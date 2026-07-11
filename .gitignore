@@ -9,6 +9,10 @@ next-env.d.ts
 .env*.local
 .vercel
 
+frontend/node_modules/
+frontend/.next/
+frontend/.env.local
+
 # ---- Python / FastAPI ----
 __pycache__/
 *.py[cod]
