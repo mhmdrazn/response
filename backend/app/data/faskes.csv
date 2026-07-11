@@ -1,0 +1,405 @@
+osm_id,type,lat,lon,name,amenity,addr:street,healthcare
+4189210755,node,-7.3221665,112.7462036,Klinik Kencana Medika,clinic,Jl. Raya Kendangsari,clinic
+4189218265,node,-7.2880725,112.7717059,Kliknik Spesial Meridian,clinic,Manyar Tirtomoyo 3,clinic
+4191121402,node,-7.2915096,112.7539453,Scoliosis Correction Clinic,clinic,Jl. Ngagel Jaya Tengah,clinic
+4191464390,node,-7.2934043,112.735286,Medika Utama,clinic,Jl. Ciliwung,clinic
+4191508335,node,-7.2818895,112.7369126,Miracle Aesthetic Clinic Thamrin,clinic,Jl. M H. Tamrin,clinic
+4191509711,node,-7.2801062,112.7817642,Miracle Aesthetic Clinic Kertajaya Indah,clinic,Jl. Raya Kertajaya Indah Blok O,clinic
+4192842880,node,-7.2533533,112.7488414,Dr. Silvester Hariwidodo D.Spa,doctors,Jl. Ketupa,doctor
+4472384093,node,-7.2573574,112.7409288,Posyandu Genteng,clinic,,clinic
+4474589264,node,-7.2501395,112.760249,Poliklinik Noor Mushola,clinic,,clinic
+4474589265,node,-7.252788,112.7736956,Posyandu Ceria,clinic,,
+4474589266,node,-7.2501528,112.7604488,Rumah Bersalin Noor Mushola,clinic,,clinic
+4481028812,node,-7.223835,112.7823898,Posyandu Tresnojoyo,clinic,,
+4488324018,node,-7.2285213,112.744542,Posyandu Kemuning,clinic,,
+4489755662,node,-7.2183042,112.7620354,Posyandu,clinic,,
+4491967593,node,-7.3033696,112.6356738,Posyandu,clinic,,clinic
+4491967594,node,-7.301037,112.6324626,Posyandu,clinic,,clinic
+4491967595,node,-7.2963932,112.6351709,Posyandu RW 03 Kel. Lakarsantri,clinic,,clinic
+4493536650,node,-7.3036875,112.6432075,Posyandu Balita RW 2 Kel. Jeruk,clinic,,
+4493716524,node,-7.2299329,112.7570498,Melati II,clinic,,
+4493716697,node,-7.2261378,112.7550063,Sri Rejeki 1,clinic,,
+4501753523,node,-7.2208036,112.769442,Posyandu Flamboyan,clinic,,
+4503436232,node,-7.3043746,112.6527109,Posyandu RW 03 Kel. Lidah Kulon,clinic,,
+4504062374,node,-7.2233282,112.753399,Posyandu Jaya Indah,clinic,,
+4504062375,node,-7.2147588,112.7535521,Posyandu Mekarsari,clinic,,
+4505929385,node,-7.2248409,112.7427147,Posyandu Anak Smilebaby,clinic,,
+4505929386,node,-7.22484,112.7426843,Posyandu Lansia Udang,clinic,,
+4518422428,node,-7.2503291,112.7348737,Posyandu Melati,clinic,,clinic
+4519863509,node,-7.3175535,112.6504265,Posyandu,clinic,,
+4519997488,node,-7.3269704,112.6679038,Posyandu Balita Melati 4 dan Lansia,clinic,,
+4519997589,node,-7.3277938,112.6775352,Posyandu Melati 1,clinic,,
+4520228470,node,-7.2779899,112.7224087,Posyandu Beringin 5,clinic,,
+4520374041,node,-7.2842004,112.7285004,Posyandu Pagulanstar,clinic,,clinic
+4520374042,node,-7.2898002,112.7225647,Posyandu Sartika,clinic,,clinic
+4525562655,node,-7.2358207,112.7223595,Posyandu Kelurahan Morokrembangan,clinic,,
+4546069711,node,-7.2665784,112.7219504,Posyandu Lansia,clinic,,
+4556388447,node,-7.3225926,112.7575667,Posyandu Lengkuas,clinic,,
+4556787619,node,-7.2672549,112.7166865,Posyandu Melati,clinic,,
+4564476620,node,-7.2637591,112.6554682,Posyandu Kenanga,clinic,,clinic
+4576947775,node,-7.2482424,112.6289821,Posyandu Lansia Harapan Pertiwi,clinic,,
+4580700781,node,-7.237383,112.6204419,Posyandu Gotong Royong I,clinic,,
+4580700784,node,-7.237383,112.6203802,Posyandu Lansia Anugerah,clinic,,
+4586349373,node,-7.236088,112.6308249,Posyandu Melati,clinic,,clinic
+4590428564,node,-7.2317759,112.6136895,Posyandu Melati,clinic,,
+4590428566,node,-7.2318005,112.6137599,Posyandu Lansia Senja Bahagia,clinic,,
+4590474592,node,-7.2344455,112.6152002,Poskesdes Benowo Ceria,clinic,,
+4590474593,node,-7.2343983,112.6152169,Posyandu Lansia Melati,clinic,,
+4592185087,node,-7.325543,112.7219675,Posyandu Melati 5,clinic,,
+4599296027,node,-7.2852063,112.6530981,Doktor umum,doctors,,doctor
+4599296302,node,-7.2951874,112.6543318,Praktek dokter umum,doctors,,doctor
+4600912486,node,-7.2592698,112.6628369,Posyandu Balita Mawar Merah,clinic,,clinic
+4617474834,node,-7.3406871,112.7224062,Posyandu Palupi,clinic,,
+4625438061,node,-7.2362054,112.6241829,Posyandu Harapan Bangsa,clinic,,clinic
+4628345071,node,-7.2428127,112.6108218,Posyandu RW IV Pakal,clinic,,
+4676089689,node,-7.3403897,112.7363945,Puskesmas siwalankerto,clinic,,
+5369425864,node,-7.2874209,112.6791875,,clinic,,clinic
+5897591859,node,-7.2809075,112.7754253,,clinic,,clinic
+5897591862,node,-7.2808876,112.7779573,Surabaya Heart & Vascular Clinic,clinic,,clinic
+5897591866,node,-7.2800335,112.7642566,LBC Manyar Kertoarjo,clinic,,clinic
+5897593893,node,-7.2801133,112.7750632,Biotest,clinic,,clinic
+9807851263,node,-7.2905095,112.7466458,Klinik Pratama Sebelas Medika,clinic,,clinic
+9813574236,node,-7.2654681,112.7516768,Klinik Surabaya Utara,clinic,,clinic
+9816232358,node,-7.3246162,112.7251207,Klinik Pratama Adi Hayati Ketintang,clinic,,clinic
+9816279739,node,-7.3087325,112.7316606,Praktek Dokter Dr. Sofwan Hadi,doctors,,doctor
+9821306322,node,-7.3201147,112.7599313,Klinik Sentra Medika Surabaya,clinic,,clinic
+9821384497,node,-7.2988591,112.7600089,Klinik Mata Tritya,clinic,,clinic
+9821475352,node,-7.3349965,112.7514273,Klinik Medico Sier Kutisari,clinic,,clinic
+9824048049,node,-7.2911822,112.7951887,RSGM Nala Husada,hospital,,hospital
+9833059949,node,-7.2931451,112.7354954,Klinik Gigi RKZ,hospital,Jalan Ciliwung,hospital
+9833266137,node,-7.2720146,112.7237254,Bidan Sudjiati Frans,doctors,,doctor
+9891147069,node,-7.2605642,112.7952831,AKJ Aesthetic Center Pusat,clinic,Jalan Raya Mulyosari,clinic
+11308076627,node,-7.3319572,112.7311917,BRIMedika,clinic,,
+12292717236,node,-7.2912069,112.7362614,RS Katolik Vincentius A Poli,hospital,,
+12958226683,node,-7.3331252,112.7356612,Klinik Pratama Poltekbang Surabaya,clinic,,
+13205863501,node,-7.2921556,112.7362334,Klinik Umum Dan Spesialis Ciliwung 26,hospital,Jalan Ciliwung,hospital
+119490024,way,-7.2903521,112.7928406,Medical Center ITS,clinic,,clinic
+121862400,way,-7.2908984,112.7892865,Rumah Sakit Onkologi,hospital,,hospital
+138697830,way,-7.3284006,112.7144457,Puskesmas Kebonsari,clinic,,
+185053556,way,-7.2661587,112.7370451,RSIA PUSURA,hospital,Jalan Tegalsari,hospital
+185055599,way,-7.267437,112.7359191,TCM Sari Alam,clinic,,clinic
+185056779,way,-7.2679286,112.7383203,Erha,clinic,Jalan Kombes M. Duryat,clinic
+185056781,way,-7.2681102,112.7391107,Panti Asuhan Matahari Terbit,clinic,Jalan Kombes M. Duryat,clinic
+194433170,way,-7.2828126,112.7798288,RSUD Haji Provinsi Jawa Timur,hospital,Jl. Manyar Kertoadi,hospital
+257897278,way,-7.2697298,112.7849794,Rumah Sakit Universitas Airlangga,hospital,Jalan Dharmahusada Indah Utara,
+280299555,way,-7.287413,112.7382653,Rumah Sakit Darmo,hospital,Jalan Raya Darmo,hospital
+307282253,way,-7.2861609,112.7620875,Rumah Sakit Jiwa Menur Provinsi Jawa Timur,hospital,,hospital
+307388039,way,-7.2420683,112.7928573,Klinik Pratama,clinic,,
+320182744,way,-7.2699287,112.7863259,Rumah Sakit Khusus Infeksi,hospital,Jl. Mulyorejo,
+344100866,way,-7.2808544,112.6345629,Ciputra Hospital,hospital,,
+371708402,way,-7.2708674,112.7566483,Pusat Layanan Kesehatan Unair,clinic,,clinic
+376494209,way,-7.2918904,112.7353796,Rumah Sakit Katolik St. Vincentius A Paulo (RKZ),hospital,,hospital
+405810167,way,-7.3056173,112.7377329,Puskesmas Jagir,clinic,Jalan Bendul Merisi,clinic
+405810297,way,-7.3056404,112.7391014,UPT Latkesmas Murnajati,clinic,Jalan Bendul Merisi,clinic
+426896954,way,-7.2694757,112.7514424,Klinik Ultra Medica,clinic,,clinic
+426896980,way,-7.2693392,112.7511561,MedicElle Clinic Gubeng,clinic,,clinic
+429000349,way,-7.2762311,112.7491055,The Emdee Skin Clinic,clinic,Jl. Biliton,clinic
+429077947,way,-7.2737545,112.7448221,RSIA Ferina Surabaya,hospital,,hospital
+431978015,way,-7.2771172,112.747935,Elizabeth Medical Centre,clinic,,clinic
+445055946,way,-7.2893685,112.8003844,Puskesmas Pembantu Sukolilo,clinic,Jalan KH. Ahmad Dahlan,clinic
+446524876,way,-7.3096549,112.7385128,Rumah Sakit Angkatan Laut Dr. Ramelan,hospital,Dinas Pertanian UPT Pengawasan dan sertifikasi hasil pertanian,hospital
+446537097,way,-7.2993423,112.676384,National Hospital,hospital,Jalan Lingkar Dalam Barat,hospital
+446965896,way,-7.2839025,112.7854947,Puskesmas Pembantu Gebang Putih,clinic,,clinic
+447131994,way,-7.2842851,112.7672786,Dokter Spesialis Anak Dr Dian Pratamastuti,doctors,,doctor
+447133120,way,-7.2888754,112.7608882,KLINIK SANTA MARIA TAK BERCELA,clinic,Jalan Ngagel Jaya Indah II,clinic
+447334127,way,-7.294027,112.8018785,Puskesmas Keputih,clinic,,clinic
+447352159,way,-7.2968727,112.764347,Puskesmas Menur,clinic,,clinic
+447609697,way,-7.2651863,112.7516509,RS DKT Gubeng Pojok,hospital,,hospital
+447610406,way,-7.2426787,112.7519019,Rumah Sakit Adi Husada Kapasan,hospital,,hospital
+447615916,way,-7.2889539,112.741385,Rumah Sakit Surabaya Medical Center,hospital,,hospital
+447624443,way,-7.2922008,112.7647208,Yayasan Kesehatan Gotong Royong,clinic,,clinic
+447625654,way,-7.259271,112.7517882,Klinik Putra Mulya,clinic,,clinic
+447634957,way,-7.2491194,112.7513052,Klinik Waridho Walidain,clinic,,clinic
+447644654,way,-7.2239311,112.7871822,Puskesmas Pembantu Kedung Cowek,clinic,,
+448067612,way,-7.2637016,112.7382415,Puskesmas Kedungdoro,clinic,,clinic
+448068865,way,-7.2994662,112.7668296,Poliklinik Utama UNTAG Surabaya,clinic,,clinic
+448068924,way,-7.2994651,112.7670062,PMI Gerai Unit Donor Darah,clinic,,clinic
+448071243,way,-7.2526888,112.7548298,Poliklinik PMI,clinic,,clinic
+448078357,way,-7.2525209,112.7580285,Klinik Bersama,clinic,,clinic
+448092882,way,-7.2801984,112.7387603,Esther House Of Beauty,clinic,,clinic
+448098012,way,-7.2624178,112.7619086,Klinik Satelit RS Islam Surabaya,clinic,,
+448107876,way,-7.254337,112.7434557,RS Mata Undaan,hospital,,
+448112158,way,-7.290849,112.7826956,RS Ibu dan Anak Putri,hospital,,hospital
+448112707,way,-7.2573961,112.7780142,Puskesmas Kalijudan,clinic,,
+448113249,way,-7.2491872,112.7610313,Klinik Dokter Spesialis,clinic,,clinic
+448114210,way,-7.2899849,112.7635634,RS Manyar Medical Centre,hospital,Jl. Raya Manyar,hospital
+448114218,way,-7.2892905,112.76631,Poliklinik STIESIA umum dan gigi,clinic,,clinic
+448114499,way,-7.2564985,112.7574592,Posyandu Kemuning IX,clinic,,clinic
+448114559,way,-7.2588398,112.7562372,Praktek Dokter Umum,clinic,,clinic
+448116483,way,-7.2891562,112.7784899,Puskesmas Klampis Ngasem,clinic,,clinic
+448232177,way,-7.2463081,112.7672265,Puskesmas Rangkah,clinic,,
+448239806,way,-7.2513248,112.7935673,Posyandu Elang RW 06,clinic,,
+448245727,way,-7.2482975,112.753717,Bidan Ny Harini Lestari,clinic,,clinic
+448246572,way,-7.3032731,112.791325,Posyandu Bahari RW 5,clinic,,
+448252098,way,-7.2484607,112.7555541,Puskesmas Tambak Rejo,clinic,,clinic
+448264192,way,-7.2401803,112.759633,Posyandu Lansia Mandiri,clinic,,
+448270057,way,-7.3013829,112.7794722,Puskesmas Pembantu Semolowaru,clinic,,
+448272385,way,-7.2694401,112.7299249,Dr Felix,doctors,,doctor
+448275217,way,-7.2901029,112.7772709,Klinik Mata Dr. Sjamsu,clinic,,clinic
+448294353,way,-7.2411108,112.7952791,Puskesmas Kenjeran,clinic,,
+448441994,way,-7.2625376,112.7464849,Klinik Pusura,clinic,,clinic
+448450445,way,-7.2512979,112.7707782,Puskesmas Pembantu Karang Empat,clinic,,
+448473676,way,-7.2562632,112.7698486,Klinik Alba Medika,clinic,,
+448475017,way,-7.2491597,112.7650498,Puskesmas,clinic,,
+448477649,way,-7.2781339,112.7321913,Melania Aesthetic Dermatology Clinic,clinic,Jl. RA Kartini,clinic
+448591841,way,-7.2424907,112.7640344,Puskesmas Gading,clinic,,clinic
+449166441,way,-7.2580579,112.746832,Puskesmas Ketabang,clinic,,clinic
+449296667,way,-7.2492473,112.7649574,Klinik Adiguna,clinic,,
+449296668,way,-7.2450111,112.7636945,Klinik Bakti Sehat Utama,clinic,,
+449305760,way,-7.2445606,112.759089,Klinik Bersama,clinic,,
+449308789,way,-7.2470572,112.7592683,Klinik dr. Samuel Abednego,clinic,,
+449327860,way,-7.2834074,112.7323819,Grha Prodia,clinic,,clinic
+449328955,way,-7.2827291,112.73194,Klinik Modern Dasa Medika,clinic,,clinic
+449476756,way,-7.2607225,112.784748,Puskesmas Mulyorejo,clinic,,
+449518151,way,-7.2399974,112.7753521,Klinik Wisma Husada,clinic,,
+449621808,way,-7.2514797,112.7458467,Rumah Sakit Adi Husada Undaan Wetan,hospital,"Jalan Undaan Wetan, Ketabang, Kecamatan Genteng",hospital
+449624579,way,-7.2591028,112.7566847,Klinik Aisyiyah,clinic,,clinic
+449624580,way,-7.2607977,112.7538987,Klinik Umum dan Gigi,clinic,,clinic
+449624588,way,-7.2571603,112.7626845,Puskesmas Pacar Keling,clinic,,clinic
+449624602,way,-7.2648315,112.7561908,Rumah Sakit Spesialis Husada Utama,hospital,Jalan Prof. Dr. Moestopo,hospital
+449647030,way,-7.294719,112.7592737,Puskesmas Pembantu Baratajaya,clinic,,clinic
+449648357,way,-7.2866348,112.7555043,Puskesmas Pucang Sewu,clinic,,clinic
+449649417,way,-7.2910067,112.7518751,Klinik Utama Welas Asih Medika,clinic,,clinic
+449813809,way,-7.2331689,112.7508445,Posyandu Gading Putih 3,clinic,,
+449818017,way,-7.2348687,112.7510499,Puskesmas Simolawang,clinic,,
+449832258,way,-7.2267667,112.7466825,Klinik Indosehat 2003,clinic,,
+449903849,way,-7.283108,112.7528757,Rumah Sakit Pura Raharja,hospital,JL. Pucang Adi,hospital
+450513383,way,-7.2740186,112.7463992,Siloam Hospitals,hospital,"Jalan Raya Gubeng, Kelurahan Gubeng, Kecamatan Gubeng",hospital
+450535884,way,-7.3019181,112.7697265,Poliklinik Brimob Jatim,clinic,,
+450537851,way,-7.2328749,112.7493507,Pos Kesehatan Kelurahan Simolawang,clinic,,
+450538654,way,-7.2303464,112.7459021,Puskesmas Sidotopo,clinic,,
+450540438,way,-7.2260303,112.7548303,Puskesmas Pembantu Pegirian,clinic,,
+450694876,way,-7.2540403,112.743466,Rumah Sakit Mata Undaan,hospital,,hospital
+450698654,way,-7.2592221,112.7915467,Puskesmas Pembantu Dukuh Sutorejo,clinic,,
+450713015,way,-7.304768,112.7823332,Posyandu Kasih Ibu,clinic,,
+450772003,way,-7.2519469,112.787182,Posyandu Anggrek,clinic,,
+450772004,way,-7.250642,112.7836416,RSIA Kendangsari Merr,hospital,,
+450914332,way,-7.2929638,112.7488359,Puskesmas Ngagel Rejo,clinic,,clinic
+450924741,way,-7.2421764,112.7457903,Klinik Utama Mentari,clinic,,clinic
+450927051,way,-7.2459712,112.7579873,RSUD Dr.M.Soewandhie,hospital,,hospital
+450956834,way,-7.2330718,112.7312338,Puskesmas Krembangan Selatan,clinic,,
+450958724,way,-7.305913,112.7812212,Dokter Spesialis Kulit dan Kelamin,clinic,,
+450968413,way,-7.3075501,112.7875308,Rumah Sakit Gotong Royong,hospital,,hospital
+450968417,way,-7.3053225,112.7945056,Puskesmas Pembantu Medokan Semampir,clinic,,
+450988751,way,-7.3085395,112.7396657,Klinik Estetika,hospital,,hospital
+451090213,way,-7.2310205,112.7523034,Posyandu Dewi Sartika,clinic,,
+451271293,way,-7.2304023,112.7745675,Puskesmas Tanah Kali Kedinding,clinic,,
+451286578,way,-7.2773515,112.7341031,Puskesmas Dr. Soetomo,clinic,,
+451293428,way,-7.2197386,112.7505788,Klinik Pratama Indosehat 2003,clinic,,
+451296786,way,-7.2196179,112.7525663,Puskesmas Wonokusumo,clinic,,
+451303182,way,-7.3338362,112.710235,Puskesmas Pagesangan,clinic,,clinic
+451486454,way,-7.2522939,112.740834,Puskesmas Peneleh,clinic,,clinic
+451490133,way,-7.2483503,112.6354712,UPTD Puskesmas Sememi,clinic,,
+451490528,way,-7.2407486,112.7341564,Pos Kesehatan Krembangan,clinic,,clinic
+451495390,way,-7.3220559,112.7762486,Klinik Pratama Cita Husada,doctors,,
+451500391,way,-7.1960206,112.6472049,Puskesmas Pembantu Romokalisari,clinic,,clinic
+451500928,way,-7.2224309,112.5942467,Posyandu Anggrek,clinic,,
+451501279,way,-7.2644367,112.6621652,Klinik Pratama Sartika 59,clinic,,clinic
+451505559,way,-7.3358199,112.7728437,Puskesmas Pembantu Rungkut Menanggal,clinic,,
+451508502,way,-7.2359644,112.7352564,Poliklinik Polrestabes Surabaya,clinic,,clinic
+451512482,way,-7.281756,112.7284812,Puskesmas Pakis,clinic,,clinic
+451523861,way,-7.3277303,112.7733607,Puskesmas Pembantu Rungkut Kidul,clinic,,
+451527942,way,-7.2145165,112.6058289,Posyandu Lansia Makarya,clinic,,clinic
+451529838,way,-7.3348985,112.7473827,Klinik Nurani Jaya 66,clinic,,clinic
+451533238,way,-7.3108049,112.7133609,Posyandu Melati,clinic,,
+451534817,way,-7.234725,112.6114964,Puskesmas Pembantu Benowo,clinic,,
+451535366,way,-7.2599046,112.6707873,Klinik Perdana Husada,clinic,,clinic
+451581649,way,-7.2396642,112.7289548,Puskesmas Pembantu Krembangan,clinic,,clinic
+451645249,way,-7.2860322,112.7010288,Klinik Abdi Mulia,clinic,,clinic
+451651355,way,-7.3179955,112.7882898,Puskesmas Pembantu Penjaringan Sari,clinic,,
+451659196,way,-7.2342871,112.7229483,Poliklinik SATBRIMOB Polda Jatim,clinic,,
+451664232,way,-7.2829825,112.71065,Poliklinik UWK,clinic,,clinic
+451665314,way,-7.3096097,112.7277362,Yakes Telkom,clinic,,clinic
+451666575,way,-7.3358151,112.7467579,Laboratorium Klinik Isaki,clinic,,
+451666730,way,-7.3361447,112.7462963,Puskesmas Pembantu Kutisari,clinic,,
+451670191,way,-7.2666818,112.6912576,Rumah Sakit Mitra Keluarga,hospital,"Jalan Satelit Indah II Blok FN, Kelurahan Tanjungsari, Kecamatan Sukomanunggal",hospital
+451672394,way,-7.2242448,112.7269731,Poli Umum Dr. Soetomo,clinic,,
+451832547,way,-7.2227322,112.7354624,Puskesmas Perak Timur,clinic,,
+451850988,way,-7.3031765,112.7303925,Puskesmas Wonokromo,clinic,,clinic
+451857624,way,-7.2972173,112.7228121,RS Kodam Brawijaya,hospital,,
+452167581,way,-7.3503024,112.6729796,Puskesmas Pembantu Warugunung,clinic,,
+452173174,way,-7.2265923,112.7635026,Puskesmas Sidotopo Wetan,clinic,,
+452176358,way,-7.2260781,112.7408182,Klinik Raddina,clinic,,
+452200878,way,-7.2281429,112.7411216,Rumah Sakit Al Irsyad,hospital,,
+452344055,way,-7.2363217,112.7628382,Posyandu Granting,clinic,,
+452354573,way,-7.2110958,112.7769442,Puskesmas Tambak Wedi,clinic,,
+452393932,way,-7.3165098,112.693701,Pusmesmas Wiyung,clinic,,
+452574500,way,-7.2147636,112.7298193,Posyandu Mawar 1 & 2,clinic,,
+452577220,way,-7.3053011,112.6403592,Posyandu Balita Rw.3 Kel. Jeruk,clinic,,
+452577221,way,-7.3054466,112.6383802,Puskesmas Jeruk,clinic,,
+452577922,way,-7.2174798,112.7724023,Puskesmas Tambak Wedi,clinic,,
+452580516,way,-7.2871492,112.7417777,Klinik Anugerah Sulung,clinic,Jalan Tumapel,
+452582731,way,-7.3314856,112.6900387,Puskesmas Balas Klumprik,clinic,,
+452600945,way,-7.2299251,112.7412128,Rumah Sakit PKU Muhammadiyah Surabaya,hospital,,
+452601170,way,-7.2240386,112.7464745,Rumah Sakit Paru,hospital,,
+453248827,way,-7.277327,112.6370279,Puskesmas Made,clinic,,clinic
+453435490,way,-7.2226967,112.7358392,Klinik Jakarta,clinic,,
+453439343,way,-7.2177651,112.7662792,Puskesmas Bulak Banteng,clinic,,
+453631141,way,-7.3066493,112.6614463,,clinic,,
+453632604,way,-7.2367559,112.7449987,Posyandu Nusa Indah,clinic,,
+453637968,way,-7.3017245,112.6526769,Bidan Delima,clinic,,clinic
+453637971,way,-7.2994323,112.6620645,RS Orthopedi & Traumatologi,hospital,,hospital
+453640265,way,-7.2809532,112.7031363,Drg Elfreda Sidharta,doctors,,doctor
+453642807,way,-7.2603726,112.687805,Posyandu Mawar,clinic,,clinic
+453646193,way,-7.2785831,112.6872442,Royal Clinic,clinic,,clinic
+453647675,way,-7.2335417,112.7527761,Praktek Umum,clinic,,
+453650878,way,-7.2779805,112.6992369,Posyandu Cempaka II,clinic,,clinic
+453707238,way,-7.216005,112.7520433,Posyandu Mekarsari,clinic,,
+453886347,way,-7.3176093,112.7300683,Citra Medical Center,clinic,,clinic
+453890813,way,-7.3197547,112.7093945,Puskesmas Kedurus,clinic,,
+453891369,way,-7.2481302,112.7233109,Posyandu Angrek III,clinic,,clinic
+453913629,way,-7.257277,112.7276715,Klinik Gigi,clinic,,clinic
+453915896,way,-7.2545274,112.7192132,Puskesmas Tembok Dukuh,clinic,,
+453934622,way,-7.2228124,112.7446748,Puskesmas Sawah Pulo,clinic,,
+453936730,way,-7.3434646,112.7231568,Puskesmas Pembantu Dukuh Menanggal,clinic,,
+453940511,way,-7.2518611,112.714562,Puskesmas Asem Rowo,clinic,,
+454129371,way,-7.2756512,112.679649,Rumah Sakit Marien,hospital,,hospital
+454131822,way,-7.2841042,112.6708088,Klinik Medpoint,clinic,,clinic
+454131823,way,-7.2832568,112.6660158,Klinik Miftachul Munir Medika,clinic,,clinic
+454131831,way,-7.2850638,112.6627328,Puskesmas Lontar,clinic,,clinic
+454131833,way,-7.2845689,112.669523,Rumah Sakit Lombok Dua dua,hospital,,hospital
+454147499,way,-7.2472448,112.7253904,Puskesmas Gundih,clinic,,clinic
+454187199,way,-7.347893,112.6660642,Klinik Pratama Rawat Inap Putri Rahayu,clinic,,
+454776218,way,-7.2876992,112.723181,Klinik Alma Karya,clinic,,clinic
+454798302,way,-7.2754381,112.7010087,Puskesmas Pembantu Sono Kwijenan,clinic,,clinic
+454803509,way,-7.2246432,112.7469148,Puskesmas Pegirian,clinic,,
+454826209,way,-7.2814089,112.7223537,Puskesmas Putat Jaya,clinic,,clinic
+454833008,way,-7.292135,112.7268137,Klinik Pusura,clinic,,clinic
+454994578,way,-7.2689496,112.6909665,Klinik Kasih Karunia,clinic,,clinic
+455236163,way,-7.3340082,112.7015021,Puskesmas Pembantu Kebraon,clinic,,
+455255075,way,-7.3381017,112.7186968,Puskesmas Gayungan,clinic,,
+455426806,way,-7.2393518,112.7172651,Puskesmas Dupak,clinic,,
+455427429,way,-7.242188,112.718773,Balai Pengobatan dan Rumah Bersalin Al Azhar,clinic,,
+455434214,way,-7.257587,112.7065905,Klinik Pratama Dinayla Utama,clinic,,
+455447410,way,-7.2347836,112.7124377,Puskesmas Moro Krembangab,clinic,,
+455463072,way,-7.2581462,112.7174423,"Klinik Pratama ""BDS PACUAN KUDA""",clinic,,
+455595527,way,-7.2307821,112.7115654,Balai Pengobaran Sawung,clinic,,
+455611437,way,-7.3263941,112.6740739,Posyandu Melati 2 RW 2 Sumur Welut,clinic,,
+455658137,way,-7.313098,112.6917019,Rumah Sakit Wijaya,hospital,,hospital
+455669193,way,-7.3327318,112.7012534,Klinik PHC Kebraon,clinic,,
+455672509,way,-7.3257669,112.7277251,Posyandu Balita Kuncup Harapan VIII,clinic,,clinic
+456282384,way,-7.3193894,112.652082,Posyandu Merpati,clinic,,
+456282385,way,-7.3249008,112.656109,Puskesmas Bangkingan,clinic,,
+456287350,way,-7.3501002,112.6678542,Pos Kesehatan Kelurahan,clinic,,
+456494281,way,-7.2714433,112.7200783,Puskesmas Banyu Urip,clinic,,
+456497978,way,-7.3219492,112.744921,Surabaya Eye Clinic,clinic,,clinic
+456498677,way,-7.2837369,112.6881604,Puskesmas Pembantu Pradah Kali Kendal,clinic,,clinic
+456689406,way,-7.3137669,112.7544745,Posyandu Melati,clinic,,
+456699993,way,-7.2742109,112.7210324,Posyandu Ikebana 5,clinic,,
+456700072,way,-7.2731846,112.7217868,Posyandu Ikebana 9,clinic,,
+456703703,way,-7.3287275,112.7427359,Laboratorium Klinik PRAMITA Jemur Andayani,clinic,,clinic
+456713946,way,-7.3046746,112.7084451,Rs Marinir Ewa Pangalila,hospital,,
+456740299,way,-7.3112451,112.6879189,Rumah Sakit Wiyung Sejahtera,hospital,,
+457109445,way,-7.2453469,112.7277389,Rumah Sakit Ibu dan Anak IBI Surabaya,hospital,,hospital
+457123400,way,-7.240723,112.7310978,Rumah Sakit UPT Vertikal Surabaya,hospital,Jalan Indrapura,hospital
+457810393,way,-7.2505647,112.7131519,BPM Afah Fahmi,doctors,,
+458000639,way,-7.3183333,112.7292958,Posyandu Melati 3,clinic,,clinic
+458002766,way,-7.302637,112.7585778,Klinik Cantik,clinic,,clinic
+458010414,way,-7.3073313,112.7556756,Puskesmas Sidosermo,clinic,,
+458021925,way,-7.3285632,112.748748,Pos Kesehatan Kelurahan Kendangsari,clinic,,clinic
+458022008,way,-7.3282569,112.7473882,Klinik Nurani Jaya 37,clinic,,clinic
+458029990,way,-7.2655792,112.7240192,Klinik Petemon Husada,clinic,,
+458235183,way,-7.2517325,112.6504313,RSU Bunda Surabaya,hospital,,hospital
+458258330,way,-7.2779701,112.7221352,Puskesmas Pembantu Putat Jaya,clinic,,
+458445205,way,-7.2655814,112.7277504,Puskesmas Sawahan,clinic,,
+458604522,way,-7.3427719,112.7200297,Posyandu Anggrek Merpati XII,clinic,,
+458631578,way,-7.3330792,112.7485076,Klinik Umum Cita Husada 2,clinic,,clinic
+458634484,way,-7.2732814,112.7065548,Puskesmas Pembantu Simohilir,clinic,,
+458637628,way,-7.2590682,112.7224962,Puskesmas Pembantu Petemon,clinic,,clinic
+458638279,way,-7.2736336,112.7232721,Posyandu Ikebana 3,clinic,,
+458638290,way,-7.2756392,112.7214171,Posyandu Ikebana,clinic,,
+458639570,way,-7.3253317,112.7455018,RSIA Kendangsari,hospital,,hospital
+458669729,way,-7.2695128,112.7142863,Puskesmas Pembantu Simo Katrungan,clinic,,
+459474104,way,-7.2955884,112.7204895,Puskesmas Pembantu Gunungsari,clinic,,clinic
+459478993,way,-7.3245082,112.7889494,Posyandu Roro Mendhut,clinic,,
+459481999,way,-7.3037338,112.7081883,Rumah Sakit Marinir Ewa Panggalila,hospital,,
+459482003,way,-7.3060142,112.7099517,Klinik Pratama Gunungsari,clinic,,
+459492026,way,-7.2607121,112.7114557,Klinik Pratama Am Nur,clinic,,
+459525939,way,-7.2624604,112.7120093,Puskesmas Simomulyo,clinic,,
+459683506,way,-7.3096808,112.6749751,Puskesmas Pembantu Babatan,clinic,,
+459700974,way,-7.2572721,112.6561328,Pos Kesehatan Keluarga,clinic,,
+459704924,way,-7.3160411,112.7911365,,doctors,,doctor
+459709704,way,-7.2584667,112.6607069,Puskesmas Pembantu Banjar Sugihan,clinic,,clinic
+459740266,way,-7.2490462,112.6470329,Posyandu Gunung Bromo,clinic,,
+459917161,way,-7.3164173,112.7615729,Posyandu Kencur 2,clinic,,
+459928185,way,-7.3200163,112.7548191,Larissa Aesthetic Center Tenggilis,clinic,,clinic
+459958973,way,-7.2608338,112.6779614,Klinik Pusura,clinic,,clinic
+459976950,way,-7.2850691,112.7107246,Klinik Pratama,clinic,,clinic
+459976960,way,-7.283233,112.7122697,Puskesmas Dukuh Kupang,clinic,,clinic
+460435672,way,-7.2247944,112.6156227,Posyandu Lansia Seroja,clinic,,
+460452633,way,-7.2598627,112.6651877,Klinik Dokter Eko,clinic,,clinic
+460452660,way,-7.260159,112.6650026,Klinik Manukan,clinic,,clinic
+460456690,way,-7.226615,112.6063314,Puskesmas Pembantu Sumberrejo,clinic,,clinic
+460476420,way,-7.2435441,112.6174056,Posyandu Gotong Royong II,clinic,,
+460664800,way,-7.3272735,112.7838393,RSUD Eka Candrarini,hospital,,hospital
+460664973,way,-7.3323931,112.7706133,Posyandu Sedap Malam,clinic,,
+460670273,way,-7.321853,112.7807443,"dr. Amak Ali, GP.",doctors,,
+460673093,way,-7.2367007,112.6272867,Klinik PHC Benowo,clinic,,clinic
+460847334,way,-7.3068048,112.7450055,Puskesmas Pembantu Bendul Merisi,clinic,,clinic
+460853355,way,-7.3209183,112.7537806,Klinik Pratama Yayasan BK3S Jatim,clinic,,
+460853356,way,-7.3207923,112.7469606,Klinik Utama El Shafi,clinic,,clinic
+461053157,way,-7.3121608,112.7501595,klinik Cipta Husada medika,clinic,,clinic
+461091984,way,-7.3089742,112.7503422,Klinik Pratama RBG RZ,clinic,,clinic
+461264992,way,-7.3415611,112.7254506,Posyandu Lanjut Usia,clinic,,
+461269085,way,-7.3119125,112.7445417,Rumah Bersalin Puri Permata Twins,clinic,,clinic
+461269463,way,-7.328807,112.7509277,Rumah Sakit Royal Surabaya,hospital,Jalan Rungkut Industri I,hospital
+461272773,way,-7.259211,112.6783194,Puskesmas Balongsari,clinic,,clinic
+461276957,way,-7.3449974,112.72338,Klinik Usada Buana,clinic,,
+461277744,way,-7.2516177,112.6526735,Puskesmas Pembantu Kandangan,clinic,,
+461297566,way,-7.3385165,112.7695536,Faskes Tingkat 1 Klinik Nurani Jaya 83,clinic,,
+461311530,way,-7.2550783,112.6514478,Posyandu Lansia Puspita RW I,clinic,,
+461326425,way,-7.2979759,112.7243902,,hospital,,hospital
+462012644,way,-7.3124034,112.6815596,RSIA Graha Medika,hospital,,hospital
+462281653,way,-7.2706677,112.6774827,Posyandu Mawar,clinic,,clinic
+462285622,way,-7.2357613,112.6290534,Posyandu Durian,clinic,,clinic
+462285627,way,-7.2494632,112.6260209,3D Clinic Pakal,clinic,,
+462684729,way,-7.3142558,112.7363203,Puskesmas Pembantu Margorejo,clinic,,clinic
+462687018,way,-7.2630337,112.6688961,Puskemas Manukan Kulon,clinic,,clinic
+462688134,way,-7.3345586,112.743154,Klinik Reiki dan Ling-Chi,clinic,,clinic
+462690555,way,-7.2495158,112.673127,Puskesmas Pembantu Buntaran,clinic,,
+462702755,way,-7.2570063,112.6708713,Rumah Sakit Muji Rahayu,hospital,Jl. Raya Manukan Wetan,hospital
+462704784,way,-7.3063163,112.734857,Rumah Sakit Islam Surabaya,hospital,,hospital
+463387641,way,-7.3215391,112.7137283,RSIA Cempaka Putih Permata,hospital,,
+463401889,way,-7.2422948,112.6158418,Puskesmas Pembantu Pakal,clinic,,
+463561564,way,-7.2784836,112.7489193,RSIA Lombok Dua Dua Surabaya,hospital,,hospital
+463573274,way,-7.288203,112.7344518,TLC (Total Life Clinic),clinic,Jalan Bogowonto,clinic
+463796368,way,-7.2635077,112.6840606,Klinik Nayaka Husada,clinic,,clinic
+463796369,way,-7.2614635,112.6856935,Posyandu Sekar Sari,clinic,,clinic
+463796371,way,-7.2595014,112.6892656,Puskesmas Tanjungsari,clinic,,clinic
+463994509,way,-7.3280744,112.7752518,Klinik Utama Pusura Rungkut,clinic,Jl. Rungkut Asri Tengah,
+464048633,way,-7.3120132,112.7229563,RSU Bhakti Rahayu,hospital,,
+464057071,way,-7.3261478,112.7255981,Rumah Sakit Mata Masyarakat Jawa Timur,hospital,,hospital
+464566820,way,-7.2682181,112.7583031,RSUD Dr. Soetomo,hospital,,hospital
+464630285,way,-7.2912022,112.7372722,Rumah Sakit William Booth Surabaya,hospital,Jalan Diponegoro,hospital
+465103030,way,-7.2314758,112.6061761,Posyandu Graha Kencana,clinic,,
+465114884,way,-7.198663,112.625748,Poskeskel Kelurahan Romokalisari,clinic,,
+465117740,way,-7.2915348,112.7409612,RSAU SOEMITRO,hospital,,hospital
+465127627,way,-7.2558516,112.636114,RSUD Bhakti Dharma Husada,hospital,,
+465330021,way,-7.3243054,112.7302983,Rumah Sakit Bhayangkara HS Samsoeri Mertojoso,hospital,Jalan Jend. A. Yani,hospital
+466545797,way,-7.291851,112.755906,Laboratorium Klinik Pramita,clinic,,clinic
+466546454,way,-7.2935831,112.7394333,Klinik Mata Java,clinic,,clinic
+467064618,way,-7.3408917,112.7222365,Faskes Tingkat 1 Kartini,clinic,,
+467117588,way,-7.3223638,112.7621088,Puskesmas Tenggilis,clinic,,
+467117595,way,-7.322216,112.7707626,Puskesmas Kalirungkut,clinic,,
+467846573,way,-7.3188406,112.7386769,Klinik Pratama Muslimat NU 1,clinic,,clinic
+467853472,way,-7.2817974,112.7325031,Klinik Estetika dr. Affandi Surabaya,clinic,,clinic
+467861431,way,-7.2640097,112.7713289,Waron Hospital,hospital,Jalan Kaliwaron,hospital
+467879001,way,-7.3261001,112.7399626,Puskesmas Jemursari,clinic,,clinic
+468200113,way,-7.2856904,112.7602151,Laboratorium Kesehatan Dinas Kesehatan Surabaya,clinic,,clinic
+468202523,way,-7.2788023,112.7572795,Klinik Kita Kertajaya,clinic,,clinic
+468208002,way,-7.2922777,112.7597315,Dermasense Aesthetic Clinic,clinic,Jl. Ngagel Madya,clinic
+468612480,way,-7.3240244,112.7949913,Puskesmas Medokan Ayu,clinic,,
+468637726,way,-7.2353495,112.6125421,Rumah Sakit Islam Darus Syifa',hospital,,
+468987710,way,-7.2267672,112.7689562,Puskesmas Pembantu Tanah Kali Kedinding,clinic,,
+469305807,way,-7.3402617,112.7364661,Puskesmas Siwalankerto,clinic,,clinic
+470106207,way,-7.3225208,112.7398926,Rumah Sakit Islam Jemursari Surabaya,hospital,,hospital
+470946184,way,-7.2893733,112.7526335,Rumah Bersalin Kartika,clinic,,clinic
+474088345,way,-7.2605955,112.7952277,Ruko AKJ Aesthetic Center Pusat,clinic,Jalan Raya Mulyosari,clinic
+669873116,way,-7.2096035,112.7354571,Rumah Sakit PHC Surabaya,hospital,,
+784664351,way,-7.251387,112.7850088,Rumah Sakit Mitra Keluarga Kenjeran,hospital,,
+921951024,way,-7.3048568,112.7654146,RS Premier Surabaya,hospital,,hospital
+985433940,way,-7.2919642,112.7276698,Mayapada Hospital,hospital,Jalan Mayor Jenderal Sungkono,hospital
+1189510723,way,-7.2781116,112.7396044,Dr. Susy Tantra Spd,doctors,Jalan Cokroaminoto,doctor
+1189512001,way,-7.2782323,112.7399248,Dr. Gunawan Angga Husada,doctors,Jalan Cokroaminoto,doctor
+1189920586,way,-7.314081,112.7662153,Rumah Sakit Universitas Surabaya,hospital,,hospital
+6703135,multipolygon,-7.2119504,112.724599,Rumah Sakit TNI AL Dr. Oepomo,hospital,,

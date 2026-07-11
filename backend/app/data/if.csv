@@ -1,0 +1,141 @@
+id,latitude,longitude,waterway_name,waterway_type,highway_name,highway_type,distance_to_water_m,n_source_points
+IF_000,-7.254481899999995,112.7658331,,stream,Jalan Karang Asem,primary,6.5,1
+IF_001,-7.248691200000001,112.7968342,,river,Jalan Sukolilo Sukorejo,primary,0.2,15
+IF_002,-7.250176799999996,112.7681029,,stream,Jalan Putro Agung,primary,3.7,6
+IF_003,-7.226439499999994,112.7461528,,river,Jalan Sultan Iskandar Muda,trunk,3.4,9
+IF_004,-7.23160755912252,112.7442922375262,,river,Jalan Nyamplungan,secondary,9.4,1
+IF_005,-7.238409300000005,112.7448792,,river,Jalan Kembang Jepun,primary,2.6,4
+IF_006,-7.257985799999996,112.7956272,,stream,Jalan Temporejo,secondary,2.5,4
+IF_007,-7.260974120719012,112.78970756893062,,stream,Jalan Raya Sutorejo,secondary,3.6,1
+IF_008,-7.254966199999994,112.7824872,,river,Jalan Doktor Insinyur Haji Soekarno,primary,2.1,6
+IF_009,-7.300146506771892,112.77223502238617,,river,Jalan Nginden Semolo,secondary,1.8,3
+IF_010,-7.2689351000000055,112.7118395,,stream,Jalan Simo Gunung,secondary,1.8,2
+IF_011,-7.331188399999995,112.7705498,Selokan,river,Jalan Zamhuri,primary,1.5,7
+IF_012,-7.274648899999995,112.7009006,,river,Jalan Raya Kupang Jaya,secondary,0.2,8
+IF_013,-7.265815200000004,112.7563824,,stream,Jalan Profesor Doktor Moestopo,primary,1.0,8
+IF_014,-7.2556697999999935,112.7434194,,river,Jalan Ambengan,secondary,7.7,2
+IF_015,-7.245105999999997,112.7274721,,river,Jalan Raya Dupak,primary,3.1,12
+IF_016,-7.284718900000002,112.7326702,,stream,Jalan Dokter Soetomo,secondary,1.5,8
+IF_017,-7.236122700000006,112.7717259,,stream,Jalan Kedung Cowek,secondary,2.4,5
+IF_018,-7.228592162462253,112.77460173125174,,stream,Jalan Kedung Cowek,trunk,5.2,1
+IF_019,-7.264248764573405,112.78141206877656,,stream,Jalan Mulyorejo,secondary,3.9,1
+IF_020,-7.287180099999992,112.76318440000001,,river,Jalan Raya Menur,primary,2.0,15
+IF_021,-7.289803600000006,112.7752374,,river,Jalan Klampis Jaya,secondary,5.9,2
+IF_022,-7.263888399999999,112.773311,,stream,Jalan Mulyorejo,secondary,4.7,2
+IF_023,-7.260295900000007,112.7592301,,stream,Jalan Tambang Boyo,primary,2.4,13
+IF_024,-7.262935942999366,112.76451538693877,,stream,Jalan Kaliwaron,secondary,5.1,3
+IF_025,-7.258164364368612,112.76348500167119,,stream,Jalan Bronggolan,primary,5.3,3
+IF_026,-7.262412599999997,112.7577112,,stream,Jalan Tambang Boyo,primary,7.9,2
+IF_027,-7.302089300000004,112.6221742,,river,Ruas Jalan Menganti - Lakarsantri,secondary,9.1,2
+IF_028,-7.360044600000002,112.6277941,,river,Ruas Jalan Driyorejo - Lakarsantri,secondary,4.9,2
+IF_029,-7.157733999999994,112.65304,,river,Jalan Mohammad Husni Thamrin,secondary,5.1,2
+IF_030,-7.330707972613479,112.76324793175053,Kali Kebon Agung,river,Jalan Rungkut Industri Raya,primary,3.5,3
+IF_031,-7.2617261067696965,112.65109370654777,,river,Jalan Raya Bringin Indah,secondary,3.7,2
+IF_032,-7.274860538545157,112.72626845838323,,river,Jalan Banyu Urip,secondary,5.6,3
+IF_033,-7.2781697000000065,112.7433655,,stream,Jalan Sunda,secondary,5.1,1
+IF_034,-7.329729099999997,112.7516701,Kali Kebon Agung,river,Jalan Rungkut Industri Raya,primary,1.1,4
+IF_035,-7.330218755771268,112.75743444919449,Kali Kebon Agung,river,Jalan Rungkut Industri Raya,primary,8.4,1
+IF_036,-7.3293582999999956,112.7455035,,stream,Jalan Raya Kendangsari Industri,primary,5.9,5
+IF_037,-7.163854699999994,112.8538182,,river,,secondary,3.2,2
+IF_038,-7.277484500000006,112.7810281,,river,Jalan Doktor Insinyur Haji Soekarno,primary,10.0,1
+IF_039,-7.299388900000006,112.7621821,,river,Jalan Manyar,primary,1.2,9
+IF_040,-7.2891753000000055,112.7391719,,river,Jalan Raya Darmo,primary,0.4,2
+IF_041,-7.307149299999996,112.71487820000002,Kali Brantas,river,Jalan Golf I,secondary,0.6,3
+IF_042,-7.307700299999994,112.7129718,,river,Jalan Prabu Siliwangi,primary,8.6,1
+IF_043,-7.283672800000004,112.7349856,,stream,Jalan Dokter Soetomo,secondary,1.7,4
+IF_044,-7.239476895693872,112.77012137367936,,stream,Jalan Kedung Cowek,trunk,9.6,1
+IF_045,-7.242667400000007,112.7689755,,stream,Jalan Kedung Cowek,secondary,0.5,6
+IF_046,-7.2322573382482265,112.77300859671143,,stream,Jalan Kedung Cowek,trunk,7.9,1
+IF_047,-7.243155500000006,112.7607892,,river,Jalan Kenjeran,trunk,2.9,4
+IF_048,-7.326988900000007,112.7306379,,stream,Jalan Ahmad Yani,trunk,3.8,5
+IF_049,-7.259830499999996,112.7271377,,river,Jalan Raya Arjuno,trunk,4.9,4
+IF_050,-7.319093900000002,112.7330836,,stream,Jalan Ahmad Yani,trunk,3.3,5
+IF_051,-7.289566300000002,112.7360025,,river,Jalan Raya Diponegoro,trunk,3.7,3
+IF_052,-7.274741900000007,112.6450858,,river,Jalan Telaga Puspa Raya,secondary,0.7,5
+IF_053,-7.236043599999996,112.7205645,,river,Jalan Raya Demak,trunk,5.8,4
+IF_054,-7.3126036999999995,112.6898212,,river,Jalan Raya Wiyung,secondary,3.2,5
+IF_055,-7.313702300000003,112.6928012,,river,Jalan Raya Wiyung,secondary,6.0,1
+IF_056,-7.35523729999999,112.72908780000002,,river,Jalan Raya Waru,trunk,5.8,6
+IF_057,-7.298559099999992,112.7558884,Kali Boma,river,Jalan Bratang Gede,secondary,3.9,3
+IF_058,-7.221817200000001,112.7684757,,river,Jalan Kedinding Lor,secondary,7.2,1
+IF_059,-7.229972499999992,112.6825129,,river,Jalan Tambak Oso,trunk,5.7,5
+IF_060,-7.290320299999992,112.788462,,river,Jalan Arief Rahman Hakim,secondary,8.6,1
+IF_061,-7.2497183000000085,112.7842629,,river,Jalan Doktor Insinyur Haji Soekarno,primary,6.2,7
+IF_062,-7.365505399999997,112.60341,,river,Ruas Jalan Driyorejo - Sumput,secondary,3.2,1
+IF_063,-7.345908799999993,112.62615100000001,,river,Ruas Jalan Petiken - Sumput,secondary,2.3,2
+IF_064,-7.351198500000001,112.6611626,,river,Jalan Raya Surabaya - Driyorejo,primary,3.3,2
+IF_065,-7.245280599999998,112.7688918,,stream,Jalan Kenjeran,trunk,7.6,9
+IF_066,-7.331456400000007,112.7776407,Kali Kebon Agung,river,Jalan Rungkut Madya,primary,8.6,2
+IF_067,-7.327602056299529,112.73524517557702,,stream,Jalan Jemur Wonosari,primary,6.5,2
+IF_068,-7.328653399999999,112.740399,,stream,Jalan Jemur Andayani,primary,5.7,4
+IF_069,-7.248363500000007,112.7469,,river,Jalan Kalianyar,primary,5.0,4
+IF_070,-7.277933700000001,112.7411122,,stream,Jalan Raya Darmo,primary,4.8,2
+IF_071,-7.271702700000001,112.72323920000001,,stream,Jalan Banyu Urip,secondary,3.9,2
+IF_072,-7.286779400000003,112.7464804,,river,Jalan Ngagel,trunk,6.8,2
+IF_073,-7.348985699999991,112.7031945,,river,Jalan Raya Ketegan,secondary,6.7,2
+IF_074,-7.3136281627744015,112.69820249035122,,river,Jalan Raya Wiyung,secondary,5.2,6
+IF_075,-7.305850700000002,112.7127388,Kali Brantas,river,Jalan Golf I,secondary,2.8,2
+IF_076,-7.278506500000003,112.6959246,,river,Jalan Raya Darmo Permai III,secondary,5.0,4
+IF_077,-7.241076099999998,112.79487750000001,,river,Jalan Abdul Latif,secondary,7.4,3
+IF_078,-7.2289957,112.7919521,,river,Jalan Pantai Kenjeran Lama,primary,9.0,1
+IF_079,-7.227052656260998,112.79097104363242,,river,Jalan Pantai Kenjeran Lama,primary,7.9,1
+IF_080,-7.293658600000001,112.7624611,,river,Jalan Ngagel Jaya Selatan,primary,1.8,5
+IF_081,-7.2562399830752256,112.76507257099136,,stream,Jalan Bronggolan,primary,5.3,1
+IF_082,-7.277533400000005,112.7726964,,river,Jalan Raya Dharmahusada Indah,primary,8.9,2
+IF_083,-7.241054409454796,112.797795543313,,river,Jalan Sukolilo Sukorejo,primary,0.3,19
+IF_084,-7.290072267864467,112.7970718772787,,river,Jalan Arief Rahman Hakim,secondary,4.9,6
+IF_085,-7.29373,112.7570767,Kali Boma,river,Jalan Ngagel Jaya Selatan,primary,4.0,5
+IF_086,-7.299804600000008,112.7666941,,river,,secondary,2.3,2
+IF_087,-7.304531300000005,112.6366492,,river,Jalan Raya Lakarsantri,secondary,3.2,2
+IF_088,-7.258186600000005,112.6555933,,river,Jalan Tengger Raya,secondary,1.6,2
+IF_089,-7.294068199999996,112.7312408,,stream,Jalan Adityawarman,primary,8.0,3
+IF_090,-7.306290100000001,112.6621636,,river,Jalan Raya Lidah Kulon,secondary,4.0,2
+IF_091,-7.329100300000002,112.7229229,,stream,Jalan Gayung Kebon Sari,secondary,4.7,10
+IF_092,-7.329796299999994,112.7307742,,stream,Jalan Ahmad Yani,trunk,1.0,13
+IF_093,-7.333784400000001,112.73023470000001,,stream,Jalan Jenderal Ahmad Yani,trunk,2.5,4
+IF_094,-7.346919500000004,112.7243469,Kali Perbatasan,stream,Jalan Bypass Waru,trunk,5.9,4
+IF_095,-7.147351268967016,112.65366843247077,,stream,Jalan RE. Martadinata,secondary,3.9,1
+IF_096,-7.287098300000006,112.7558737,,river,Jalan Ngagel Jaya,primary,7.5,2
+IF_097,-7.300217088058249,112.66574128633279,,river,Jalan Raya Unesa,secondary,2.9,7
+IF_098,-7.303220400000008,112.7073903,,stream,Jalan Jajar Tunggal Timur,secondary,2.7,5
+IF_099,-7.2921213000000025,112.7250415,,river,Jalan Mayjend Sungkono,primary,7.1,4
+IF_100,-7.217372693009312,112.77753497574663,,stream,Jalan Kedung Cowek,secondary,8.1,2
+IF_101,-7.229490066097841,112.74576884071513,,river,Jalan Pegirian,secondary,7.0,1
+IF_102,-7.213521899999993,112.7517165,,river,Jalan Wonosari,secondary,6.0,1
+IF_103,-7.254027102393748,112.72041090242568,,river,Jalan Raya Demak,trunk,7.4,2
+IF_104,-7.243870500000001,112.7209436,,river,Jalan Raya Demak,trunk,2.1,4
+IF_105,-7.264878585894761,112.69724299770068,,stream,Jalan Sukomanunggal,secondary,9.0,1
+IF_106,-7.2531083000000045,112.6548948,,river,Jalan Raya Banjar Sugihan,secondary,5.2,2
+IF_107,-7.258501799999999,112.6773447,,river,Jalan Raya Bibis,secondary,3.2,2
+IF_108,-7.250807459210902,112.78748819529498,,river,Jalan Kenjeran,primary,4.5,4
+IF_109,-7.248645899999999,112.780136,,river,Jalan Kenjeran,primary,2.8,3
+IF_110,-7.267386579527609,112.70231675986909,,river,,secondary,6.5,1
+IF_111,-7.224812397514164,112.78741696075978,,river,Jalan Cumpat,primary,3.2,2
+IF_112,-7.358665499999997,112.7292826,,stream,Jalan Layang Waru,trunk,2.5,8
+IF_113,-7.318182599999994,112.7510036,,stream,Jalan Jemursari,primary,4.3,2
+IF_114,-7.235525700000003,112.6825062,,river,,trunk,9.0,1
+IF_115,-7.344839800000001,112.78649440000001,Kali Perbatasan,river,Jalan Doktor Insinyur Haji Soekarno,primary,9.7,1
+IF_116,-7.360664699999999,112.617314,,river,Ruas Jalan Driyorejo - Kesambenwetan,secondary,6.4,2
+IF_117,-7.342086099999992,112.629721,,river,Ruas Jalan Driyorejo - Lakarsantri,secondary,8.7,2
+IF_118,-7.312962199999997,112.6346895,,river,Ruas Jalan Driyorejo - Lakarsantri,secondary,8.6,1
+IF_119,-7.291017099999999,112.7424088,Kali Mas,river,Jalan Bengawan,primary,8.7,1
+IF_120,-7.326528857964186,112.7814266949804,,river,Jalan Doktor Insinyur Haji Soekarno,primary,6.9,1
+IF_121,-7.264056399999996,112.7752904,,stream,Jalan Villa Kalijudan Indah,secondary,3.1,2
+IF_122,-7.331635300000002,112.7810747,Kali Kebon Agung,river,Jalan Doktor Insinyur Haji Soekarno,primary,5.0,4
+IF_123,-7.338747299999991,112.7681247,Kali Perbatasan,river,Jalan Rungkut Menanggal,secondary,1.3,4
+IF_124,-7.347598699999994,112.7019764,,stream,Jalan Raya Ketegan,secondary,0.9,2
+IF_125,-7.350743899999993,112.7120356,,river,Jalan Bypass Waru,trunk,2.1,2
+IF_126,-7.2622066000000025,112.7462812,Ketabang Kali,river,Jalan Yos Sudarso,secondary,6.0,1
+IF_127,-7.329093399999995,112.7425456,,stream,Jalan Jemur Andayani,primary,7.2,2
+IF_128,-7.348211200000002,112.72884430000002,Kali Perbatasan,river,Jalan Raya Waru,trunk,3.8,1
+IF_129,-7.232879300000006,112.7938824,,river,Jalan Pantai Kenjeran Lama,primary,7.0,4
+IF_130,-7.289583900000001,112.7806936,,river,Jalan Doktor Insinyur Haji Soekarno,primary,4.3,4
+IF_131,-7.312789401039477,112.70925677112001,,river,Jalan Raya Wiyung,secondary,9.1,1
+IF_132,-7.3419129239512415,112.72922572024181,,stream,Jalan Jenderal Ahmad Yani,trunk,4.5,2
+IF_133,-7.241347399999996,112.7206503,,stream,Jalan Raya Demak,trunk,5.0,2
+IF_134,-7.313408100000002,112.7024801,,river,Jalan Raya Wiyung,secondary,7.8,2
+IF_135,-7.356635600000005,112.6910459,,river,Jalan Raya Geluran,primary,9.7,1
+IF_136,-7.3547139000000055,112.60305320000002,,stream,Ruas Jalan Petiken - Sumput,secondary,8.7,1
+IF_137,-7.351558315245407,112.6028987546282,,stream,Ruas Jalan Petiken - Sumput,secondary,5.6,2
+IF_138,-7.331351299999997,112.7753515,Kali Kebon Agung,river,Jalan Rungkut Madya,primary,9.4,2
+IF_139,-7.3090558388896385,112.6739239080603,,river,Jalan Raya Lidah Wetan,secondary,3.8,1
