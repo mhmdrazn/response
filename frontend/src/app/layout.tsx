@@ -11,7 +11,7 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: "Response — SPK Rute Pompa Banjir Surabaya",
+  title: "Response",
   description:
     "Sistem Pendukung Keputusan untuk manajemen Dinas Pemadam Kebakaran & Penyelamatan Kota Surabaya dalam menentukan rute armada penanganan banjir.",
 };
