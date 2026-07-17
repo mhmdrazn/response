@@ -73,7 +73,7 @@ export function ConvergenceChart({ data }: ConvergenceChartProps) {
             <Line
               type="monotone"
               dataKey="best_z"
-              stroke="var(--color-indigo-ink)"
+              stroke="var(--color-midnight-ink)"
               strokeWidth={2}
               dot={false}
               name="Best"

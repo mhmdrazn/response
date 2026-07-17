@@ -25,7 +25,7 @@ export function ModeToggle({ mode, onChange, compact = false }: ModeToggleProps)
         padding: 3,
         background: "var(--color-mist)",
         border: "1px solid var(--color-frost)",
-        borderRadius: 999,
+        borderRadius: "var(--radius-lg)",
         flexShrink: 0,
       }}
     >
@@ -40,18 +40,22 @@ export function ModeToggle({ mode, onChange, compact = false }: ModeToggleProps)
             onClick={() => onChange(opt.id)}
             title={opt.desc}
             style={{
-              padding: compact ? "5px 10px" : "6px 14px",
-              borderRadius: 999,
-              border: "none",
+              padding: compact ? "4px 10px" : "5px 14px",
+              borderRadius: "var(--radius-md)",
               cursor: "pointer",
               fontSize: compact ? 11 : 13,
               fontWeight: "var(--font-weight-semibold)",
               letterSpacing: "-0.13px",
               background: active
-                ? "var(--color-indigo-ink)"
+                ? "var(--color-active-wash)"
                 : "transparent",
-              color: active ? "#ffffff" : "var(--color-steel)",
-              transition: "background 0.15s ease, color 0.15s ease",
+              color: active
+                ? "var(--color-active-ink)"
+                : "var(--color-steel)",
+              border: active
+                ? "1px solid var(--color-active-border)"
+                : "1px solid transparent",
+              transition: "background 0.15s ease, color 0.15s ease, border-color 0.15s ease",
               whiteSpace: "nowrap",
             }}
           >

@@ -17,14 +17,13 @@ interface ResultsPanelProps {
 export function ResultsPanel({ result, mode }: ResultsPanelProps) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      <SectionHeader>Ringkasan Hasil</SectionHeader>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
         <Metric
           Icon={TrendingDown}
           label="Skor Respons"
           value={formatNumber(result.objective_z, 0)}
           hint="makin rendah makin baik"
-          accent="var(--color-indigo-ink)"
+          accent="var(--color-midnight-ink)"
         />
         <Metric
           Icon={Route}
@@ -70,22 +69,6 @@ export function ResultsPanel({ result, mode }: ResultsPanelProps) {
           </span>
         </div>
       ) : null}
-    </div>
-  );
-}
-
-function SectionHeader({ children }: { children: React.ReactNode }) {
-  return (
-    <div
-      style={{
-        fontSize: 11,
-        textTransform: "uppercase",
-        letterSpacing: "0.9px",
-        fontWeight: "var(--font-weight-bold)",
-        color: "var(--color-slate)",
-      }}
-    >
-      {children}
     </div>
   );
 }

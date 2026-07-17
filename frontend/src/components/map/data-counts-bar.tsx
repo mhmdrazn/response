@@ -14,9 +14,9 @@ interface DataCountsBarProps {
 
 const DATA_ITEMS = [
   { key: "floods" as DatasetKey, label: "Genangan", Icon: Droplets, color: "#ef4444" },
-  { key: "depots" as DatasetKey, label: "Depo", Icon: Building2, color: "#533afd" },
-  { key: "ifs" as DatasetKey, label: "Sungai", Icon: Waves, color: "#50617a" },
-  { key: "faskes" as DatasetKey, label: "Faskes", Icon: Hospital, color: "#0891b2" },
+  { key: "depots" as DatasetKey, label: "Depo", Icon: Building2, color: "#f59e0b" },
+  { key: "ifs" as DatasetKey, label: "Sungai", Icon: Waves, color: "#0284c7" },
+  { key: "faskes" as DatasetKey, label: "Faskes", Icon: Hospital, color: "#059669" },
 ] as const;
 
 export function DataCountsBar({

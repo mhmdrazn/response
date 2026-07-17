@@ -115,7 +115,7 @@ export function SiPill({ si, label }: SiPillProps) {
       style={{
         display: "inline-flex",
         alignItems: "center",
-        borderRadius: 999,
+        borderRadius: "var(--radius-md)",
         padding: "1px 8px",
         fontSize: 11,
         background: siColor(si),

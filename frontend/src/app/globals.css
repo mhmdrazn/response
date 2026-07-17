@@ -2,20 +2,25 @@
 
 @theme {
   /* --- Colors: UI palette --- */
-  --color-indigo-ink: #533afd;
-  --color-indigo-hover: #7389ff;
-  --color-midnight-ink: #061b31;
-  --color-slate: #64748d;
-  --color-steel: #50617a;
-  --color-smoke: #839bc8;
+  /* Red (`--color-indigo-ink`) is now reserved for primary action buttons.
+     All other historical "indigo/lavender/periwinkle" tokens have been
+     re-skinned to neutral grays so decorative surfaces (borders, washes,
+     hover states, icons) don't shout fire-brigade red. */
+  --color-indigo-ink: #dc2626;
+  --color-indigo-hover: #b91c1c;
+  --color-midnight-ink: #171717;
+  --color-slate: #737373;
+  --color-steel: #525252;
+  --color-smoke: #a3a3a3;
   --color-pure-white: #ffffff;
-  --color-mist: #f8fafd;
-  --color-frost: #e5edf5;
-  --color-lavender-border: #b9b9f9;
-  --color-lilac-border: #d6d9fc;
-  --color-periwinkle-wash: #e8e9ff;
-  --color-deep-violet: #182659;
-  --color-amethyst-edge: #7f71e6;
+  --color-mist: #fafafa;
+  --color-frost: #e5e5e5;
+  --color-lavender-border: #d4d4d4;
+  --color-lilac-border: #e5e5e5;
+  --color-periwinkle-wash: #f5f5f5;
+  --color-deep-violet: #262626;
+  --color-amethyst-edge: #a3a3a3;
+  --color-depot-accent: #f59e0b;
 
   /* --- Colors: SI palette (map markers only) --- */
   --color-si-low: #22c55e;
@@ -25,7 +30,7 @@
   --color-si-critical: #ef4444;
 
   /* --- Colors: vehicle route palette (map only) --- */
-  --color-route-0: #533afd;
+  --color-route-0: #dc2626;
   --color-route-1: #e11d48;
   --color-route-2: #0891b2;
   --color-route-3: #c026d3;
@@ -92,17 +97,23 @@
   --section-gap: 24px;
 
   /* --- Border radius --- */
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
   --radius-pill: 9999px;
+
+  /* --- Active state (pink wash) --- */
+  --color-active-wash: #fce7f3;
+  --color-active-border: #f9a8d4;
+  --color-active-ink: #9d174d;
 
   /* --- Surfaces --- */
   --surface-canvas: #ffffff;
-  --surface-mist: #f8fafd;
-  --surface-frost: #e5edf5;
-  --surface-periwinkle: #e8e9ff;
-  --surface-indigo: #533afd;
+  --surface-mist: #fafafa;
+  --surface-frost: #e5e5e5;
+  --surface-periwinkle: #f5f5f5;
+  --surface-indigo: #dc2626;
 }
 
 html,
@@ -293,4 +304,17 @@ body {
 @keyframes slideUp {
   from { transform: translateY(100%); }
   to   { transform: translateY(0);    }
+}
+
+/* --- Hidden scrollbar utility: retain scroll behaviour, hide the visible
+       bar. Used inside dock bodies where the scrollbar competed with the
+       card border for space. */
+.scrollbar-hidden {
+  scrollbar-width: none;      /* Firefox */
+  -ms-overflow-style: none;   /* IE 10+ */
+}
+.scrollbar-hidden::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;              /* Chromium/Safari */
 }

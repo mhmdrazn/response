@@ -34,7 +34,7 @@ export function depthToSiPlaceholder(depthCm: number | null | undefined): number
 }
 
 export const ROUTE_COLORS: string[] = [
-  "#533afd",
+  "#dc2626",
   "#e11d48",
   "#0891b2",
   "#c026d3",
@@ -99,19 +99,19 @@ export const OVERLAY_LAYERS: OverlayLayerMeta[] = [
   {
     id: "depots",
     label: "Depo Pemadam",
-    swatchColor: "#533afd",
+    swatchColor: "#f59e0b",
     defaultVisible: false,
   },
   {
     id: "ifs",
     label: "Sungai (IF)",
-    swatchColor: "#50617a",
+    swatchColor: "#0284c7",
     defaultVisible: false,
   },
   {
     id: "faskes",
     label: "Fasilitas Kesehatan",
-    swatchColor: "#0891b2",
+    swatchColor: "#059669",
     defaultVisible: false,
   },
 ];

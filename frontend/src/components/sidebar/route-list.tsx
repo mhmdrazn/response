@@ -1,6 +1,13 @@
 "use client";
 
-import { ChevronDown, ChevronRight, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronRight,
+  ChevronsDownUp,
+  ChevronsUpDown,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 
 import {
@@ -17,6 +24,8 @@ interface RouteListProps {
   highlightId: string | null;
   onHoverRoute: (id: string | null) => void;
   onFocusRoute: (route: RouteOut) => void;
+  hiddenVehicleIds?: Set<string>;
+  onToggleVehicleVisibility?: (vehicleId: string) => void;
 }
 
 interface DepotGroup {
@@ -30,6 +39,8 @@ export function RouteList({
   highlightId,
   onHoverRoute,
   onFocusRoute,
+  hiddenVehicleIds,
+  onToggleVehicleVisibility,
 }: RouteListProps) {
   const [expandedVehicles, setExpandedVehicles] = useState<Set<string>>(
     new Set(),
@@ -105,41 +116,102 @@ export function RouteList({
           Rute per Kendaraan
         </div>
         {routes.length > 0 ? (
-          <button
-            type="button"
-            onClick={toggleAll}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 4,
-              padding: "4px 8px",
-              borderRadius: "var(--radius-sm)",
-              border: "1px solid var(--color-frost)",
-              background: "var(--color-pure-white)",
-              color: "var(--color-indigo-ink)",
-              fontSize: 10.5,
-              fontWeight: "var(--font-weight-bold)",
-              letterSpacing: "-0.1px",
-              cursor: "pointer",
-              flexShrink: 0,
-              transition: "background 0.15s ease, border-color 0.15s ease",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "var(--color-mist)";
-              e.currentTarget.style.borderColor = "var(--color-smoke)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "var(--color-pure-white)";
-              e.currentTarget.style.borderColor = "var(--color-frost)";
-            }}
-          >
-            {allExpanded ? (
-              <ChevronsDownUp size={13} strokeWidth={2} />
-            ) : (
-              <ChevronsUpDown size={13} strokeWidth={2} />
-            )}
-            {allExpanded ? "Tutup Semua" : "Buka Semua"}
-          </button>
+          <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+            {onToggleVehicleVisibility ? (
+              <button
+                type="button"
+                onClick={() => {
+                  const allHidden =
+                    hiddenVehicleIds != null &&
+                    routes.length > 0 &&
+                    routes.every((r) => hiddenVehicleIds.has(r.vehicle_id));
+                  if (allHidden) {
+                    routes.forEach((r) =>
+                      onToggleVehicleVisibility(r.vehicle_id),
+                    );
+                  } else {
+                    routes.forEach((r) => {
+                      if (!hiddenVehicleIds?.has(r.vehicle_id))
+                        onToggleVehicleVisibility(r.vehicle_id);
+                    });
+                  }
+                }}
+                title="Tampil/sembunyikan semua rute"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 4,
+                  padding: "4px 8px",
+                  borderRadius: "var(--radius-sm)",
+                  border: "1px solid var(--color-frost)",
+                  background: "var(--color-pure-white)",
+                  color: "var(--color-steel)",
+                  fontSize: 10.5,
+                  fontWeight: "var(--font-weight-bold)",
+                  letterSpacing: "-0.1px",
+                  cursor: "pointer",
+                  transition:
+                    "background 0.15s ease, border-color 0.15s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "var(--color-mist)";
+                  e.currentTarget.style.borderColor = "var(--color-smoke)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background =
+                    "var(--color-pure-white)";
+                  e.currentTarget.style.borderColor = "var(--color-frost)";
+                }}
+              >
+                {hiddenVehicleIds != null &&
+                routes.length > 0 &&
+                routes.every((r) => hiddenVehicleIds.has(r.vehicle_id)) ? (
+                  <Eye size={12} strokeWidth={2} />
+                ) : (
+                  <EyeOff size={12} strokeWidth={2} />
+                )}
+                {hiddenVehicleIds != null &&
+                routes.length > 0 &&
+                routes.every((r) => hiddenVehicleIds.has(r.vehicle_id))
+                  ? "Tampil"
+                  : "Sembunyi"}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={toggleAll}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4,
+                padding: "4px 8px",
+                borderRadius: "var(--radius-sm)",
+                border: "1px solid var(--color-frost)",
+                background: "var(--color-pure-white)",
+                color: "var(--color-steel)",
+                fontSize: 10.5,
+                fontWeight: "var(--font-weight-bold)",
+                letterSpacing: "-0.1px",
+                cursor: "pointer",
+                transition: "background 0.15s ease, border-color 0.15s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "var(--color-mist)";
+                e.currentTarget.style.borderColor = "var(--color-smoke)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "var(--color-pure-white)";
+                e.currentTarget.style.borderColor = "var(--color-frost)";
+              }}
+            >
+              {allExpanded ? (
+                <ChevronsDownUp size={13} strokeWidth={2} />
+              ) : (
+                <ChevronsUpDown size={13} strokeWidth={2} />
+              )}
+              {allExpanded ? "Tutup" : "Buka"}
+            </button>
+          </div>
         ) : null}
       </div>
 
@@ -168,16 +240,16 @@ export function RouteList({
               }}
             >
               {isDepotCollapsed ? (
-                <ChevronRight size={13} color="var(--color-indigo-ink)" />
+                <ChevronRight size={13} color="var(--color-steel)" />
               ) : (
-                <ChevronDown size={13} color="var(--color-indigo-ink)" />
+                <ChevronDown size={13} color="var(--color-steel)" />
               )}
               <span
                 style={{
                   width: 8,
                   height: 8,
                   borderRadius: 999,
-                  background: "#533afd",
+                  background: "#f59e0b",
                   flexShrink: 0,
                 }}
                 aria-hidden
@@ -186,7 +258,7 @@ export function RouteList({
                 style={{
                   fontSize: 12.5,
                   fontWeight: "var(--font-weight-bold)",
-                  color: "var(--color-indigo-ink)",
+                  color: "var(--color-midnight-ink)",
                   flex: 1,
                   minWidth: 0,
                   overflow: "hidden",
@@ -216,9 +288,15 @@ export function RouteList({
                     route={r}
                     isOpen={expandedVehicles.has(r.vehicle_id)}
                     isActive={highlightId === r.vehicle_id}
+                    isHidden={hiddenVehicleIds?.has(r.vehicle_id) ?? false}
                     onToggle={() => toggleVehicle(r.vehicle_id)}
                     onHoverRoute={onHoverRoute}
                     onFocusRoute={onFocusRoute}
+                    onToggleVisibility={
+                      onToggleVehicleVisibility
+                        ? () => onToggleVehicleVisibility(r.vehicle_id)
+                        : undefined
+                    }
                   />
                 ))
               : null}
@@ -233,16 +311,20 @@ function RouteCard({
   route: r,
   isOpen,
   isActive,
+  isHidden,
   onToggle,
   onHoverRoute,
   onFocusRoute,
+  onToggleVisibility,
 }: {
   route: RouteOut;
   isOpen: boolean;
   isActive: boolean;
+  isHidden: boolean;
   onToggle: () => void;
   onHoverRoute: (id: string | null) => void;
   onFocusRoute: (route: RouteOut) => void;
+  onToggleVisibility?: () => void;
 }) {
   const color = ROUTE_COLORS[r.route_color_index % ROUTE_COLORS.length];
   const capLabel = r.capacity_l >= 1000 ? `${r.capacity_l / 1000}K` : `${r.capacity_l}`;
@@ -257,70 +339,111 @@ function RouteCard({
         borderRadius: "var(--radius-md)",
         background: isActive ? "var(--color-mist)" : "var(--color-pure-white)",
         overflow: "hidden",
-        transition: "border-color 0.14s ease, background 0.14s ease",
+        transition: "border-color 0.14s ease, background 0.14s ease, opacity 0.14s ease",
         marginLeft: 12,
+        opacity: isHidden ? 0.55 : 1,
       }}
     >
-      <button
-        type="button"
-        onClick={() => {
-          onToggle();
-          onFocusRoute(r);
-        }}
+      <div
         style={{
-          width: "100%",
           display: "flex",
           alignItems: "center",
-          gap: 8,
-          padding: "8px 10px",
-          minHeight: 38,
-          background: "transparent",
-          border: "none",
-          cursor: "pointer",
-          textAlign: "left",
-          fontFamily: "var(--font-manrope)",
+          gap: 4,
         }}
       >
-        <span
-          aria-hidden
-          style={{
-            width: 10,
-            height: 10,
-            borderRadius: 999,
-            background: color,
-            flexShrink: 0,
+        <button
+          type="button"
+          onClick={() => {
+            onToggle();
+            if (!isHidden) onFocusRoute(r);
           }}
-        />
-        <span
           style={{
-            fontSize: 13,
-            fontWeight: "var(--font-weight-bold)",
-            color: "var(--color-midnight-ink)",
-            flexShrink: 0,
-          }}
-        >
-          {capLabel} L
-        </span>
-        <span
-          style={{
-            fontSize: 12,
-            color: "var(--color-steel)",
-            fontWeight: "var(--font-weight-semibold)",
             flex: 1,
-            minWidth: 0,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "8px 10px",
+            minHeight: 38,
+            background: "transparent",
+            border: "none",
+            cursor: "pointer",
+            textAlign: "left",
+            fontFamily: "var(--font-manrope)",
           }}
         >
-          {r.visit_count_flood} genangan · {formatMeters(r.total_distance_m)}
-        </span>
-        {isOpen ? (
-          <ChevronDown size={14} color="var(--color-slate)" />
-        ) : (
-          <ChevronRight size={14} color="var(--color-slate)" />
-        )}
-      </button>
+          <span
+            aria-hidden
+            style={{
+              width: 10,
+              height: 10,
+              borderRadius: 999,
+              background: color,
+              flexShrink: 0,
+            }}
+          />
+          <span
+            style={{
+              fontSize: 13,
+              fontWeight: "var(--font-weight-bold)",
+              color: "var(--color-midnight-ink)",
+              flexShrink: 0,
+            }}
+          >
+            {capLabel} L
+          </span>
+          <span
+            style={{
+              fontSize: 12,
+              color: "var(--color-steel)",
+              fontWeight: "var(--font-weight-semibold)",
+              flex: 1,
+              minWidth: 0,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {r.visit_count_flood} genangan · {formatMeters(r.total_distance_m)}
+          </span>
+          {isOpen ? (
+            <ChevronDown size={14} color="var(--color-slate)" />
+          ) : (
+            <ChevronRight size={14} color="var(--color-slate)" />
+          )}
+        </button>
+        {onToggleVisibility ? (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleVisibility();
+            }}
+            title={isHidden ? "Tampilkan rute" : "Sembunyikan rute"}
+            aria-label={isHidden ? "Tampilkan rute" : "Sembunyikan rute"}
+            style={{
+              width: 28,
+              height: 28,
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: "var(--radius-sm)",
+              border: "1px solid var(--color-frost)",
+              background: isHidden
+                ? "var(--color-mist)"
+                : "var(--color-pure-white)",
+              cursor: "pointer",
+              marginRight: 6,
+              flexShrink: 0,
+            }}
+          >
+            {isHidden ? (
+              <EyeOff size={13} strokeWidth={2} color="var(--color-slate)" />
+            ) : (
+              <Eye size={13} strokeWidth={2} color={color} />
+            )}
+          </button>
+        ) : null}
+      </div>
 
       {isOpen ? (
         <div
@@ -467,9 +590,9 @@ function Kv({ label, value }: { label: string; value: string }) {
 
 function VisitDot({ type }: { type: "depot" | "flood" | "if" }) {
   const map: Record<string, string> = {
-    depot: "#533afd",
+    depot: "#f59e0b",
     flood: "#ef4444",
-    if: "#50617a",
+    if: "#0284c7",
   };
   return (
     <span

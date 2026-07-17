@@ -304,7 +304,7 @@ function SortTh({
         padding: "4px 6px",
         cursor: "pointer",
         fontWeight: "var(--font-weight-bold)",
-        color: isActive ? "var(--color-indigo-ink)" : "var(--color-slate)",
+        color: isActive ? "var(--color-midnight-ink)" : "var(--color-slate)",
         fontSize: 9,
         textTransform: "uppercase",
         letterSpacing: "0.5px",

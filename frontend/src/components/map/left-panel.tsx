@@ -2,9 +2,8 @@
 
 import type { DatasetKey } from "../data-table-modal";
 import type { BaseMapId, OverlayLayerId } from "../../lib/map-constants";
-import { DataCountsBar } from "./data-counts-bar";
-import { LayerControls } from "./layer-controls";
 import { MapControls } from "./map-controls";
+import { MapLayerDock } from "./map-layer-dock";
 
 interface LeftPanelProps {
   floodCount: number;
@@ -47,24 +46,17 @@ export function LeftPanel({
     >
       <MapControls />
 
-      <DataCountsBar
+      <MapLayerDock
         floodCount={floodCount}
         depotCount={depotCount}
         ifCount={ifCount}
         faskesCount={faskesCount}
-        onPreviewData={onPreviewData}
-      />
-
-      {/* overlay={false}: the expanded layer panel grows this dock's height
-          in normal flow. Because LeftPanel is bottom-anchored, it grows
-          upward, pushing DataCountsBar and MapControls (compass + zoom) up
-          instead of covering them. */}
-      <LayerControls
         overlays={overlays}
         setOverlay={setOverlay}
         baseMap={baseMap}
         setBaseMap={setBaseMap}
-        overlay={false}
+        onPreviewData={onPreviewData}
+        defaultOpen={false}
       />
     </div>
   );

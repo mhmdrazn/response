@@ -39,7 +39,7 @@ export function MobileRunBar({
           display: "flex",
           gap: 2,
           background: "var(--color-mist)",
-          borderRadius: 999,
+          borderRadius: "var(--radius-lg)",
           padding: 3,
           flexShrink: 0,
         }}
@@ -106,7 +106,7 @@ export function MobileRunBar({
           borderRadius: "var(--radius-md)",
           border: "1px solid var(--color-frost)",
           background: "var(--color-pure-white)",
-          color: "var(--color-indigo-ink)",
+          color: "var(--color-steel)",
           cursor: "pointer",
           flexShrink: 0,
           transition: "background 0.15s ease, border-color 0.15s ease",
@@ -140,16 +140,23 @@ function MiniTab({
       type="button"
       onClick={onClick}
       style={{
-        padding: "5px 9px",
-        borderRadius: 999,
-        border: "none",
+        padding: "4px 9px",
+        borderRadius: "var(--radius-md)",
         cursor: "pointer",
         fontSize: 11,
         fontWeight: "var(--font-weight-bold)",
-        background: active ? "var(--color-indigo-ink)" : "transparent",
-        color: active ? "#ffffff" : "var(--color-steel)",
+        background: active
+          ? "var(--color-active-wash)"
+          : "transparent",
+        color: active
+          ? "var(--color-active-ink)"
+          : "var(--color-steel)",
+        border: active
+          ? "1px solid var(--color-active-border)"
+          : "1px solid transparent",
         whiteSpace: "nowrap",
-        transition: "background 0.15s ease, color 0.15s ease",
+        transition:
+          "background 0.15s ease, color 0.15s ease, border-color 0.15s ease",
       }}
     >
       {label}

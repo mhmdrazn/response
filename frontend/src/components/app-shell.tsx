@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useAlgorithmConfig } from "../hooks/use-algorithm-config";
 import { useBreakpoint } from "../hooks/use-breakpoint";
@@ -20,7 +20,6 @@ import { SiLegend } from "./map/si-legend";
 import { MobileRunBar } from "./mobile-run-bar";
 import { PanelOverlay } from "./panel-overlay";
 import { ResultsDock } from "./results-dock";
-import { SplashScreen } from "./splash-screen";
 
 const INITIAL_OVERLAYS: Record<OverlayLayerId, boolean> = OVERLAY_LAYERS.reduce(
   (acc, l) => ({ ...acc, [l.id]: l.defaultVisible }),
@@ -44,16 +43,36 @@ const RESULT_PANEL_WIDTH: Record<string, number> = {
 
 /** Distance the desktop/tablet algorithm sidebar keeps from the viewport
  * bottom, so it never overlaps the map's LeftPanel dock in its resting
- * (layers-collapsed) state: compass + zoom + data counts + collapsed layer
- * toggle. When the layer panel is expanded LeftPanel grows upward past this
- * line, but LeftPanel's higher z-index (1000 > 900) means it cleanly covers
- * the sidebar's bottom for the duration — an acceptable, user-initiated
- * transient. If LeftPanel's resting content changes, re-measure and update. */
-const SIDEBAR_BOTTOM_CLEARANCE = 280;
+ * (layers-collapsed) state: compass + zoom + collapsed layer/data dock. */
+const SIDEBAR_BOTTOM_CLEARANCE = 220;
+
+const HIDDEN_ROUTES_STORAGE_KEY = "floodroute:hidden-routes:v1";
+
+function loadStoredSet(key: string): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return new Set();
+    const arr = JSON.parse(raw) as unknown;
+    if (Array.isArray(arr))
+      return new Set(arr.filter((v): v is string => typeof v === "string"));
+  } catch {
+    /* ignore */
+  }
+  return new Set();
+}
+
+function saveStoredSet(key: string, value: Set<string>): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(key, JSON.stringify(Array.from(value)));
+  } catch {
+    /* ignore */
+  }
+}
 
 export function AppShell() {
   const bp = useBreakpoint();
-  const [showSplash, setShowSplash] = useState(true);
   const [mode, setMode] = useState<AppMode>("simple");
   const [overlays, setOverlays] =
     useState<Record<OverlayLayerId, boolean>>(INITIAL_OVERLAYS);
@@ -68,6 +87,28 @@ export function AppShell() {
     "none" | "algorithm" | "results"
   >("none");
 
+  const [hiddenRoutes, setHiddenRoutes] = useState<Set<string>>(new Set());
+  const hydratedHidden = useRef(false);
+
+  useEffect(() => {
+    setHiddenRoutes(loadStoredSet(HIDDEN_ROUTES_STORAGE_KEY));
+    hydratedHidden.current = true;
+  }, []);
+
+  useEffect(() => {
+    if (!hydratedHidden.current) return;
+    saveStoredSet(HIDDEN_ROUTES_STORAGE_KEY, hiddenRoutes);
+  }, [hiddenRoutes]);
+
+  const toggleRouteVisibility = useCallback((vehicleId: string) => {
+    setHiddenRoutes((prev) => {
+      const next = new Set(prev);
+      if (next.has(vehicleId)) next.delete(vehicleId);
+      else next.add(vehicleId);
+      return next;
+    });
+  }, []);
+
   const { data, loading, error: dataError, reload } = useMapData();
   const {
     result,
@@ -79,6 +120,22 @@ export function AppShell() {
     reset,
   } = useOptimization();
   const algoCfg = useAlgorithmConfig();
+
+  // Drop stale hidden-route ids whenever result changes so the persisted
+  // set does not carry vehicle ids that no longer exist in the new solution.
+  useEffect(() => {
+    if (!result) return;
+    setHiddenRoutes((prev) => {
+      const validIds = new Set(result.routes.map((r) => r.vehicle_id));
+      const filtered = new Set<string>();
+      let changed = false;
+      prev.forEach((id) => {
+        if (validIds.has(id)) filtered.add(id);
+        else changed = true;
+      });
+      return changed ? filtered : prev;
+    });
+  }, [result]);
 
   function setOverlay(id: OverlayLayerId, visible: boolean) {
     setOverlays((prev) => ({ ...prev, [id]: visible }));
@@ -105,15 +162,22 @@ export function AppShell() {
 
   function handleRun() {
     setFocusedRoute(null);
+    setHiddenRoutes(new Set());
     run(algoCfg.buildRunRequest());
     if (isMobile) setMobilePanel("none");
   }
 
   function handleCompare() {
     setFocusedRoute(null);
+    setHiddenRoutes(new Set());
     runComparison();
     if (isMobile) setMobilePanel("none");
   }
+
+  // Only show routes on the map that are not hidden by the user.
+  const visibleRoutes = (result?.routes ?? []).filter(
+    (r) => !hiddenRoutes.has(r.vehicle_id),
+  );
 
   const algorithmPanelContent = (
     <AlgorithmPanel
@@ -133,6 +197,7 @@ export function AppShell() {
         reset();
         setFocusedRoute(null);
         setHighlightVehicleId(null);
+        setHiddenRoutes(new Set());
       }}
     />
   );
@@ -147,18 +212,17 @@ export function AppShell() {
         highlightVehicleId={highlightVehicleId}
         onHoverRoute={setHighlightVehicleId}
         onFocusRoute={setFocusedRoute}
+        hiddenVehicleIds={hiddenRoutes}
+        onToggleVehicleVisibility={toggleRouteVisibility}
       />
     </>
   ) : null;
 
   return (
     <ErrorBoundary>
-      {showSplash && <SplashScreen onDismiss={() => setShowSplash(false)} />}
-
       <div
         className="relative h-screen w-screen overflow-hidden"
         style={{ background: "var(--color-mist)" }}
-        aria-hidden={showSplash}
       >
         {/* Full-viewport map */}
         <div className="absolute inset-0">
@@ -172,7 +236,7 @@ export function AppShell() {
               setOverlay={setOverlay}
               baseMap={baseMap}
               setBaseMap={setBaseMap}
-              routes={result?.routes ?? []}
+              routes={visibleRoutes}
               highlightVehicleId={highlightVehicleId}
               setHighlightVehicleId={setHighlightVehicleId}
               focusedRoute={focusedRoute}
@@ -219,9 +283,7 @@ export function AppShell() {
             </div>
 
             {/* Right panel — the container has a definite height (top/bottom
-                anchored) and does NOT scroll itself. The summary dock inside
-                stays pinned (flexShrink:0); only the route-details dock scrolls
-                (flex:1 + overflowY:auto in results-dock.tsx). */}
+                anchored) and does NOT scroll itself. */}
             {result ? (
               <div
                 style={{
@@ -255,12 +317,7 @@ export function AppShell() {
           </>
         ) : (
           <>
-            {/* ── Mobile: single flex-stacked bottom dock ──
-                One column, one `gap` — spacing between every dock (result
-                peek bar, severity legend, data/layer dock, run bar) is
-                uniform and non-overlapping regardless of content height.
-                The algorithm run bar is the primary action, so it sits last
-                (bottom-most, within thumb reach). */}
+            {/* ── Mobile: single flex-stacked bottom dock ── */}
             <div
               style={{
                 position: "absolute",
@@ -306,8 +363,6 @@ export function AppShell() {
               />
             </div>
 
-            {/* Settings overlay — advanced params, compare, reset. Optional,
-                not required to run a default optimization. */}
             <PanelOverlay
               open={mobilePanel === "algorithm"}
               onClose={() => setMobilePanel("none")}
@@ -386,7 +441,7 @@ function ResultPeekBar({
       <span
         style={{
           fontSize: 12,
-          color: "var(--color-indigo-ink)",
+          color: "var(--color-midnight-ink)",
           fontWeight: "var(--font-weight-bold)",
           fontVariantNumeric: "tabular-nums",
         }}
