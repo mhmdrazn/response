@@ -137,9 +137,9 @@ export const DEFAULT_ACS_PARAMS: ACSParams = {
   iterations: 60,
   n_ants: 20,
   alpha: 1.0,
-  beta: 3.0,
-  rho: 0.10,
-  q0: 0.90,
+  beta: 1.0,
+  rho: 0.15,
+  q0: 0.70,
   seed: 42,
   time_limit_s: 45,
 };

@@ -111,7 +111,7 @@ export function AlgorithmPanel({
           style={{
             display: "flex",
             gap: 4,
-            padding: 4,
+            padding: 6,
             background: "var(--color-periwinkle-wash)",
             borderRadius: "var(--radius-lg)",
           }}
@@ -334,7 +334,7 @@ function AlgoTab({
       onClick={onClick}
       style={{
         flex: 1,
-        padding: "7px 10px",
+        padding: "6px 12px",
         borderRadius: "var(--radius-md)",
         border: "none",
         background: active ? "var(--color-active-wash)" : "transparent",

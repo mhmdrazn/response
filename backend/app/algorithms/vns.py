@@ -55,6 +55,10 @@ class VNSSolution:
 
 
 class VNS:
+    # Multiplier on the SI/d score for a flood whose nearest depot equals
+    # the home depot of the vehicle currently under construction.
+    DEPOT_PROXIMITY_BONUS = 3.0
+
     def __init__(self, instance: Instance, params: VNSParams):
         self.inst = instance
         self.p = params
@@ -65,6 +69,16 @@ class VNS:
         self._flood_lookup: dict[int, int] = {
             fi: k for k, fi in enumerate(instance.flood_indices)
         }
+
+        # Depot-proximity soft constraint: for each flood, which depot NODE INDEX
+        # is closest. Used to bias greedy selection toward "own" territory.
+        if instance.n_depots > 0 and instance.n_floods > 0:
+            depot_nodes = np.array(instance.depot_indices, dtype=int)
+            flood_nodes = np.array(instance.flood_indices, dtype=int)
+            sub = instance.dist_matrix[np.ix_(flood_nodes, depot_nodes)]
+            self.nearest_depot = depot_nodes[np.argmin(sub, axis=1)]
+        else:
+            self.nearest_depot = np.zeros(instance.n_floods, dtype=int)
 
     def _greedy_initial(self) -> tuple[list[list[int]], list[int]]:
         """Build a feasible initial solution using nearest-neighbor + SI bias.
@@ -143,7 +157,7 @@ class VNS:
                 current = nearest_if
                 continue
 
-            nxt = self._greedy_next(current, served)
+            nxt = self._greedy_next(current, served, home_depot=depot)
             flood_slot = self._flood_lookup[nxt]
             free = cap - tank
             pump = min(volumes_left[flood_slot], free)
@@ -156,12 +170,24 @@ class VNS:
         route.append(depot)
         return route, tank
 
-    def _greedy_next(self, current: int, candidates: list[int]) -> int:
+    def _greedy_next(
+        self,
+        current: int,
+        candidates: list[int],
+        home_depot: int,
+    ) -> int:
         """Pick the candidate with best SI / distance ratio (with noise)."""
+        slots = [self._flood_lookup[c] for c in candidates]
         dists = self.inst.dist_matrix[current, candidates]
-        si = self.inst.si_values[[self._flood_lookup[c] for c in candidates]]
+        si = self.inst.si_values[slots]
         with np.errstate(divide="ignore", invalid="ignore"):
             scores = si / np.where(dists < 1e-6, 1e-6, dists)
+        bonus = np.where(
+            self.nearest_depot[slots] == home_depot,
+            self.DEPOT_PROXIMITY_BONUS,
+            1.0,
+        )
+        scores = scores * bonus
         noise = self._np_rng.uniform(0.8, 1.2, size=len(scores))
         scores = scores * noise
         return int(candidates[int(np.argmax(scores))])

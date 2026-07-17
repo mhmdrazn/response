@@ -32,9 +32,12 @@ class ACSParams:
     iterations: int = 60
     n_ants: int = 20
     alpha: float = 1.0
-    beta: float = 3.0
-    rho: float = 0.10
-    q0: float = 0.90
+    # β cubes 1/d; keep at 1 so SI (∈ [0, 1]) is not steamrolled by distance.
+    beta: float = 1.0
+    # Slightly stronger evaporation preserves diversity across iterations.
+    rho: float = 0.15
+    # Lower q0 leaves ~30% of moves probabilistic — enough to escape early plateaus.
+    q0: float = 0.70
     seed: int | None = None
     time_limit_s: float | None = 45.0
 
@@ -55,6 +58,9 @@ class ACSSolution:
 
 
 class HybridACS:
+    # Multiplier on η for a flood whose nearest depot equals the vehicle's home depot.
+    DEPOT_PROXIMITY_BONUS = 3.0
+
     def __init__(self, instance: Instance, params: ACSParams):
         self.inst = instance
         self.p = params
@@ -76,25 +82,46 @@ class HybridACS:
         for k, fi in enumerate(instance.flood_indices):
             self.node_si[fi] = instance.si_values[k]
 
+        # O(1) flood membership + slot lookup.
+        self._flood_set: set[int] = set(instance.flood_indices)
+        self._flood_lookup: dict[int, int] = {
+            fi: k for k, fi in enumerate(instance.flood_indices)
+        }
+
+        # Depot-proximity soft constraint: for each flood, which depot NODE INDEX
+        # is closest. A vehicle whose home depot matches gets a bonus on η.
+        if instance.n_depots > 0 and instance.n_floods > 0:
+            depot_nodes = np.array(instance.depot_indices, dtype=int)
+            flood_nodes = np.array(instance.flood_indices, dtype=int)
+            sub = instance.dist_matrix[np.ix_(flood_nodes, depot_nodes)]
+            self.nearest_depot = depot_nodes[np.argmin(sub, axis=1)]
+        else:
+            self.nearest_depot = np.zeros(instance.n_floods, dtype=int)
+
     # ---------------- Ant construction ----------------
 
-    def _eta(self, i: int, j: int) -> float:
-        if j in self.inst.flood_indices:
-            return self.node_si[j] * self.inv_dist[i, j]
+    def _eta(self, i: int, j: int, home_depot: int) -> float:
+        if j in self._flood_set:
+            base = self.node_si[j] * self.inv_dist[i, j]
+            k = self._flood_lookup[j]
+            if int(self.nearest_depot[k]) == home_depot:
+                return base * self.DEPOT_PROXIMITY_BONUS
+            return base
         return self.inv_dist[i, j]
 
     def _choose_next(
         self,
         current: int,
         candidates: list[int],
+        home_depot: int,
     ) -> int:
         assert candidates
         tau = self.pheromone[current, candidates]
-        eta = np.array([self._eta(current, j) for j in candidates])
+        eta = np.array([self._eta(current, j, home_depot) for j in candidates])
         score = (tau ** self.p.alpha) * (eta ** self.p.beta)
         if self._rng.random() < self.p.q0:
             return int(candidates[int(np.argmax(score))])
-            
+
         total = score.sum()
         if total <= 0:
             return int(self._rng.choice(candidates))
@@ -103,87 +130,74 @@ class HybridACS:
         return int(candidates[idx])
 
     def _construct_one_ant(self) -> tuple[list[list[int]], list[int]]:
-        """Build one full solution using all vehicles. Returns (routes, capacities)."""
-        volumes_left = self.inst.volumes.copy()
-        n_vehicles = len(self.inst.vehicles)
+        """Build a solution round-robin so every vehicle contributes in parallel.
 
-        # Shuffle vehicle order so different ants try different depot priorities.
+        Sequential construction (previous version) let the first-shuffled vehicles
+        exhaust the flood pool, leaving later vehicles with empty routes → few
+        active vehicles, long tours per vehicle, t_j accumulating → high Z.
+        Round-robin lets each vehicle pick one step per round, distributing load
+        evenly and keeping per-vehicle tours short.
+        """
+        n_vehicles = len(self.inst.vehicles)
+        volumes_left = self.inst.volumes.copy()
+
+        depots = [self.inst.vehicles[vi][0] for vi in range(n_vehicles)]
+        capacities = [self.inst.vehicles[vi][1] for vi in range(n_vehicles)]
+        routes: list[list[int]] = [[depots[vi]] for vi in range(n_vehicles)]
+        tanks = [0.0] * n_vehicles
+
         order = list(range(n_vehicles))
         self._rng.shuffle(order)
 
-        route_map: dict[int, list[int]] = {}
-        cap_map: dict[int, int] = {}
-        for vi in order:
-            depot, cap = self.inst.vehicles[vi]
-            if all(v <= 0.5 for v in volumes_left):
-                route_map[vi] = [depot, depot]
-                cap_map[vi] = cap
-                continue
-            route, _tank = self._build_route(depot, cap, volumes_left)
-            route_map[vi] = route
-            cap_map[vi] = cap
+        # Safety cap on rounds — natural termination is "no progress this round".
+        max_rounds = self.inst.n_floods * 2 + self.inst.n_ifs + 5
 
-        # Return in canonical vehicle order.
-        routes = [route_map[i] for i in range(n_vehicles)]
-        capacities = [cap_map[i] for i in range(n_vehicles)]
-        return routes, capacities
-
-    def _build_route(
-        self,
-        depot: int,
-        cap: int,
-        volumes_left: np.ndarray,
-    ) -> tuple[list[int], float]:
-        route: list[int] = [depot]
-        tank = 0.0
-        current = depot
-        flood_visits = 0
-        max_flood_visits = max(
-            3, (self.inst.n_floods * 2) // max(len(self.inst.vehicles), 1) + 1
-        )
-        max_steps = self.inst.n_floods * 2 + self.inst.n_ifs + 5
-        for _ in range(max_steps):
-            served = [
-                fi
-                for k, fi in enumerate(self.inst.flood_indices)
-                if volumes_left[k] > 0.5
-            ]
-            if not served or flood_visits >= max_flood_visits:
+        for _round in range(max_rounds):
+            if not np.any(volumes_left > 0.5):
                 break
-            if tank >= cap - 1e-3:
-                # Need an IF to drain.
-                nearest_if = self._nearest(current, self.inst.if_indices)
-                route.append(nearest_if)
-                tank = 0.0
-                current = nearest_if
-                self._local_update(route[-2], route[-1])
-                continue
-            # Choose next flood — smaller candidate list for speed.
-            k = min(6, len(served))
-            top = self._k_closest(current, served, k)
-            nxt = self._choose_next(current, top)
-            flood_slot = self.inst.flood_indices.index(nxt)
-            free = cap - tank
-            pump = min(volumes_left[flood_slot], free)
-            volumes_left[flood_slot] -= pump
-            tank += pump
-            route.append(nxt)
-            flood_visits += 1
-            self._local_update(current, nxt)
-            current = nxt
-        # Return to depot.
-        route.append(depot)
-        self._local_update(current, depot)
-        return route, tank
+            made_progress = False
+            for vi in order:
+                served_now = [
+                    fi for k, fi in enumerate(self.inst.flood_indices)
+                    if volumes_left[k] > 0.5
+                ]
+                if not served_now:
+                    break
+                cur = routes[vi][-1]
+                cap = capacities[vi]
+
+                if tanks[vi] >= cap - 1e-3:
+                    nearest_if = self._nearest(cur, self.inst.if_indices)
+                    routes[vi].append(nearest_if)
+                    self._local_update(cur, nearest_if)
+                    tanks[vi] = 0.0
+                    made_progress = True
+                    continue
+
+                nxt = self._choose_next(cur, served_now, home_depot=depots[vi])
+                slot = self._flood_lookup[nxt]
+                free = cap - tanks[vi]
+                pump = float(min(volumes_left[slot], free))
+                if pump <= 0:
+                    continue
+                volumes_left[slot] -= pump
+                tanks[vi] += pump
+                routes[vi].append(nxt)
+                self._local_update(cur, nxt)
+                made_progress = True
+            if not made_progress:
+                break
+
+        for vi in range(n_vehicles):
+            if routes[vi][-1] != depots[vi]:
+                self._local_update(routes[vi][-1], depots[vi])
+                routes[vi].append(depots[vi])
+
+        return routes, capacities
 
     def _nearest(self, i: int, pool: list[int]) -> int:
         d = self.inst.dist_matrix[i, pool]
         return int(pool[int(np.argmin(d))])
-
-    def _k_closest(self, i: int, pool: list[int], k: int) -> list[int]:
-        d = self.inst.dist_matrix[i, pool]
-        order = np.argsort(d)[:k]
-        return [pool[int(x)] for x in order]
 
     # ---------------- Pheromone updates ----------------
 

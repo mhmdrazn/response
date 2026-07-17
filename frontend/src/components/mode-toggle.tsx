@@ -22,7 +22,7 @@ export function ModeToggle({ mode, onChange, compact = false }: ModeToggleProps)
         display: "inline-flex",
         alignItems: "center",
         gap: 4,
-        padding: 4,
+        padding: 6,
         background: "var(--color-periwinkle-wash)",
         borderRadius: "var(--radius-lg)",
         flexShrink: 0,

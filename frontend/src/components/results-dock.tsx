@@ -199,7 +199,7 @@ export function ResultsDock({
               style={{
                 display: "flex",
                 gap: 4,
-                padding: 4,
+                padding: 6,
                 background: "var(--color-periwinkle-wash)",
                 borderRadius: "var(--radius-lg)",
                 flexShrink: 0,
