@@ -105,7 +105,17 @@ export function AlgorithmPanel({
         }}
       >
         {/* Algorithm selector */}
-        <div style={{ display: "flex", gap: 6 }}>
+        <div
+          role="tablist"
+          aria-label="Pilih algoritma"
+          style={{
+            display: "flex",
+            gap: 4,
+            padding: 4,
+            background: "var(--color-periwinkle-wash)",
+            borderRadius: "var(--radius-lg)",
+          }}
+        >
           <AlgoTab
             active={algorithm === "acs"}
             onClick={() => onAlgorithmChange("acs")}
@@ -319,25 +329,22 @@ function AlgoTab({
   return (
     <button
       type="button"
+      role="tab"
+      aria-selected={active}
       onClick={onClick}
       style={{
         flex: 1,
         padding: "7px 10px",
         borderRadius: "var(--radius-md)",
-        border: active
-          ? "1px solid var(--color-active-border)"
-          : "1px solid var(--color-frost)",
-        background: active
-          ? "var(--color-active-wash)"
-          : "var(--color-pure-white)",
-        color: active
-          ? "var(--color-active-ink)"
-          : "var(--color-slate)",
+        border: "none",
+        background: active ? "var(--color-active-wash)" : "transparent",
+        color: active ? "var(--color-active-ink)" : "var(--color-slate)",
+        boxShadow: active ? "0 1px 2px 0 rgb(0 0 0 / 0.06)" : "none",
         fontSize: 12,
         fontWeight: active ? "var(--font-weight-bold)" : "var(--font-weight-medium)",
         cursor: "pointer",
         letterSpacing: "-0.12px",
-        transition: "all 0.15s",
+        transition: "background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease",
       }}
     >
       {label}

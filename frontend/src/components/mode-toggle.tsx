@@ -21,10 +21,9 @@ export function ModeToggle({ mode, onChange, compact = false }: ModeToggleProps)
       style={{
         display: "inline-flex",
         alignItems: "center",
-        gap: 2,
-        padding: 3,
-        background: "var(--color-mist)",
-        border: "1px solid var(--color-frost)",
+        gap: 4,
+        padding: 4,
+        background: "var(--color-periwinkle-wash)",
         borderRadius: "var(--radius-lg)",
         flexShrink: 0,
       }}
@@ -52,10 +51,9 @@ export function ModeToggle({ mode, onChange, compact = false }: ModeToggleProps)
               color: active
                 ? "var(--color-active-ink)"
                 : "var(--color-steel)",
-              border: active
-                ? "1px solid var(--color-active-border)"
-                : "1px solid transparent",
-              transition: "background 0.15s ease, color 0.15s ease, border-color 0.15s ease",
+              border: "none",
+              boxShadow: active ? "0 1px 2px 0 rgb(0 0 0 / 0.06)" : "none",
+              transition: "background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease",
               whiteSpace: "nowrap",
             }}
           >

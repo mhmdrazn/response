@@ -37,10 +37,10 @@ export function MobileRunBar({
       <div
         style={{
           display: "flex",
-          gap: 2,
-          background: "var(--color-mist)",
+          gap: 4,
+          background: "var(--color-periwinkle-wash)",
           borderRadius: "var(--radius-lg)",
-          padding: 3,
+          padding: 4,
           flexShrink: 0,
         }}
       >
@@ -151,12 +151,10 @@ function MiniTab({
         color: active
           ? "var(--color-active-ink)"
           : "var(--color-steel)",
-        border: active
-          ? "1px solid var(--color-active-border)"
-          : "1px solid transparent",
+        border: "none",
+        boxShadow: active ? "0 1px 2px 0 rgb(0 0 0 / 0.06)" : "none",
         whiteSpace: "nowrap",
-        transition:
-          "background 0.15s ease, color 0.15s ease, border-color 0.15s ease",
+        transition: "background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease",
       }}
     >
       {label}

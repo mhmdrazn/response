@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-@theme {
+@theme static {
   /* --- Colors: UI palette --- */
   /* Red (`--color-indigo-ink`) is now reserved for primary action buttons.
      All other historical "indigo/lavender/periwinkle" tokens have been
@@ -103,10 +103,10 @@
   --radius-xl: 18px;
   --radius-pill: 9999px;
 
-  /* --- Active state (pink wash) --- */
-  --color-active-wash: #fce7f3;
-  --color-active-border: #f9a8d4;
-  --color-active-ink: #9d174d;
+  /* --- Active state (shadcn-style: borderless white pill on grey track,
+     depth via tint shift instead of box-shadow per DESIGN.md) --- */
+  --color-active-wash: #ffffff;
+  --color-active-ink: #171717;
 
   /* --- Surfaces --- */
   --surface-canvas: #ffffff;
@@ -214,6 +214,11 @@ body {
   line-height: 1.4;
 }
 
+@keyframes response-tooltip-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 .leaflet-tooltip {
   box-shadow: none !important;
   background: var(--color-pure-white);
@@ -228,6 +233,22 @@ body {
   max-width: 280px;
   min-width: 180px;
   width: max-content;
+}
+
+/* Leaflet already toggles tooltip opacity 1<->0 around add/remove (with a
+   200ms delayed removal) when the map has fade animation enabled -- it just
+   never shipped a transition rule for tooltips (only popups). Adding one here
+   makes that existing open/close opacity swap animate instead of jumping,
+   giving a real fade-in AND fade-out. */
+.leaflet-fade-anim .leaflet-tooltip {
+  transition: opacity 0.2s linear;
+}
+
+/* Recharts hover tooltip (convergence + comparison charts) -- recharts mounts
+   this fresh on hover-in and unmounts synchronously on hover-out, so only the
+   entrance can be animated with pure CSS. */
+.recharts-tooltip-wrapper {
+  animation: response-tooltip-fade 0.15s ease-out;
 }
 
 @keyframes response-spin {
