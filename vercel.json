@@ -1,11 +1,14 @@
 {
   "services": {
     "frontend": { "root": "frontend", "framework": "nextjs" },
-    "backend":  { "root": "backend" }
+    "backend": {
+      "root": "backend",
+      "entrypoint": "app.main:app"
+    }
   },
   "rewrites": [
-    { "source": "/api/(.*)", "destination": { "type": "service", "service": "backend" } },
-    { "source": "/health",   "destination": { "type": "service", "service": "backend" } },
-    { "source": "/(.*)",     "destination": { "type": "service", "service": "frontend" } }
+    { "source": "/api/(.*)", "destination": { "service": "backend" } },
+    { "source": "/health",   "destination": { "service": "backend" } },
+    { "source": "/(.*)",     "destination": { "service": "frontend" } }
   ]
 }
