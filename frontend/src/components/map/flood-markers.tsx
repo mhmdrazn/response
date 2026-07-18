@@ -36,6 +36,7 @@ function buildIcon(color: string, dotSize: number, isCritical: boolean): L.DivIc
     html: `
       <div class="flood-marker" style="width:${box}px; height:${box}px;">
         ${pulse}
+        
         <div class="flood-marker-dot" style="
           width:${dotSize}px;
           height:${dotSize}px;

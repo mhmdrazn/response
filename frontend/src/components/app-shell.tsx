@@ -14,6 +14,7 @@ import { AlgorithmPanel } from "./sidebar/algorithm-panel";
 import { ComparisonPanel } from "./sidebar/comparison-panel";
 import { DataTableModal, type DatasetKey } from "./data-table-modal";
 import { FloatingNavbar } from "./floating-navbar";
+import { ChoroplethLegend } from "./map/choropleth-legend";
 import { MapCanvas } from "./map/map-container";
 import { MobileDataLayerDock } from "./map/mobile-data-layer-dock";
 import { SiLegend } from "./map/si-legend";
@@ -85,6 +86,9 @@ export function AppShell() {
   const [hiddenRoutes, setHiddenRoutes] = useState<Set<string>>(new Set());
   const hydratedHidden = useRef(false);
 
+  // Basemap to restore when the choropleth overlay is turned back off.
+  const preChoroplethBaseMap = useRef<BaseMapId>("standard");
+
   useEffect(() => {
     setHiddenRoutes(loadStoredSet(HIDDEN_ROUTES_STORAGE_KEY));
     hydratedHidden.current = true;
@@ -134,6 +138,20 @@ export function AppShell() {
 
   function setOverlay(id: OverlayLayerId, visible: boolean) {
     setOverlays((prev) => ({ ...prev, [id]: visible }));
+
+    // The choropleth's tinted districts read best over a light basemap, so
+    // enabling it auto-switches to "Terang" and disabling it restores the
+    // previous basemap (unless the user changed it manually in between).
+    if (id === "choropleth") {
+      if (visible) {
+        setBaseMap((prev) => {
+          preChoroplethBaseMap.current = prev;
+          return "positron";
+        });
+      } else {
+        setBaseMap((prev) => (prev === "positron" ? preChoroplethBaseMap.current : prev));
+      }
+    }
   }
 
   const handlePreviewData = useCallback((key: DatasetKey) => {
@@ -331,6 +349,8 @@ export function AppShell() {
                     onOpen={() => setMobilePanel("results")}
                   />
                 ) : null}
+
+                {data && overlays.choropleth ? <ChoroplethLegend /> : null}
 
                 {data ? <SiLegend inline collapsible /> : null}
 

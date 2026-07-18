@@ -43,6 +43,12 @@ export function siColor(si: number | null | undefined): string {
   return SI_PALETTE[SI_PALETTE.length - 1].hex;
 }
 
+export function siLabel(si: number | null | undefined): string {
+  if (si == null || Number.isNaN(si)) return "—";
+  for (const bucket of SI_PALETTE) if (si <= bucket.max) return bucket.labelId;
+  return SI_PALETTE[SI_PALETTE.length - 1].labelId;
+}
+
 // Placeholder SI derived from depth until backend AHP+EW module lands (M1).
 // Assumes 25 cm ~ moderate, 60 cm ~ high, 100 cm+ = critical.
 export function depthToSiPlaceholder(depthCm: number | null | undefined): number {
@@ -96,7 +102,7 @@ export const BASE_MAP_LAYERS = {
 
 export type BaseMapId = keyof typeof BASE_MAP_LAYERS;
 
-export type OverlayLayerId = "floods" | "depots" | "ifs" | "faskes";
+export type OverlayLayerId = "floods" | "depots" | "ifs" | "faskes" | "choropleth";
 
 export interface OverlayLayerMeta {
   id: OverlayLayerId;
@@ -128,6 +134,12 @@ export const OVERLAY_LAYERS: OverlayLayerMeta[] = [
     id: "faskes",
     label: "Fasilitas Kesehatan",
     swatchColor: "#059669",
+    defaultVisible: false,
+  },
+  {
+    id: "choropleth",
+    label: "Indeks Keparahan per Kecamatan",
+    swatchColor: "#f97316",
     defaultVisible: false,
   },
 ];

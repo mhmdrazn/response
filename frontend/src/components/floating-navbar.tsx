@@ -28,9 +28,10 @@ export function FloatingNavbar({ mode, onModeChange, compact = false }: Floating
         pointerEvents: "auto",
       }}
     >
-      <div className="flex items-center gap-2" style={{ minWidth: 0 }}>
+      <div className="flex items-center gap-16" style={{ minWidth: 0 }}>
         <span
           aria-hidden
+          className="navbar-status-dot"
           style={{
             display: "inline-block",
             width: compact ? 8 : 10,

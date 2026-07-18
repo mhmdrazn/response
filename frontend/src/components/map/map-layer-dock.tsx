@@ -8,6 +8,7 @@ import {
   Eye,
   Hospital,
   Layers,
+  Map as MapIcon,
   Waves,
   type LucideIcon,
 } from "lucide-react";
@@ -88,6 +89,7 @@ const OVERLAY_OPTIONS: OverlayOption[] = [
   { id: "depots", label: "Depo", Icon: Building2, activeColor: "#f59e0b" },
   { id: "ifs", label: "Sungai", Icon: Waves, activeColor: "#0284c7" },
   { id: "faskes", label: "Faskes", Icon: Hospital, activeColor: "#059669" },
+  { id: "choropleth", label: "Keparahan Kecamatan", Icon: MapIcon, activeColor: "#f97316" },
 ];
 
 /** Single unified dock combining the data-counts row and the layer controls

@@ -14,6 +14,8 @@ import {
 } from "../../lib/map-constants";
 import type { DatasetKey } from "../data-table-modal";
 import type { Depot, Faskes, FloodPoint, IntermediateFacility, RouteOut } from "../../types";
+import { ChoroplethLayer } from "./choropleth-layer";
+import { ChoroplethLegend } from "./choropleth-legend";
 import { DepotMarkers } from "./depot-markers";
 import { FaskesMarkers } from "./faskes-markers";
 import { FloodMarkers } from "./flood-markers";
@@ -82,6 +84,9 @@ export function MapInner({
     >
       <TileLayer url={base.urlTemplate} attribution={base.attribution} />
 
+      {/* Choropleth sits directly above the basemap so markers/routes overlay it. */}
+      {overlays.choropleth ? <ChoroplethLayer floods={floods} /> : null}
+
       {overlays.floods ? <FloodMarkers points={floods} /> : null}
       {overlays.depots ? <DepotMarkers depots={depots} /> : null}
       {overlays.ifs ? <IfMarkers ifs={ifs} /> : null}
@@ -114,8 +119,27 @@ export function MapInner({
         </div>
       ) : null}
 
-      {/* SI legend: hide on mobile, hide when routes shown (data in results panel) */}
-      {!isMobile && routes.length === 0 ? <SiLegend /> : null}
+      {/* Bottom-right legends. The choropleth legend (relative load scale)
+          shows whenever that overlay is on; the point SI legend (absolute
+          thresholds) shows when no routes occupy the results panel. */}
+      {!isMobile && (overlays.choropleth || routes.length === 0) ? (
+        <div
+          style={{
+            position: "absolute",
+            bottom: 24,
+            right: 16,
+            zIndex: 800,
+            display: "flex",
+            flexDirection: "column",
+            gap: 8,
+            alignItems: "flex-end",
+            pointerEvents: "none",
+          }}
+        >
+          {overlays.choropleth ? <ChoroplethLegend /> : null}
+          {routes.length === 0 ? <SiLegend inline /> : null}
+        </div>
+      ) : null}
 
       {/* Mobile renders its own flex-stacked data/layer dock in app-shell.tsx
           instead, to guarantee consistent spacing with the other mobile docks. */}
