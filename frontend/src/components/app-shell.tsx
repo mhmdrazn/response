@@ -20,6 +20,7 @@ import { SiLegend } from "./map/si-legend";
 import { MobileRunBar } from "./mobile-run-bar";
 import { PanelOverlay } from "./panel-overlay";
 import { ResultsDock } from "./results-dock";
+import { ToastProvider } from "./toast";
 
 const INITIAL_OVERLAYS: Record<OverlayLayerId, boolean> = OVERLAY_LAYERS.reduce(
   (acc, l) => ({ ...acc, [l.id]: l.defaultVisible }),
@@ -54,8 +55,7 @@ function loadStoredSet(key: string): Set<string> {
     const raw = window.localStorage.getItem(key);
     if (!raw) return new Set();
     const arr = JSON.parse(raw) as unknown;
-    if (Array.isArray(arr))
-      return new Set(arr.filter((v): v is string => typeof v === "string"));
+    if (Array.isArray(arr)) return new Set(arr.filter((v): v is string => typeof v === "string"));
   } catch {
     /* ignore */
   }
@@ -74,18 +74,13 @@ function saveStoredSet(key: string, value: Set<string>): void {
 export function AppShell() {
   const bp = useBreakpoint();
   const [mode, setMode] = useState<AppMode>("simple");
-  const [overlays, setOverlays] =
-    useState<Record<OverlayLayerId, boolean>>(INITIAL_OVERLAYS);
+  const [overlays, setOverlays] = useState<Record<OverlayLayerId, boolean>>(INITIAL_OVERLAYS);
   const [baseMap, setBaseMap] = useState<BaseMapId>("standard");
-  const [highlightVehicleId, setHighlightVehicleId] = useState<string | null>(
-    null,
-  );
+  const [highlightVehicleId, setHighlightVehicleId] = useState<string | null>(null);
   const [focusedRoute, setFocusedRoute] = useState<RouteOut | null>(null);
   const [previewDataset, setPreviewDataset] = useState<DatasetKey | null>(null);
 
-  const [mobilePanel, setMobilePanel] = useState<
-    "none" | "algorithm" | "results"
-  >("none");
+  const [mobilePanel, setMobilePanel] = useState<"none" | "algorithm" | "results">("none");
 
   const [hiddenRoutes, setHiddenRoutes] = useState<Set<string>>(new Set());
   const hydratedHidden = useRef(false);
@@ -175,9 +170,7 @@ export function AppShell() {
   }
 
   // Only show routes on the map that are not hidden by the user.
-  const visibleRoutes = (result?.routes ?? []).filter(
-    (r) => !hiddenRoutes.has(r.vehicle_id),
-  );
+  const visibleRoutes = (result?.routes ?? []).filter((r) => !hiddenRoutes.has(r.vehicle_id));
 
   const algorithmPanelContent = (
     <AlgorithmPanel
@@ -220,84 +213,55 @@ export function AppShell() {
 
   return (
     <ErrorBoundary>
-      <div
-        className="relative h-screen w-screen overflow-hidden"
-        style={{ background: "var(--color-mist)" }}
-      >
-        {/* Full-viewport map */}
-        <div className="absolute inset-0">
-          {data ? (
-            <MapCanvas
-              floods={data.floods}
-              depots={data.depots}
-              ifs={data.ifs}
-              faskes={data.faskes}
-              overlays={overlays}
-              setOverlay={setOverlay}
-              baseMap={baseMap}
-              setBaseMap={setBaseMap}
-              routes={visibleRoutes}
-              highlightVehicleId={highlightVehicleId}
-              setHighlightVehicleId={setHighlightVehicleId}
-              focusedRoute={focusedRoute}
-              onPreviewData={handlePreviewData}
-              isMobile={isMobile}
-            />
-          ) : (
-            <MapStatusPlaceholder loading={loading} error={dataError} />
-          )}
-        </div>
+      <ToastProvider>
+        <div
+          className="relative h-screen w-screen overflow-hidden"
+          style={{ background: "var(--color-mist)" }}
+        >
+          {/* Full-viewport map */}
+          <div className="absolute inset-0">
+            {data ? (
+              <MapCanvas
+                floods={data.floods}
+                depots={data.depots}
+                ifs={data.ifs}
+                faskes={data.faskes}
+                overlays={overlays}
+                setOverlay={setOverlay}
+                baseMap={baseMap}
+                setBaseMap={setBaseMap}
+                routes={visibleRoutes}
+                highlightVehicleId={highlightVehicleId}
+                setHighlightVehicleId={setHighlightVehicleId}
+                focusedRoute={focusedRoute}
+                onPreviewData={handlePreviewData}
+                isMobile={isMobile}
+              />
+            ) : (
+              <MapStatusPlaceholder loading={loading} error={dataError} />
+            )}
+          </div>
 
-        {/* Top-left: floating navbar */}
-        <FloatingNavbar mode={mode} onModeChange={setMode} compact={isMobile} />
+          {/* Top-left: floating navbar */}
+          <FloatingNavbar mode={mode} onModeChange={setMode} compact={isMobile} />
 
-        {/* ── Desktop / Tablet: side panels ── */}
-        {!isMobile ? (
-          <>
-            {/* Left panel — bottom offset clears map LeftPanel dock */}
-            <div
-              style={{
-                position: "absolute",
-                top: 84,
-                left: 16,
-                bottom: SIDEBAR_BOTTOM_CLEARANCE,
-                width: panelW,
-                zIndex: 900,
-                display: "flex",
-                flexDirection: "column",
-                gap: 10,
-                pointerEvents: "none",
-                overflowY: "auto",
-              }}
-            >
-              <div
-                style={{
-                  pointerEvents: "auto",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 10,
-                }}
-              >
-                {algorithmPanelContent}
-              </div>
-            </div>
-
-            {/* Right panel — the container has a definite height (top/bottom
-                anchored) and does NOT scroll itself. */}
-            {result ? (
+          {/* ── Desktop / Tablet: side panels ── */}
+          {!isMobile ? (
+            <>
+              {/* Left panel — bottom offset clears map LeftPanel dock */}
               <div
                 style={{
                   position: "absolute",
-                  top: 16,
-                  right: 16,
-                  bottom: 16,
-                  width: resultPanelW,
+                  top: 84,
+                  left: 16,
+                  bottom: SIDEBAR_BOTTOM_CLEARANCE,
+                  width: panelW,
                   zIndex: 900,
                   display: "flex",
                   flexDirection: "column",
                   gap: 10,
                   pointerEvents: "none",
-                  overflow: "hidden",
+                  overflowY: "auto",
                 }}
               >
                 <div
@@ -306,102 +270,127 @@ export function AppShell() {
                     display: "flex",
                     flexDirection: "column",
                     gap: 10,
-                    flex: 1,
-                    minHeight: 0,
                   }}
                 >
-                  {resultsPanelContent}
+                  {algorithmPanelContent}
                 </div>
               </div>
-            ) : null}
-          </>
-        ) : (
-          <>
-            {/* ── Mobile: single flex-stacked bottom dock ── */}
-            <div
-              style={{
-                position: "absolute",
-                left: 16,
-                right: 16,
-                bottom: 16,
-                zIndex: 950,
-                display: "flex",
-                flexDirection: "column",
-                gap: 10,
-                pointerEvents: "none",
-              }}
-            >
+
+              {/* Right panel — the container has a definite height (top/bottom
+                anchored) and does NOT scroll itself. */}
               {result ? (
-                <ResultPeekBar
-                  objectiveZ={result.objective_z}
-                  onOpen={() => setMobilePanel("results")}
-                />
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 16,
+                    right: 16,
+                    bottom: 16,
+                    width: resultPanelW,
+                    zIndex: 900,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 10,
+                    pointerEvents: "none",
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    style={{
+                      pointerEvents: "auto",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 10,
+                      flex: 1,
+                      minHeight: 0,
+                    }}
+                  >
+                    {resultsPanelContent}
+                  </div>
+                </div>
               ) : null}
+            </>
+          ) : (
+            <>
+              {/* ── Mobile: single flex-stacked bottom dock ── */}
+              <div
+                style={{
+                  position: "absolute",
+                  left: 16,
+                  right: 16,
+                  bottom: 16,
+                  zIndex: 950,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 10,
+                  pointerEvents: "none",
+                }}
+              >
+                {result ? (
+                  <ResultPeekBar
+                    objectiveZ={result.objective_z}
+                    onOpen={() => setMobilePanel("results")}
+                  />
+                ) : null}
 
-              {data ? <SiLegend inline collapsible /> : null}
+                {data ? <SiLegend inline collapsible /> : null}
 
-              {data ? (
-                <MobileDataLayerDock
-                  floodCount={data.floods.length}
-                  depotCount={data.depots.length}
-                  ifCount={data.ifs.length}
-                  faskesCount={data.faskes.length}
-                  overlays={overlays}
-                  setOverlay={setOverlay}
-                  baseMap={baseMap}
-                  setBaseMap={setBaseMap}
-                  onPreviewData={handlePreviewData}
+                {data ? (
+                  <MobileDataLayerDock
+                    floodCount={data.floods.length}
+                    depotCount={data.depots.length}
+                    ifCount={data.ifs.length}
+                    faskesCount={data.faskes.length}
+                    overlays={overlays}
+                    setOverlay={setOverlay}
+                    baseMap={baseMap}
+                    setBaseMap={setBaseMap}
+                    onPreviewData={handlePreviewData}
+                  />
+                ) : null}
+
+                <MobileRunBar
+                  algorithm={algoCfg.algorithm}
+                  onAlgorithmChange={algoCfg.setAlgorithm}
+                  isLoading={isLoading}
+                  onRun={handleRun}
+                  onOpenSettings={() => setMobilePanel("algorithm")}
                 />
-              ) : null}
+              </div>
 
-              <MobileRunBar
-                algorithm={algoCfg.algorithm}
-                onAlgorithmChange={algoCfg.setAlgorithm}
-                isLoading={isLoading}
-                onRun={handleRun}
-                onOpenSettings={() => setMobilePanel("algorithm")}
-              />
-            </div>
+              <PanelOverlay
+                open={mobilePanel === "algorithm"}
+                onClose={() => setMobilePanel("none")}
+                title="Konfigurasi Algoritma"
+              >
+                {algorithmPanelContent}
+              </PanelOverlay>
 
-            <PanelOverlay
-              open={mobilePanel === "algorithm"}
-              onClose={() => setMobilePanel("none")}
-              title="Konfigurasi Algoritma"
-            >
-              {algorithmPanelContent}
-            </PanelOverlay>
+              <PanelOverlay
+                open={mobilePanel === "results"}
+                onClose={() => setMobilePanel("none")}
+                title="Hasil Optimasi"
+              >
+                {resultsPanelContent}
+              </PanelOverlay>
+            </>
+          )}
+        </div>
 
-            <PanelOverlay
-              open={mobilePanel === "results"}
-              onClose={() => setMobilePanel("none")}
-              title="Hasil Optimasi"
-            >
-              {resultsPanelContent}
-            </PanelOverlay>
-          </>
-        )}
-      </div>
-
-      {/* Data table modal */}
-      {previewDataset && data ? (
-        <DataTableModal
-          datasetKey={previewDataset}
-          data={getPreviewData()}
-          onClose={() => setPreviewDataset(null)}
-          onReload={reload}
-        />
-      ) : null}
+        {/* Data table modal */}
+        {previewDataset && data ? (
+          <DataTableModal
+            datasetKey={previewDataset}
+            data={getPreviewData()}
+            onClose={() => setPreviewDataset(null)}
+            onReload={reload}
+          />
+        ) : null}
+      </ToastProvider>
     </ErrorBoundary>
   );
 }
 
-function ResultPeekBar({
-  objectiveZ,
-  onOpen,
-}: {
-  objectiveZ: number;
-  onOpen: () => void;
-}) {
+function ResultPeekBar({ objectiveZ, onOpen }: { objectiveZ: number; onOpen: () => void }) {
   return (
     <button
       type="button"
@@ -452,16 +441,10 @@ function ResultPeekBar({
   );
 }
 
-function MapStatusPlaceholder({
-  loading,
-  error,
-}: {
-  loading: boolean;
-  error: string | null;
-}) {
+function MapStatusPlaceholder({ loading, error }: { loading: boolean; error: string | null }) {
   return (
     <div className="flex h-full w-full items-center justify-center">
-      <div className="text-center px-6 max-w-md">
+      <div className="max-w-md px-6 text-center">
         <p
           style={{
             fontSize: 20,
@@ -470,11 +453,7 @@ function MapStatusPlaceholder({
             letterSpacing: "-0.2px",
           }}
         >
-          {loading
-            ? "Memuat data peta..."
-            : error
-              ? "Gagal memuat data"
-              : "Menunggu data"}
+          {loading ? "Memuat data peta..." : error ? "Gagal memuat data" : "Menunggu data"}
         </p>
         {error ? (
           <p
@@ -489,8 +468,7 @@ function MapStatusPlaceholder({
             {error}
             <br />
             <span style={{ color: "var(--color-slate)" }}>
-              Pastikan backend berjalan di{" "}
-              <code>http://localhost:8000</code>.
+              Pastikan backend berjalan di <code>http://localhost:8000</code>.
             </span>
           </p>
         ) : null}

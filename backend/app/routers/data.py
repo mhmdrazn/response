@@ -35,6 +35,35 @@ _CSV_MAP: dict[str, str] = {
     "faskes": "faskes.csv",
 }
 
+# Track CSV mtimes so external edits (e.g. manual `depo.csv` edit) are picked
+# up automatically. Without this the in-memory data.depots stays stale until
+# the next uvicorn reload, and stale rows leak into optimization results.
+_MTIME_CACHE: dict[str, float] = {}
+
+
+def _refresh_from_disk_if_stale(name: str) -> None:
+    """If the underlying CSV was modified after we last loaded it, reload."""
+    path = DATA_DIR / _CSV_MAP[name]
+    if not path.exists():
+        return
+    mtime = path.stat().st_mtime
+    if _MTIME_CACHE.get(name) == mtime:
+        return
+    # Delayed import to avoid the routers ↔ main circular import at module load.
+    from app.main import _load_depots, _load_faskes, _load_floods, _load_ifs
+
+    if name == "floods":
+        data.flood_points = _load_floods(path)
+    elif name == "depo":
+        data.depots = _load_depots(path)
+    elif name == "if":
+        data.ifs = _load_ifs(path)
+    elif name == "faskes":
+        data.faskes = _load_faskes(path)
+    _MTIME_CACHE[name] = mtime
+    # Coordinates changed → distance/time matrices may be stale too.
+    _invalidate_matrices()
+
 
 def _clean(value: Any) -> Any:
     if value is None:
@@ -58,6 +87,7 @@ def _rows(df: pd.DataFrame | None, dataset: str) -> list[dict[str, Any]]:
 
 
 def _get_df(name: str) -> pd.DataFrame:
+    _refresh_from_disk_if_stale(name)
     mapping: dict[str, pd.DataFrame | None] = {
         "floods": data.flood_points,
         "depo": data.depots,
@@ -85,6 +115,9 @@ def _save_csv(name: str) -> None:
     df = _get_df(name)
     path = DATA_DIR / _CSV_MAP[name]
     df.to_csv(path, index=False)
+    # Record the mtime we just wrote so our own writes don't trigger a
+    # redundant reload on the very next request.
+    _MTIME_CACHE[name] = path.stat().st_mtime
 
 
 def _invalidate_matrices() -> None:
@@ -104,22 +137,22 @@ def _find_row(df: pd.DataFrame, row_id: str, dataset: str) -> int:
 
 @router.get("/floods", response_model=list[FloodPoint])
 async def get_floods() -> list[FloodPoint]:
-    return [FloodPoint(**row) for row in _rows(data.flood_points, "floods")]
+    return [FloodPoint(**row) for row in _rows(_get_df("floods"), "floods")]
 
 
 @router.get("/depo", response_model=list[Depot])
 async def get_depots() -> list[Depot]:
-    return [Depot(**row) for row in _rows(data.depots, "depo")]
+    return [Depot(**row) for row in _rows(_get_df("depo"), "depo")]
 
 
 @router.get("/if", response_model=list[IntermediateFacility])
 async def get_intermediate_facilities() -> list[IntermediateFacility]:
-    return [IntermediateFacility(**row) for row in _rows(data.ifs, "if")]
+    return [IntermediateFacility(**row) for row in _rows(_get_df("if"), "if")]
 
 
 @router.get("/faskes", response_model=list[Faskes])
 async def get_faskes() -> list[Faskes]:
-    return [Faskes(**row) for row in _rows(data.faskes, "faskes")]
+    return [Faskes(**row) for row in _rows(_get_df("faskes"), "faskes")]
 
 
 # ──────────────────── FLOODS CRUD ────────────────────

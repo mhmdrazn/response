@@ -13,13 +13,7 @@ import {
   type OverlayLayerId,
 } from "../../lib/map-constants";
 import type { DatasetKey } from "../data-table-modal";
-import type {
-  Depot,
-  Faskes,
-  FloodPoint,
-  IntermediateFacility,
-  RouteOut,
-} from "../../types";
+import type { Depot, Faskes, FloodPoint, IntermediateFacility, RouteOut } from "../../types";
 import { DepotMarkers } from "./depot-markers";
 import { FaskesMarkers } from "./faskes-markers";
 import { FloodMarkers } from "./flood-markers";
@@ -51,7 +45,7 @@ function FitBounds({ route }: { route: RouteOut | null }) {
   useEffect(() => {
     if (!route || route.polyline.length === 0) return;
     const bounds = L.latLngBounds(
-      route.polyline.map(([la, lo]) => L.latLng(la, lo))
+      route.polyline.map(([la, lo]) => L.latLng(la, lo)),
     ) as LatLngBoundsExpression;
     map.flyToBounds(bounds, { padding: [40, 40], duration: 0.6 });
   }, [route, map]);

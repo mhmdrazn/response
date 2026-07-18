@@ -4,7 +4,7 @@ import L from "leaflet";
 import { Marker, Tooltip } from "react-leaflet";
 
 import type { Depot } from "../../types";
-import { PopupShell } from "./marker-popup";
+import { PopupRow, PopupShell } from "./marker-popup";
 
 /** Small fire-station silhouette: rectangular building with a pitched roof
  *  and a garage door — visually closer to a "pos pemadam kebakaran" than
@@ -40,16 +40,20 @@ interface DepotMarkersProps {
   depots: Depot[];
 }
 
+function fmtCoord(v: number): string {
+  return v.toFixed(5);
+}
+
 export function DepotMarkers({ depots }: DepotMarkersProps) {
   return (
     <>
       {depots.map((d) => (
         <Marker key={d.id} position={[d.lat, d.lon]} icon={depotIcon}>
           <Tooltip direction="top" offset={[0, -14]} opacity={1}>
-            <PopupShell
-              title={d.name ?? `Depo ${d.id}`}
-              subtitle={d.city ?? "Kota Surabaya"}
-            />
+            <PopupShell title={d.name ?? `Depo ${d.id}`} subtitle={d.city ?? "Kota Surabaya"}>
+              <PopupRow label="ID" value={d.id} />
+              <PopupRow label="Koordinat" value={`${fmtCoord(d.lat)}, ${fmtCoord(d.lon)}`} />
+            </PopupShell>
           </Tooltip>
         </Marker>
       ))}

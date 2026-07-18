@@ -48,9 +48,7 @@ export function useMapData(): UseMapDataResult {
         if (cancelled) return;
 
         if (severity) {
-          const siMap = new Map(
-            severity.flood_points.map((fp) => [fp.id, fp.si_value])
-          );
+          const siMap = new Map(severity.flood_points.map((fp) => [fp.id, fp.si_value]));
           for (const f of floods) {
             const si = siMap.get(f.id);
             if (si !== undefined) f.si_value = si;

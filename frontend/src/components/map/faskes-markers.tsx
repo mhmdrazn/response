@@ -71,15 +71,9 @@ export function FaskesMarkers({ faskes }: FaskesMarkersProps) {
             <PopupShell title={f.name ?? `Faskes ${f.id}`}>
               {f.street ? <PopupRow label="Alamat" value={f.street} /> : null}
               {f.healthcare ? (
-                <PopupRow
-                  label="Jenis"
-                  value={localizeHealthcare(f.healthcare) ?? f.healthcare}
-                />
+                <PopupRow label="Jenis" value={localizeHealthcare(f.healthcare) ?? f.healthcare} />
               ) : f.amenity ? (
-                <PopupRow
-                  label="Jenis"
-                  value={localizeHealthcare(f.amenity) ?? f.amenity}
-                />
+                <PopupRow label="Jenis" value={localizeHealthcare(f.amenity) ?? f.amenity} />
               ) : null}
             </PopupShell>
           </Tooltip>

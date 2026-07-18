@@ -2,11 +2,7 @@
 
 import { Clock, MapPinned, Route, TrendingDown, Truck } from "lucide-react";
 
-import {
-  formatDuration,
-  formatMeters,
-  formatNumber,
-} from "../../lib/format-metrics";
+import { formatDuration, formatMeters, formatNumber } from "../../lib/format-metrics";
 import type { AppMode, OptimizationResult } from "../../types";
 
 interface ResultsPanelProps {

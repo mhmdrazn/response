@@ -10,12 +10,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import {
-  formatDuration,
-  formatLiters,
-  formatMeters,
-  formatNumber,
-} from "../../lib/format-metrics";
+import { formatDuration, formatLiters, formatMeters, formatNumber } from "../../lib/format-metrics";
 import { ROUTE_COLORS } from "../../lib/map-constants";
 import type { RouteOut } from "../../types";
 
@@ -42,9 +37,7 @@ export function RouteList({
   hiddenVehicleIds,
   onToggleVehicleVisibility,
 }: RouteListProps) {
-  const [expandedVehicles, setExpandedVehicles] = useState<Set<string>>(
-    new Set(),
-  );
+  const [expandedVehicles, setExpandedVehicles] = useState<Set<string>>(new Set());
   const [collapsedDepots, setCollapsedDepots] = useState<Set<string>>(new Set());
 
   const groups = useMemo(() => {
@@ -63,8 +56,7 @@ export function RouteList({
     return Array.from(map.values());
   }, [routes]);
 
-  const allExpanded =
-    routes.length > 0 && expandedVehicles.size === routes.length;
+  const allExpanded = routes.length > 0 && expandedVehicles.size === routes.length;
 
   function toggleDepot(depotId: string) {
     setCollapsedDepots((prev) => {
@@ -126,9 +118,7 @@ export function RouteList({
                     routes.length > 0 &&
                     routes.every((r) => hiddenVehicleIds.has(r.vehicle_id));
                   if (allHidden) {
-                    routes.forEach((r) =>
-                      onToggleVehicleVisibility(r.vehicle_id),
-                    );
+                    routes.forEach((r) => onToggleVehicleVisibility(r.vehicle_id));
                   } else {
                     routes.forEach((r) => {
                       if (!hiddenVehicleIds?.has(r.vehicle_id))
@@ -150,16 +140,14 @@ export function RouteList({
                   fontWeight: "var(--font-weight-bold)",
                   letterSpacing: "-0.1px",
                   cursor: "pointer",
-                  transition:
-                    "background 0.15s ease, border-color 0.15s ease",
+                  transition: "background 0.15s ease, border-color 0.15s ease",
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = "var(--color-mist)";
                   e.currentTarget.style.borderColor = "var(--color-smoke)";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background =
-                    "var(--color-pure-white)";
+                  e.currentTarget.style.background = "var(--color-pure-white)";
                   e.currentTarget.style.borderColor = "var(--color-frost)";
                 }}
               >
@@ -218,10 +206,7 @@ export function RouteList({
       {groups.map((group) => {
         const isDepotCollapsed = collapsedDepots.has(group.depotId);
         return (
-          <div
-            key={group.depotId}
-            style={{ display: "flex", flexDirection: "column", gap: 6 }}
-          >
+          <div key={group.depotId} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {/* Depot group header */}
             <button
               type="button"
@@ -428,9 +413,7 @@ function RouteCard({
               justifyContent: "center",
               borderRadius: "var(--radius-sm)",
               border: "1px solid var(--color-frost)",
-              background: isHidden
-                ? "var(--color-mist)"
-                : "var(--color-pure-white)",
+              background: isHidden ? "var(--color-mist)" : "var(--color-pure-white)",
               cursor: "pointer",
               marginRight: 6,
               flexShrink: 0,
@@ -499,10 +482,7 @@ function RouteCard({
                   gap: 6,
                   fontSize: 12.5,
                   padding: "3px 0",
-                  borderBottom:
-                    i < r.visits.length - 1
-                      ? "1px dashed var(--color-frost)"
-                      : "none",
+                  borderBottom: i < r.visits.length - 1 ? "1px dashed var(--color-frost)" : "none",
                 }}
               >
                 <VisitDot type={v.node_type} />

@@ -63,10 +63,7 @@ export function ComparisonPanel({ comparison }: ComparisonPanelProps) {
     },
   ];
 
-  const maxLen = Math.max(
-    acs.convergence.length,
-    vns.convergence.length,
-  );
+  const maxLen = Math.max(acs.convergence.length, vns.convergence.length);
   const chartData = Array.from({ length: maxLen }, (_, i) => ({
     iteration: i + 1,
     acs: i < acs.convergence.length ? acs.convergence[i].best_z : null,
@@ -196,7 +193,12 @@ export function ComparisonPanel({ comparison }: ComparisonPanelProps) {
                 stroke="var(--color-slate)"
                 fontSize={10}
                 tickLine={false}
-                width={44}
+                width={56}
+                domain={[
+                  (min: number) => Math.floor(min * 0.98),
+                  (max: number) => Math.ceil(max * 1.02),
+                ]}
+                allowDecimals={false}
                 tickFormatter={(v: number) => formatNumber(v, 0)}
               />
               <Tooltip
@@ -210,24 +212,24 @@ export function ComparisonPanel({ comparison }: ComparisonPanelProps) {
                 formatter={(value) => formatNumber(Number(value ?? 0), 2)}
                 labelFormatter={(l) => `Iterasi ${l}`}
               />
-              <Legend
-                wrapperStyle={{ fontSize: 11, paddingTop: 4 }}
-              />
+              <Legend wrapperStyle={{ fontSize: 11, paddingTop: 4 }} />
               <Line
                 type="monotone"
                 dataKey="acs"
-                stroke="var(--color-midnight-ink)"
+                stroke="var(--color-route-0)"
                 strokeWidth={2}
                 dot={false}
+                activeDot={{ r: 4, strokeWidth: 0 }}
                 name="ACS"
                 connectNulls
               />
               <Line
                 type="monotone"
                 dataKey="vns"
-                stroke="var(--color-steel)"
+                stroke="var(--color-route-7)"
                 strokeWidth={2}
                 dot={false}
+                activeDot={{ r: 4, strokeWidth: 0 }}
                 name="VNS"
                 connectNulls
               />
@@ -298,8 +300,8 @@ function DeltaSummary({ acs, vns }: { acs: number; vns: number }) {
     >
       {acsWins ? (
         <>
-          <strong style={{ color: "var(--color-midnight-ink)" }}>ACS</strong>{" "}
-          menghasilkan Z lebih baik sebesar{" "}
+          <strong style={{ color: "var(--color-midnight-ink)" }}>ACS</strong> menghasilkan Z lebih
+          baik sebesar{" "}
           <strong style={{ color: "var(--color-midnight-ink)" }}>
             {formatNumber(Math.abs(diff), 2)}
           </strong>{" "}
@@ -307,8 +309,8 @@ function DeltaSummary({ acs, vns }: { acs: number; vns: number }) {
         </>
       ) : (
         <>
-          <strong style={{ color: "var(--color-midnight-ink)" }}>VNS</strong>{" "}
-          menghasilkan Z lebih baik sebesar{" "}
+          <strong style={{ color: "var(--color-midnight-ink)" }}>VNS</strong> menghasilkan Z lebih
+          baik sebesar{" "}
           <strong style={{ color: "var(--color-midnight-ink)" }}>
             {formatNumber(Math.abs(diff), 2)}
           </strong>{" "}

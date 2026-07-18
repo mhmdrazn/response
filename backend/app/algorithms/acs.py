@@ -245,19 +245,24 @@ class HybridACS:
                 trace.best_z.append(best_z if best_z != float("inf") else 0.0)
                 continue
 
-            # Polish best-of-iteration every 5 iterations.
-            if it % 5 == 0:
+            # Stratified polish: quick per iter, full every 5 iter.
+            # Quick = only 2-opt + relocate (fast). Full adds or-opt + exchange.
+            if it % 5 == 0 and it > 0:
                 iter_best_routes, iter_best_z, ev = polish(
-                    self.inst, iter_best_routes, iter_best_caps, iter_best_z
+                    self.inst, iter_best_routes, iter_best_caps, iter_best_z,
+                    max_rounds=3, quick=False,
+                )
+            else:
+                iter_best_routes, iter_best_z, ev = polish(
+                    self.inst, iter_best_routes, iter_best_caps, iter_best_z,
+                    max_rounds=1, quick=True,
                 )
 
             if iter_best_z < best_z:
                 best_z = iter_best_z
                 best_routes = copy.deepcopy(iter_best_routes)
                 best_caps = list(iter_best_caps or [])
-                best_eval = ev if it % 5 == 0 else evaluate_solution(
-                    self.inst, best_routes, best_caps
-                )
+                best_eval = ev
 
             self._global_update(best_routes or iter_best_routes, best_z)
             trace.iter_best_z.append(float(iter_best_z))
@@ -271,6 +276,23 @@ class HybridACS:
 
         if best_routes is None or best_eval is None or best_caps is None:
             raise RuntimeError("ACS did not find any feasible solution.")
+
+        # Intensive final polish — use whatever time budget remains to
+        # deep-polish the best-so-far solution. Runs all four operators
+        # with high max_rounds; guarded by remaining time budget.
+        elapsed = time.perf_counter() - start
+        budget_left = (self.p.time_limit_s or 0.0) - elapsed
+        if budget_left > 2.0:
+            polished_routes, polished_z, polished_eval = polish(
+                self.inst, best_routes, best_caps, best_z,
+                max_rounds=10, quick=False,
+            )
+            if polished_z + 1e-9 < best_z:
+                best_routes = polished_routes
+                best_z = polished_z
+                best_eval = polished_eval
+                trace.best_z.append(float(best_z))
+                trace.iter_best_z.append(float(best_z))
 
         elapsed = time.perf_counter() - start
         return ACSSolution(

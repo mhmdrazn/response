@@ -64,29 +64,20 @@ function FloodMarker({ point: p, index }: { point: FloodPoint; index: number }) 
   const color = siColor(si);
   const dotSize = Math.max(
     14,
-    Math.min(26, Math.round(12 + Math.log((p.ketinggian_cm ?? 20) + 1) * 2.4))
+    Math.min(26, Math.round(12 + Math.log((p.ketinggian_cm ?? 20) + 1) * 2.4)),
   );
   const isEmergency = si >= 0.6;
-  const icon = useMemo(
-    () => buildIcon(color, dotSize, isEmergency),
-    [color, dotSize, isEmergency]
-  );
+  const icon = useMemo(() => buildIcon(color, dotSize, isEmergency), [color, dotSize, isEmergency]);
   const when = formatDateTimeId(p.datetime);
 
   return (
     <Marker position={[p.lat, p.lon]} icon={icon}>
       <Tooltip direction="top" offset={[0, -18]} opacity={1}>
-        <PopupShell
-          title={`Genangan ${index + 1}`}
-          subtitle={when ?? undefined}
-        >
+        <PopupShell title={`Genangan ${index + 1}`} subtitle={when ?? undefined}>
           {p.ketinggian_cm != null ? (
             <PopupRow label="Ketinggian" value={`${p.ketinggian_cm} cm`} />
           ) : null}
-          <PopupRow
-            label="Severity"
-            value={<SiPill si={si} label={siLabel(si)} />}
-          />
+          <PopupRow label="Severity" value={<SiPill si={si} label={siLabel(si)} />} />
           <DescBlock text={p.deskripsi} max={140} />
         </PopupShell>
       </Tooltip>

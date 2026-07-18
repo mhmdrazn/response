@@ -90,12 +90,10 @@ function IconButton({
         cursor: "pointer",
       }}
       onMouseEnter={(e) => {
-        (e.currentTarget as HTMLButtonElement).style.background =
-          "var(--color-frost)";
+        (e.currentTarget as HTMLButtonElement).style.background = "var(--color-frost)";
       }}
       onMouseLeave={(e) => {
-        (e.currentTarget as HTMLButtonElement).style.background =
-          "var(--color-pure-white)";
+        (e.currentTarget as HTMLButtonElement).style.background = "var(--color-pure-white)";
       }}
     >
       {children}
@@ -104,23 +102,12 @@ function IconButton({
 }
 
 function Divider() {
-  return (
-    <div
-      aria-hidden
-      style={{ height: 1, background: "var(--color-frost)", width: "100%" }}
-    />
-  );
+  return <div aria-hidden style={{ height: 1, background: "var(--color-frost)", width: "100%" }} />;
 }
 
 function CompassIcon() {
   return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
       <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.6" />
       <path d="M 12 4 L 15 12 L 12 20 L 9 12 Z" fill="currentColor" opacity="0.9" />
       <text
@@ -141,12 +128,7 @@ function CompassIcon() {
 function PlusIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path
-        d="M12 5v14M5 12h14"
-        stroke="currentColor"
-        strokeWidth="1.9"
-        strokeLinecap="round"
-      />
+      <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
     </svg>
   );
 }
@@ -154,12 +136,7 @@ function PlusIcon() {
 function MinusIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path
-        d="M5 12h14"
-        stroke="currentColor"
-        strokeWidth="1.9"
-        strokeLinecap="round"
-      />
+      <path d="M5 12h14" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
     </svg>
   );
 }

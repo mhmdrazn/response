@@ -12,8 +12,7 @@ import type {
 export type AlgorithmType = "acs" | "vns";
 
 export type RunRequest =
-  | { algorithm: "acs"; params: ACSParams }
-  | { algorithm: "vns"; params: VNSParams };
+  { algorithm: "acs"; params: ACSParams } | { algorithm: "vns"; params: VNSParams };
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -35,26 +34,28 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     let detail = "";
     try {
       const body = await res.json();
-      detail =
-        typeof body?.detail === "string" ? body.detail : JSON.stringify(body);
+      detail = typeof body?.detail === "string" ? body.detail : JSON.stringify(body);
     } catch {
       detail = await res.text();
     }
     throw new ApiError(res.status, detail || `Request failed: ${res.status}`);
   }
-  return (await res.json()) as T;
+  // Handle empty bodies (204 No Content, HEAD, or endpoints that return nothing).
+  // res.json() throws "Unexpected end of JSON input" on empty body.
+  if (res.status === 204) return undefined as T;
+  const text = await res.text();
+  if (!text) return undefined as T;
+  return JSON.parse(text) as T;
 }
 
 export { ApiError };
 
 export const api = {
   // Meta
-  health: (): Promise<{ status: string; service: string }> =>
-    request("/health"),
+  health: (): Promise<{ status: string; service: string }> => request("/health"),
 
   // Data
-  getFloodPoints: (): Promise<FloodPoint[]> =>
-    request<FloodPoint[]>("/api/data/floods"),
+  getFloodPoints: (): Promise<FloodPoint[]> => request<FloodPoint[]>("/api/data/floods"),
   getDepots: (): Promise<Depot[]> => request<Depot[]>("/api/data/depo"),
   getIntermediateFacilities: (): Promise<IntermediateFacility[]> =>
     request<IntermediateFacility[]>("/api/data/if"),
@@ -139,7 +140,7 @@ export const DEFAULT_ACS_PARAMS: ACSParams = {
   alpha: 1.0,
   beta: 1.0,
   rho: 0.15,
-  q0: 0.70,
+  q0: 0.7,
   seed: 42,
   time_limit_s: 45,
 };

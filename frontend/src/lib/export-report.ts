@@ -101,16 +101,7 @@ export function exportReport(result: OptimizationResult): void {
     startY: y,
     margin: { left: margin, right: margin },
     head: [
-      [
-        "Kendaraan",
-        "Depo",
-        "Kapasitas",
-        "Genangan",
-        "Buang Air",
-        "Jarak",
-        "Waktu",
-        "Kontribusi Z",
-      ],
+      ["Kendaraan", "Depo", "Kapasitas", "Genangan", "Buang Air", "Jarak", "Waktu", "Kontribusi Z"],
     ],
     body: routeRows,
     styles: {
@@ -146,11 +137,7 @@ export function exportReport(result: OptimizationResult): void {
     doc.setTextColor(83, 58, 253);
     doc.setFontSize(9);
     doc.setFont("helvetica", "bold");
-    doc.text(
-      `${route.vehicle_id} — ${route.depot_name || route.depot_id}`,
-      margin,
-      y,
-    );
+    doc.text(`${route.vehicle_id} — ${route.depot_name || route.depot_id}`, margin, y);
 
     doc.setTextColor(100, 116, 141);
     doc.setFontSize(7);
@@ -165,11 +152,7 @@ export function exportReport(result: OptimizationResult): void {
     const visitRows = route.visits.map((v, i) => [
       String(i + 1),
       v.node_name,
-      v.node_type === "flood"
-        ? "Genangan"
-        : v.node_type === "if"
-          ? "Buang Air"
-          : "Depo",
+      v.node_type === "flood" ? "Genangan" : v.node_type === "if" ? "Buang Air" : "Depo",
       formatDuration(v.arrival_time_s),
       v.volume_pumped_l > 0 ? `${v.volume_pumped_l.toLocaleString()} L` : "—",
       `${v.tank_load_after_l.toLocaleString()} L`,
@@ -223,7 +206,6 @@ export function exportReport(result: OptimizationResult): void {
   doc.save(`laporan-optimasi-${new Date().toISOString().slice(0, 10)}.pdf`);
 }
 
-
 export function exportJSON(result: OptimizationResult): void {
   const json = JSON.stringify(result, null, 2);
   const blob = new Blob([json], { type: "application/json" });
@@ -234,7 +216,6 @@ export function exportJSON(result: OptimizationResult): void {
   a.click();
   URL.revokeObjectURL(url);
 }
-
 
 export function exportCSV(result: OptimizationResult): void {
   const headers = [
@@ -259,7 +240,7 @@ export function exportCSV(result: OptimizationResult): void {
       r.total_distance_m.toFixed(2),
       r.total_time_s.toFixed(2),
       r.z_contribution.toFixed(2),
-    ].join(",")
+    ].join(","),
   );
   const csv = [headers.join(","), ...rows].join("\n");
   const blob = new Blob([csv], { type: "text/csv" });

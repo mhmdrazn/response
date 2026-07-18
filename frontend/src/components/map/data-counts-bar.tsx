@@ -95,12 +95,7 @@ export function DataCountsBar({
           >
             {label}
           </span>
-          <Eye
-            size={11}
-            strokeWidth={2}
-            color="var(--color-smoke)"
-            style={{ marginLeft: 2 }}
-          />
+          <Eye size={11} strokeWidth={2} color="var(--color-smoke)" style={{ marginLeft: 2 }} />
         </button>
       ))}
     </div>

@@ -45,12 +45,8 @@ export function ModeToggle({ mode, onChange, compact = false }: ModeToggleProps)
               fontSize: compact ? 11 : 13,
               fontWeight: "var(--font-weight-semibold)",
               letterSpacing: "-0.13px",
-              background: active
-                ? "var(--color-active-wash)"
-                : "transparent",
-              color: active
-                ? "var(--color-active-ink)"
-                : "var(--color-steel)",
+              background: active ? "var(--color-active-wash)" : "transparent",
+              color: active ? "var(--color-active-ink)" : "var(--color-steel)",
               border: "none",
               boxShadow: active ? "0 1px 2px 0 rgb(0 0 0 / 0.06)" : "none",
               transition: "background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease",

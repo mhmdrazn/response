@@ -12,11 +12,29 @@ export interface SiBucket {
 }
 
 export const SI_PALETTE: SiBucket[] = [
-  { max: 0.2, hex: "#22c55e", cssVar: "--color-si-low",      labelId: "Rendah",  labelEn: "Low" },
-  { max: 0.4, hex: "#84cc16", cssVar: "--color-si-moderate", labelId: "Sedang",  labelEn: "Moderate" },
-  { max: 0.6, hex: "#eab308", cssVar: "--color-si-elevated", labelId: "Waspada", labelEn: "Elevated" },
-  { max: 0.8, hex: "#f97316", cssVar: "--color-si-high",     labelId: "Tinggi",  labelEn: "High" },
-  { max: 1.0, hex: "#ef4444", cssVar: "--color-si-critical", labelId: "Kritis",  labelEn: "Critical" },
+  { max: 0.2, hex: "#22c55e", cssVar: "--color-si-low", labelId: "Rendah", labelEn: "Low" },
+  {
+    max: 0.4,
+    hex: "#84cc16",
+    cssVar: "--color-si-moderate",
+    labelId: "Sedang",
+    labelEn: "Moderate",
+  },
+  {
+    max: 0.6,
+    hex: "#eab308",
+    cssVar: "--color-si-elevated",
+    labelId: "Waspada",
+    labelEn: "Elevated",
+  },
+  { max: 0.8, hex: "#f97316", cssVar: "--color-si-high", labelId: "Tinggi", labelEn: "High" },
+  {
+    max: 1.0,
+    hex: "#ef4444",
+    cssVar: "--color-si-critical",
+    labelId: "Kritis",
+    labelEn: "Critical",
+  },
 ];
 
 export function siColor(si: number | null | undefined): string {
@@ -55,16 +73,14 @@ export const BASE_MAP_LAYERS = {
   positron: {
     id: "positron",
     label: "Terang",
-    urlTemplate:
-      "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+    urlTemplate: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
     attribution:
       '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
   },
   darkmatter: {
     id: "darkmatter",
     label: "Gelap",
-    urlTemplate:
-      "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+    urlTemplate: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
     attribution:
       '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
   },

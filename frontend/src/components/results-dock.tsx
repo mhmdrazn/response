@@ -8,12 +8,7 @@ import { ConvergenceChart } from "./sidebar/convergence-chart";
 import { ResultsPanel } from "./sidebar/results-panel";
 import { RouteList } from "./sidebar/route-list";
 import { SeverityPanel } from "./sidebar/severity-panel";
-import type {
-  AppMode,
-  OptimizationResult,
-  RouteOut,
-  SeverityIndexResponse,
-} from "../types";
+import type { AppMode, OptimizationResult, RouteOut, SeverityIndexResponse } from "../types";
 
 type DetailsTab = "routes" | "severity";
 
@@ -187,8 +182,7 @@ export function ResultsDock({
             minHeight: 0,
             opacity: detailsOpen ? 1 : 0,
             overflow: "hidden",
-            transition:
-              "opacity 0.2s ease, padding 0.28s ease, flex 0.28s ease",
+            transition: "opacity 0.2s ease, padding 0.28s ease, flex 0.28s ease",
             pointerEvents: detailsOpen ? "auto" : "none",
           }}
         >
@@ -241,10 +235,7 @@ export function ResultsDock({
                 />
                 {mode === "advanced" ? (
                   <>
-                    <div
-                      aria-hidden
-                      style={{ height: 1, background: "var(--color-frost)" }}
-                    />
+                    <div aria-hidden style={{ height: 1, background: "var(--color-frost)" }} />
                     <ConvergenceChart data={result.convergence} />
                   </>
                 ) : null}
@@ -282,12 +273,8 @@ function TabButton({
         fontSize: 12,
         fontWeight: "var(--font-weight-bold)",
         letterSpacing: "-0.12px",
-        background: active
-          ? "var(--color-active-wash)"
-          : "transparent",
-        color: active
-          ? "var(--color-active-ink)"
-          : "var(--color-steel)",
+        background: active ? "var(--color-active-wash)" : "transparent",
+        color: active ? "var(--color-active-ink)" : "var(--color-steel)",
         border: "none",
         boxShadow: active ? "0 1px 2px 0 rgb(0 0 0 / 0.06)" : "none",
         transition: "background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease",

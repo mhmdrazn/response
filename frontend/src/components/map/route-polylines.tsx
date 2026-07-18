@@ -12,11 +12,7 @@ interface RoutePolylinesProps {
   onHover: (vehicleId: string | null) => void;
 }
 
-export function RoutePolylines({
-  routes,
-  highlightId,
-  onHover,
-}: RoutePolylinesProps) {
+export function RoutePolylines({ routes, highlightId, onHover }: RoutePolylinesProps) {
   return (
     <>
       {routes.map((r) => {
@@ -63,8 +59,7 @@ export function RoutePolylines({
                 <div style={{ fontSize: 12, color: "var(--color-midnight-ink)" }}>
                   {r.visit_count_flood} titik genangan · {r.visit_count_if} sungai
                   <br />
-                  {formatMeters(r.total_distance_m)} ·{" "}
-                  {formatDuration(r.total_time_s)}
+                  {formatMeters(r.total_distance_m)} · {formatDuration(r.total_time_s)}
                 </div>
               </div>
             </Tooltip>

@@ -36,12 +36,7 @@ export function ConvergenceChart({ data }: ConvergenceChartProps) {
         <ResponsiveContainer>
           <LineChart data={data} margin={{ top: 6, right: 8, left: -12, bottom: 0 }}>
             <CartesianGrid stroke="var(--color-frost)" strokeDasharray="2 4" />
-            <XAxis
-              dataKey="iteration"
-              stroke="var(--color-slate)"
-              fontSize={10}
-              tickLine={false}
-            />
+            <XAxis dataKey="iteration" stroke="var(--color-slate)" fontSize={10} tickLine={false} />
             <YAxis
               stroke="var(--color-slate)"
               fontSize={10}
@@ -57,9 +52,7 @@ export function ConvergenceChart({ data }: ConvergenceChartProps) {
                 fontFamily: "var(--font-manrope)",
                 fontSize: 12,
               }}
-              formatter={(value) =>
-                formatNumber(Number(value ?? 0), 0)
-              }
+              formatter={(value) => formatNumber(Number(value ?? 0), 0)}
               labelFormatter={(l) => `Iterasi ${l}`}
             />
             <Line

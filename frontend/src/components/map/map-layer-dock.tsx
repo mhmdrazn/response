@@ -14,11 +14,7 @@ import {
 import { type CSSProperties, type ReactNode, useState } from "react";
 
 import type { DatasetKey } from "../data-table-modal";
-import {
-  BASE_MAP_LAYERS,
-  type BaseMapId,
-  type OverlayLayerId,
-} from "../../lib/map-constants";
+import { BASE_MAP_LAYERS, type BaseMapId, type OverlayLayerId } from "../../lib/map-constants";
 
 interface MapLayerDockProps {
   floodCount: number;
@@ -240,20 +236,12 @@ export function MapLayerDock({
               >
                 {label}
               </span>
-              <Eye
-                size={10}
-                strokeWidth={2}
-                color="var(--color-smoke)"
-                style={{ marginLeft: 1 }}
-              />
+              <Eye size={10} strokeWidth={2} color="var(--color-smoke)" style={{ marginLeft: 1 }} />
             </button>
           ))}
         </div>
 
-        <div
-          aria-hidden
-          style={{ height: 1, background: "var(--color-frost)" }}
-        />
+        <div aria-hidden style={{ height: 1, background: "var(--color-frost)" }} />
 
         <PanelSection label="Peta Dasar" noWrap>
           <div style={{ display: "flex", gap: 6, width: "100%" }}>
@@ -269,10 +257,7 @@ export function MapLayerDock({
           </div>
         </PanelSection>
 
-        <div
-          aria-hidden
-          style={{ height: 1, background: "var(--color-frost)" }}
-        />
+        <div aria-hidden style={{ height: 1, background: "var(--color-frost)" }} />
 
         <PanelSection label="Lapisan Data">
           {OVERLAY_OPTIONS.map(({ id, label, Icon, activeColor }) => (
@@ -340,9 +325,7 @@ function BaseMapTile({
       <span
         style={{
           fontSize: 9.5,
-          fontWeight: active
-            ? "var(--font-weight-bold)"
-            : "var(--font-weight-semibold)",
+          fontWeight: active ? "var(--font-weight-bold)" : "var(--font-weight-semibold)",
           color: active ? "var(--color-midnight-ink)" : "var(--color-steel)",
           letterSpacing: "-0.05px",
           paddingBottom: 4,
@@ -423,8 +406,7 @@ function Pill({
         fontWeight: "var(--font-weight-semibold)",
         letterSpacing: "-0.1px",
         cursor: "pointer",
-        transition:
-          "background 0.14s ease, color 0.14s ease, border-color 0.14s ease",
+        transition: "background 0.14s ease, color 0.14s ease, border-color 0.14s ease",
         whiteSpace: "nowrap",
       }}
       onMouseEnter={(e) => {

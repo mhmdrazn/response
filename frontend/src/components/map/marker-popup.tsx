@@ -14,46 +14,49 @@ export function PopupShell({ title, subtitle, children }: PopupShellProps) {
   return (
     <div
       style={{
-        maxWidth: 248,
-        minWidth: 160,
+        maxWidth: 260,
+        minWidth: 180,
         display: "flex",
         flexDirection: "column",
-        gap: 4,
+        gap: 6,
       }}
     >
-      <div
-        style={{
-          fontSize: 14,
-          color: "var(--color-midnight-ink)",
-          fontWeight: "var(--font-weight-bold)",
-          letterSpacing: "-0.14px",
-          lineHeight: 1.25,
-          wordBreak: "break-word",
-        }}
-      >
-        {title}
-      </div>
-      {subtitle ? (
+      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
         <div
           style={{
-            fontSize: 12,
-            color: "var(--color-slate)",
-            fontWeight: "var(--font-weight-semibold)",
-            letterSpacing: "-0.12px",
-            lineHeight: 1.35,
+            fontSize: 13.5,
+            color: "var(--color-midnight-ink)",
+            fontWeight: "var(--font-weight-bold)",
+            letterSpacing: "-0.15px",
+            lineHeight: 1.3,
             wordBreak: "break-word",
           }}
         >
-          {subtitle}
+          {title}
         </div>
-      ) : null}
+        {subtitle ? (
+          <div
+            style={{
+              fontSize: 11.5,
+              color: "var(--color-slate)",
+              fontWeight: "var(--font-weight-medium)",
+              letterSpacing: "-0.1px",
+              lineHeight: 1.4,
+              wordBreak: "break-word",
+            }}
+          >
+            {subtitle}
+          </div>
+        ) : null}
+      </div>
       {children ? (
         <div
           style={{
-            marginTop: 4,
+            paddingTop: 6,
+            borderTop: "1px solid var(--color-frost)",
             display: "flex",
             flexDirection: "column",
-            gap: 3,
+            gap: 4,
           }}
         >
           {children}

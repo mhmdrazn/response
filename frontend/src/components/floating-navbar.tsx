@@ -9,11 +9,7 @@ interface FloatingNavbarProps {
   compact?: boolean;
 }
 
-export function FloatingNavbar({
-  mode,
-  onModeChange,
-  compact = false,
-}: FloatingNavbarProps) {
+export function FloatingNavbar({ mode, onModeChange, compact = false }: FloatingNavbarProps) {
   return (
     <div
       style={{

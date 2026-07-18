@@ -335,8 +335,16 @@ class VNS:
                 shaken = self._shake(best_routes, best_caps, k)
 
                 try:
+                    # Evaluate shaken first so polish has a real baseline —
+                    # float("inf") baseline accepts every feasible candidate
+                    # and thrashes with scan restarts.
+                    shaken_ev = evaluate_solution(self.inst, shaken, best_caps)
+                    if not all_floods_served(shaken_ev.remaining_volume):
+                        k += 1
+                        continue
                     polished, pol_z, pol_ev = polish(
-                        self.inst, shaken, best_caps, float("inf")
+                        self.inst, shaken, best_caps, shaken_ev.objective_z,
+                        max_rounds=2, quick=True,
                     )
                 except Exception:
                     k += 1

@@ -90,9 +90,7 @@ export function IfMarkers({ ifs }: IfMarkersProps) {
         <Marker key={f.id} position={[f.lat, f.lon]} icon={ifIcon}>
           <Tooltip direction="top" offset={[0, -12]} opacity={1}>
             <PopupShell title={f.highway_name ?? `Titik Buang Air ${f.id}`}>
-              {f.waterway_name ? (
-                <PopupRow label="Sungai" value={f.waterway_name} />
-              ) : null}
+              {f.waterway_name ? <PopupRow label="Sungai" value={f.waterway_name} /> : null}
               {f.waterway_type ? (
                 <PopupRow
                   label="Tipe air"
@@ -106,10 +104,7 @@ export function IfMarkers({ ifs }: IfMarkersProps) {
                 />
               ) : null}
               {f.distance_to_water_m != null ? (
-                <PopupRow
-                  label="Jarak ke air"
-                  value={`${f.distance_to_water_m.toFixed(1)} m`}
-                />
+                <PopupRow label="Jarak ke air" value={`${f.distance_to_water_m.toFixed(1)} m`} />
               ) : null}
             </PopupShell>
           </Tooltip>

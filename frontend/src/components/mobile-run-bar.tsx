@@ -145,12 +145,8 @@ function MiniTab({
         cursor: "pointer",
         fontSize: 11,
         fontWeight: "var(--font-weight-bold)",
-        background: active
-          ? "var(--color-active-wash)"
-          : "transparent",
-        color: active
-          ? "var(--color-active-ink)"
-          : "var(--color-steel)",
+        background: active ? "var(--color-active-wash)" : "transparent",
+        color: active ? "var(--color-active-ink)" : "var(--color-steel)",
         border: "none",
         boxShadow: active ? "0 1px 2px 0 rgb(0 0 0 / 0.06)" : "none",
         whiteSpace: "nowrap",

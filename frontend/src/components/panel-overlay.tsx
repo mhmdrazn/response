@@ -10,12 +10,7 @@ interface PanelOverlayProps {
   children: React.ReactNode;
 }
 
-export function PanelOverlay({
-  open,
-  onClose,
-  title,
-  children,
-}: PanelOverlayProps) {
+export function PanelOverlay({ open, onClose, title, children }: PanelOverlayProps) {
   useEffect(() => {
     if (!open) return;
     function handleKey(e: KeyboardEvent) {

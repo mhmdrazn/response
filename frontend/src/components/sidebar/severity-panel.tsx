@@ -120,13 +120,7 @@ export function SeverityPanel({ severity, embedded = false }: SeverityPanelProps
           >
             <WeightHeader />
             {w.criteria.map((c, i) => (
-              <WeightRow
-                key={c}
-                label={c}
-                ahp={w.ahp[i]}
-                ew={w.ew[i]}
-                combined={w.combined[i]}
-              />
+              <WeightRow key={c} label={c} ahp={w.ahp[i]} ew={w.ew[i]} combined={w.combined[i]} />
             ))}
           </div>
 
@@ -143,9 +137,8 @@ export function SeverityPanel({ severity, embedded = false }: SeverityPanelProps
             <span
               style={{
                 fontWeight: "var(--font-weight-bold)",
-                color: w.consistency_ratio <= 0.1
-                  ? "var(--color-si-low)"
-                  : "var(--color-si-critical)",
+                color:
+                  w.consistency_ratio <= 0.1 ? "var(--color-si-low)" : "var(--color-si-critical)",
               }}
             >
               {w.consistency_ratio.toFixed(4)}
@@ -216,9 +209,8 @@ export function SeverityPanel({ severity, embedded = false }: SeverityPanelProps
             lineHeight: 1.5,
           }}
         >
-          {severity.flood_points.length} titik genangan dianalisis.
-          CR = {w.consistency_ratio.toFixed(4)}.
-          Klik untuk detail.
+          {severity.flood_points.length} titik genangan dianalisis. CR ={" "}
+          {w.consistency_ratio.toFixed(4)}. Klik untuk detail.
         </div>
       )}
     </div>

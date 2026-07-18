@@ -104,9 +104,7 @@ export function useOptimization(): UseOptimization {
     setComparison(null);
     try {
       const r =
-        req.algorithm === "acs"
-          ? await api.runACS(req.params)
-          : await api.runVNS(req.params);
+        req.algorithm === "acs" ? await api.runACS(req.params) : await api.runVNS(req.params);
       setResult(r);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Optimasi gagal.");

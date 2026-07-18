@@ -7,10 +7,7 @@ interface SplashScreenProps {
   autoDismissMs?: number;
 }
 
-export function SplashScreen({
-  onDismiss,
-  autoDismissMs = 3200,
-}: SplashScreenProps) {
+export function SplashScreen({ onDismiss, autoDismissMs = 3200 }: SplashScreenProps) {
   const [fading, setFading] = useState(false);
 
   useEffect(() => {
@@ -93,18 +90,8 @@ function RoutingAnimation() {
       aria-label="Animasi optimasi rute dari depo menuju titik-titik genangan"
     >
       <defs>
-        <pattern
-          id="response-grid"
-          width="24"
-          height="24"
-          patternUnits="userSpaceOnUse"
-        >
-          <path
-            d="M 24 0 L 0 0 0 24"
-            fill="none"
-            stroke="var(--color-frost)"
-            strokeWidth="1"
-          />
+        <pattern id="response-grid" width="24" height="24" patternUnits="userSpaceOnUse">
+          <path d="M 24 0 L 0 0 0 24" fill="none" stroke="var(--color-frost)" strokeWidth="1" />
         </pattern>
       </defs>
 
@@ -123,12 +110,7 @@ function RoutingAnimation() {
 
       {/* Depot chip */}
       <g transform="translate(52 182)">
-        <rect
-          width="16"
-          height="16"
-          rx="3"
-          fill="var(--color-indigo-ink)"
-        />
+        <rect width="16" height="16" rx="3" fill="var(--color-indigo-ink)" />
         <path
           d="M 8 3.5 C 6 6 4.5 7 4.5 9 A 3.5 3.5 0 0 0 11.5 9 C 11.5 7 10 6 8 3.5 Z"
           fill="var(--color-pure-white)"

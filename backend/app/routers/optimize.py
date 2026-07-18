@@ -8,6 +8,7 @@ from collections import Counter
 from fastapi import APIRouter, HTTPException
 
 import app.data as data
+from app.routers.data import _refresh_from_disk_if_stale
 from app.algorithms.acs import ACSParams, HybridACS
 from app.algorithms.vns import VNS, VNSParams
 from app.algorithms.evaluator import SolutionEval, validate_hard_constraints
@@ -36,6 +37,9 @@ router = APIRouter(prefix="/api/optimize", tags=["optimize"])
 
 
 def _build_ready_instance() -> Instance:
+    # Pick up any external CSV edits before we snapshot the coordinates.
+    for _name in ("floods", "depo", "if", "faskes"):
+        _refresh_from_disk_if_stale(_name)
     if data.flood_points is None or data.depots is None or data.ifs is None:
         raise HTTPException(
             status_code=503,

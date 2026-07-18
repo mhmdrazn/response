@@ -15,10 +15,7 @@ interface SiLegendProps {
   defaultOpen?: boolean;
 }
 
-export function SiLegend({
-  inline = false,
-  defaultOpen = false,
-}: SiLegendProps) {
+export function SiLegend({ inline = false, defaultOpen = false }: SiLegendProps) {
   const [open, setOpen] = useState(defaultOpen);
 
   const positionStyle: React.CSSProperties = inline
@@ -42,10 +39,7 @@ export function SiLegend({
       }}
     >
       {SI_PALETTE.map((bucket) => (
-        <div
-          key={bucket.labelId}
-          style={{ display: "flex", alignItems: "center", gap: 8 }}
-        >
+        <div key={bucket.labelId} style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span
             style={{
               width: 10,

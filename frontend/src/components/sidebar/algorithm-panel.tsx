@@ -151,33 +151,73 @@ export function AlgorithmPanel({
         {mode === "advanced" ? (
           algorithm === "acs" ? (
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-              <NumInput label="Iterasi" min={1} max={500} step={1}
+              <NumInput
+                label="Iterasi"
+                min={1}
+                max={500}
+                step={1}
                 value={acsParams.iterations}
-                onChange={(v) => updateACS("iterations", v)} />
-              <NumInput label="Semut" min={1} max={100} step={1}
+                onChange={(v) => updateACS("iterations", v)}
+              />
+              <NumInput
+                label="Semut"
+                min={1}
+                max={100}
+                step={1}
                 value={acsParams.n_ants}
-                onChange={(v) => updateACS("n_ants", v)} />
-              <NumInput label="α (feromon)" min={0.1} max={5} step={0.1}
+                onChange={(v) => updateACS("n_ants", v)}
+              />
+              <NumInput
+                label="α (feromon)"
+                min={0.1}
+                max={5}
+                step={0.1}
                 value={acsParams.alpha}
-                onChange={(v) => updateACS("alpha", v)} />
-              <NumInput label="β (heuristik)" min={0.1} max={10} step={0.1}
+                onChange={(v) => updateACS("alpha", v)}
+              />
+              <NumInput
+                label="β (heuristik)"
+                min={0.1}
+                max={10}
+                step={0.1}
                 value={acsParams.beta}
-                onChange={(v) => updateACS("beta", v)} />
-              <NumInput label="ρ (evaporasi)" min={0.01} max={0.9} step={0.01}
+                onChange={(v) => updateACS("beta", v)}
+              />
+              <NumInput
+                label="ρ (evaporasi)"
+                min={0.01}
+                max={0.9}
+                step={0.01}
                 value={acsParams.rho}
-                onChange={(v) => updateACS("rho", v)} />
-              <NumInput label="q₀ (eksploitasi)" min={0} max={1} step={0.01}
+                onChange={(v) => updateACS("rho", v)}
+              />
+              <NumInput
+                label="q₀ (eksploitasi)"
+                min={0}
+                max={1}
+                step={0.01}
                 value={acsParams.q0}
-                onChange={(v) => updateACS("q0", v)} />
+                onChange={(v) => updateACS("q0", v)}
+              />
             </div>
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-              <NumInput label="Iterasi Maks" min={1} max={1000} step={1}
+              <NumInput
+                label="Iterasi Maks"
+                min={1}
+                max={1000}
+                step={1}
                 value={vnsParams.max_iterations}
-                onChange={(v) => updateVNS("max_iterations", v)} />
-              <NumInput label="k Maks" min={1} max={6} step={1}
+                onChange={(v) => updateVNS("max_iterations", v)}
+              />
+              <NumInput
+                label="k Maks"
+                min={1}
+                max={6}
+                step={1}
                 value={vnsParams.k_max}
-                onChange={(v) => updateVNS("k_max", v)} />
+                onChange={(v) => updateVNS("k_max", v)}
+              />
             </div>
           )
         ) : (
@@ -219,12 +259,10 @@ export function AlgorithmPanel({
               transition: "background 0.15s",
             }}
             onMouseEnter={(e) => {
-              if (!isLoading)
-                e.currentTarget.style.background = "var(--color-indigo-hover)";
+              if (!isLoading) e.currentTarget.style.background = "var(--color-indigo-hover)";
             }}
             onMouseLeave={(e) => {
-              if (!isLoading)
-                e.currentTarget.style.background = "var(--color-indigo-ink)";
+              if (!isLoading) e.currentTarget.style.background = "var(--color-indigo-ink)";
             }}
           >
             {isLoading ? (
@@ -286,8 +324,7 @@ export function AlgorithmPanel({
             transition: "background 0.15s",
           }}
           onMouseEnter={(e) => {
-            if (!isLoading)
-              e.currentTarget.style.background = "var(--color-mist)";
+            if (!isLoading) e.currentTarget.style.background = "var(--color-mist)";
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.background = "var(--color-pure-white)";
