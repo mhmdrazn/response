@@ -23,93 +23,32 @@ export function PanelOverlay({ open, onClose, title, children }: PanelOverlayPro
   if (!open) return null;
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 1100,
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "flex-end",
-      }}
-    >
+    <div className="fixed inset-0 z-[1100] flex flex-col justify-end">
       {/* Backdrop */}
-      <div
-        onClick={onClose}
-        style={{
-          position: "absolute",
-          inset: 0,
-          background: "rgba(6, 27, 49, 0.4)",
-        }}
-      />
+      <div onClick={onClose} className="absolute inset-0 bg-[rgba(6,27,49,0.4)]" />
 
       {/* Panel */}
       <div
-        style={{
-          position: "relative",
-          background: "var(--color-pure-white)",
-          borderRadius: "var(--radius-lg) var(--radius-lg) 0 0",
-          maxHeight: "85vh",
-          display: "flex",
-          flexDirection: "column",
-          animation: "slideUp 0.25s ease-out",
-        }}
+        className="relative flex max-h-[85vh] flex-col rounded-t-lg bg-pure-white"
+        style={{ animation: "slideUp 0.25s ease-out" }}
       >
         {/* Handle + header */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "12px 16px",
-            borderBottom: "1px solid var(--color-frost)",
-            flexShrink: 0,
-          }}
-        >
-          <div
-            style={{
-              fontSize: 12,
-              textTransform: "uppercase",
-              letterSpacing: "0.8px",
-              fontWeight: "var(--font-weight-bold)",
-              color: "var(--color-slate)",
-            }}
-          >
+        <div className="flex flex-shrink-0 items-center justify-between border-b border-frost px-16 py-12">
+          <div className="text-[12px] font-bold uppercase tracking-[0.8px] text-slate">
             {title}
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Tutup"
-            style={{
-              width: 32,
-              height: 32,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: "var(--color-mist)",
-              border: "none",
-              borderRadius: "var(--radius-md)",
-              cursor: "pointer",
-              color: "var(--color-slate)",
-            }}
+            className="flex h-32 w-32 cursor-pointer items-center justify-center rounded-md border-0 bg-mist text-slate"
           >
             <X size={16} strokeWidth={2} />
           </button>
         </div>
 
         {/* Scrollable content */}
-        <div
-          style={{
-            overflowY: "auto",
-            padding: 16,
-            display: "flex",
-            flexDirection: "column",
-            gap: 12,
-          }}
-        >
-          {children}
-        </div>
+        <div className="flex flex-col gap-12 overflow-y-auto p-16">{children}</div>
       </div>
     </div>
   );

@@ -40,76 +40,43 @@ export function ResultsDock({
   // Without severity data there's nothing to switch to, so skip the tab bar.
   const activeTab = hasSeverity ? tab : "routes";
 
+  const cardCls =
+    "pointer-events-auto flex flex-col rounded-lg border border-frost bg-pure-white";
+  const headerBtnCls =
+    "font-manrope flex w-full flex-shrink-0 cursor-pointer items-center gap-8 border-0 bg-transparent px-[14px] py-12 text-left";
+  const headerLabelCls =
+    "flex-1 text-[10px] font-bold uppercase tracking-[0.9px] text-slate";
+
   return (
     <>
       {/* Summary panel — collapsible header + body */}
-      <div
-        style={{
-          background: "var(--color-pure-white)",
-          border: "1px solid var(--color-frost)",
-          borderRadius: "var(--radius-lg)",
-          display: "flex",
-          flexDirection: "column",
-          flexShrink: 0,
-          pointerEvents: "auto",
-        }}
-      >
+      <div className={`${cardCls} flex-shrink-0`}>
         <button
           type="button"
           onClick={() => setSummaryOpen((v) => !v)}
           aria-expanded={summaryOpen}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "12px 14px",
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            textAlign: "left",
-            fontFamily: "var(--font-manrope)",
-            width: "100%",
-          }}
+          className={headerBtnCls}
         >
-          <span
-            style={{
-              flex: 1,
-              fontSize: 10,
-              textTransform: "uppercase",
-              letterSpacing: "0.9px",
-              fontWeight: "var(--font-weight-bold)",
-              color: "var(--color-slate)",
-            }}
-          >
-            Ringkasan Hasil
-          </span>
+          <span className={headerLabelCls}>Ringkasan Hasil</span>
           <ChevronDown
             size={14}
             color="var(--color-slate)"
-            style={{
-              transition: "transform 0.22s ease",
-              transform: summaryOpen ? "rotate(0deg)" : "rotate(-90deg)",
-            }}
+            className={`transition-transform duration-[220ms] ${
+              summaryOpen ? "rotate-0" : "-rotate-90"
+            }`}
           />
         </button>
         <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 14,
-            maxHeight: summaryOpen ? "min(600px, 60vh)" : 0,
-            padding: summaryOpen ? "0 14px 14px" : "0 14px",
-            opacity: summaryOpen ? 1 : 0,
-            overflow: summaryOpen ? "visible" : "hidden",
-            transition:
-              "max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, padding 0.28s ease",
-            pointerEvents: summaryOpen ? "auto" : "none",
-          }}
+          className={`flex flex-col gap-[14px] transition-[max-height,opacity,padding] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+            summaryOpen
+              ? "pointer-events-auto max-h-[min(600px,60vh)] overflow-visible px-[14px] pb-[14px] opacity-100"
+              : "pointer-events-none max-h-0 overflow-hidden px-[14px] py-0 opacity-0"
+          }`}
         >
           <ResultsPanel result={result} mode={mode} />
 
           {/* Export buttons */}
-          <div style={{ display: "flex", gap: 6 }}>
+          <div className="flex gap-[6px]">
             <ExportBtn label="PDF" onClick={() => exportReport(result)} />
             <ExportBtn label="JSON" onClick={() => exportJSON(result)} />
             <ExportBtn label="CSV" onClick={() => exportCSV(result)} />
@@ -119,85 +86,38 @@ export function ResultsDock({
 
       {/* Details panel — collapsible header, then tab bar and scrolling body */}
       <div
-        style={{
-          background: "var(--color-pure-white)",
-          border: "1px solid var(--color-frost)",
-          borderRadius: "var(--radius-lg)",
-          display: "flex",
-          flexDirection: "column",
-          flex: detailsOpen ? 1 : "0 0 auto",
-          minHeight: 0,
-          overflow: "hidden",
-          pointerEvents: "auto",
-          transition: "flex 0.28s ease",
-        }}
+        className={`${cardCls} min-h-0 overflow-hidden transition-[flex] duration-[280ms] ${
+          detailsOpen ? "flex-1" : "flex-none"
+        }`}
       >
         <button
           type="button"
           onClick={() => setDetailsOpen((v) => !v)}
           aria-expanded={detailsOpen}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "12px 14px",
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            textAlign: "left",
-            fontFamily: "var(--font-manrope)",
-            width: "100%",
-            flexShrink: 0,
-          }}
+          className={headerBtnCls}
         >
-          <span
-            style={{
-              flex: 1,
-              fontSize: 10,
-              textTransform: "uppercase",
-              letterSpacing: "0.9px",
-              fontWeight: "var(--font-weight-bold)",
-              color: "var(--color-slate)",
-            }}
-          >
-            Detail Rute
-          </span>
+          <span className={headerLabelCls}>Detail Rute</span>
           <ChevronDown
             size={14}
             color="var(--color-slate)"
-            style={{
-              transition: "transform 0.22s ease",
-              transform: detailsOpen ? "rotate(0deg)" : "rotate(-90deg)",
-            }}
+            className={`transition-transform duration-[220ms] ${
+              detailsOpen ? "rotate-0" : "-rotate-90"
+            }`}
           />
         </button>
 
         <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 12,
-            padding: detailsOpen ? "0 14px 14px" : "0 14px",
-            flex: detailsOpen ? 1 : "0 0 0",
-            minHeight: 0,
-            opacity: detailsOpen ? 1 : 0,
-            overflow: "hidden",
-            transition: "opacity 0.2s ease, padding 0.28s ease, flex 0.28s ease",
-            pointerEvents: detailsOpen ? "auto" : "none",
-          }}
+          className={`flex min-h-0 flex-col gap-12 overflow-hidden transition-[opacity,padding,flex] duration-[280ms] ${
+            detailsOpen
+              ? "pointer-events-auto flex-1 px-[14px] pb-[14px] opacity-100"
+              : "pointer-events-none flex-none px-[14px] py-0 opacity-0"
+          }`}
         >
           {hasSeverity ? (
             <div
               role="tablist"
               aria-label="Detail hasil"
-              style={{
-                display: "flex",
-                gap: 4,
-                padding: 6,
-                background: "var(--color-periwinkle-wash)",
-                borderRadius: "var(--radius-lg)",
-                flexShrink: 0,
-              }}
+              className="flex flex-shrink-0 gap-[4px] rounded-lg bg-periwinkle-wash p-[6px]"
             >
               <TabButton
                 label="Rute"
@@ -212,17 +132,7 @@ export function ResultsDock({
             </div>
           ) : null}
 
-          <div
-            className="scrollbar-hidden"
-            style={{
-              flex: 1,
-              minHeight: 0,
-              overflowY: "auto",
-              display: "flex",
-              flexDirection: "column",
-              gap: 14,
-            }}
-          >
+          <div className="scrollbar-hidden flex min-h-0 flex-1 flex-col gap-[14px] overflow-y-auto">
             {activeTab === "routes" ? (
               <>
                 <RouteList
@@ -235,7 +145,7 @@ export function ResultsDock({
                 />
                 {mode === "advanced" ? (
                   <>
-                    <div aria-hidden style={{ height: 1, background: "var(--color-frost)" }} />
+                    <div aria-hidden className="h-px bg-frost" />
                     <ConvergenceChart data={result.convergence} />
                   </>
                 ) : null}
@@ -265,21 +175,11 @@ function TabButton({
       role="tab"
       aria-selected={active}
       onClick={onClick}
-      style={{
-        flex: 1,
-        padding: "5px 10px",
-        borderRadius: "var(--radius-md)",
-        cursor: "pointer",
-        fontSize: 12,
-        fontWeight: "var(--font-weight-bold)",
-        letterSpacing: "-0.12px",
-        background: active ? "var(--color-active-wash)" : "transparent",
-        color: active ? "var(--color-active-ink)" : "var(--color-steel)",
-        border: "none",
-        boxShadow: active ? "0 1px 2px 0 rgb(0 0 0 / 0.06)" : "none",
-        transition: "background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease",
-        whiteSpace: "nowrap",
-      }}
+      className={`flex-1 cursor-pointer whitespace-nowrap rounded-md border-0 px-[10px] py-[5px] text-[12px] font-bold tracking-[-0.12px] transition-[background,color,box-shadow] duration-150 ${
+        active
+          ? "bg-active-wash text-active-ink shadow-[0_1px_2px_0_rgb(0_0_0/0.06)]"
+          : "bg-transparent text-steel shadow-none"
+      }`}
     >
       {label}
     </button>
@@ -291,29 +191,7 @@ function ExportBtn({ label, onClick }: { label: string; onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      style={{
-        flex: 1,
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 5,
-        padding: "8px 10px",
-        borderRadius: "var(--radius-md)",
-        border: "1px solid var(--color-frost)",
-        background: "var(--color-pure-white)",
-        color: "var(--color-steel)",
-        fontSize: 11,
-        fontWeight: "var(--font-weight-bold)",
-        cursor: "pointer",
-        letterSpacing: "-0.11px",
-        transition: "background 0.15s",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.background = "var(--color-mist)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.background = "var(--color-pure-white)";
-      }}
+      className="inline-flex flex-1 cursor-pointer items-center justify-center gap-[5px] rounded-md border border-frost bg-pure-white px-[10px] py-8 text-[11px] font-bold tracking-[-0.11px] text-steel transition-colors hover:bg-mist"
     >
       <FileDown size={12} strokeWidth={2.2} />
       {label}

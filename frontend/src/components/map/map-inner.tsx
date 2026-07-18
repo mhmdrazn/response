@@ -80,7 +80,7 @@ export function MapInner({
       maxZoom={18}
       zoomControl={false}
       attributionControl={true}
-      style={{ height: "100%", width: "100%" }}
+      className="h-full w-full"
     >
       <TileLayer url={base.urlTemplate} attribution={base.attribution} />
 
@@ -106,15 +106,7 @@ export function MapInner({
           top:78 clears the compact FloatingNavbar (top:12 + ~46px tall)
           with a visible gap instead of nearly touching it. */}
       {isMobile ? (
-        <div
-          style={{
-            position: "absolute",
-            top: 78,
-            right: 12,
-            zIndex: 1000,
-            pointerEvents: "none",
-          }}
-        >
+        <div className="pointer-events-none absolute right-12 top-[78px] z-[1000]">
           <MapControls />
         </div>
       ) : null}
@@ -123,19 +115,7 @@ export function MapInner({
           shows whenever that overlay is on; the point SI legend (absolute
           thresholds) shows when no routes occupy the results panel. */}
       {!isMobile && (overlays.choropleth || routes.length === 0) ? (
-        <div
-          style={{
-            position: "absolute",
-            bottom: 24,
-            right: 16,
-            zIndex: 800,
-            display: "flex",
-            flexDirection: "column",
-            gap: 8,
-            alignItems: "flex-end",
-            pointerEvents: "none",
-          }}
-        >
+        <div className="pointer-events-none absolute bottom-24 right-16 z-[800] flex flex-col items-end gap-8">
           {overlays.choropleth ? <ChoroplethLegend /> : null}
           {routes.length === 0 ? <SiLegend inline /> : null}
         </div>

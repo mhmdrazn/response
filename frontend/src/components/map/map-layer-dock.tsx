@@ -3,7 +3,6 @@
 import {
   Building2,
   ChevronDown,
-  ChevronUp,
   Droplets,
   Eye,
   Hospital,
@@ -12,7 +11,7 @@ import {
   Waves,
   type LucideIcon,
 } from "lucide-react";
-import { type CSSProperties, type ReactNode, useState } from "react";
+import { type ReactNode, useState } from "react";
 
 import type { DatasetKey } from "../data-table-modal";
 import { BASE_MAP_LAYERS, type BaseMapId, type OverlayLayerId } from "../../lib/map-constants";
@@ -116,137 +115,57 @@ export function MapLayerDock({
     faskes: faskesCount,
   };
 
-  const bodyStyle: CSSProperties = {
-    display: "flex",
-    flexDirection: "column",
-    gap: 10,
-    maxHeight: open ? "min(420px, 60vh)" : 0,
-    padding: open ? "10px 12px 12px" : "0 12px",
-    opacity: open ? 1 : 0,
-    overflow: open ? "auto" : "hidden",
-    transition:
-      "max-height 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.18s ease, padding 0.28s ease",
-    pointerEvents: open ? "auto" : "none",
-    borderTop: open ? "1px solid var(--color-frost)" : "1px solid transparent",
-  };
-
   return (
-    <div
-      style={{
-        pointerEvents: "auto",
-        background: "var(--color-pure-white)",
-        border: "1px solid var(--color-frost)",
-        borderRadius: "var(--radius-lg)",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
+    <div className="pointer-events-auto flex flex-col rounded-lg border border-frost bg-pure-white">
       {/* Header row: layers icon + title + chevron toggle (whole row clickable) */}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-          padding: "8px 10px",
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          fontFamily: "var(--font-manrope)",
-          textAlign: "left",
-          width: "100%",
-        }}
+        className="font-manrope flex w-full cursor-pointer items-center gap-[6px] border-0 bg-transparent px-[10px] py-8 text-left"
       >
         <Layers size={14} strokeWidth={2} color="var(--color-slate)" />
-        <span
-          style={{
-            fontSize: 11,
-            fontWeight: "var(--font-weight-bold)",
-            color: "var(--color-midnight-ink)",
-            letterSpacing: "-0.1px",
-            flex: 1,
-          }}
-        >
+        <span className="flex-1 text-[11px] font-bold tracking-[-0.1px] text-midnight-ink">
           Lapisan Peta &amp; Data
         </span>
         <ChevronDown
           size={14}
           color="var(--color-slate)"
-          style={{
-            transition: "transform 0.22s ease",
-            transform: open ? "rotate(0deg)" : "rotate(-90deg)",
-          }}
+          className={`transition-transform duration-[220ms] ${open ? "rotate-0" : "-rotate-90"}`}
         />
       </button>
 
       {/* Collapsible body: data counts + Peta Dasar + Lapisan Data */}
-      <div className="scrollbar-hidden" style={bodyStyle}>
-        <div
-          style={{
-            display: "flex",
-            gap: 4,
-            flexWrap: "wrap",
-          }}
-        >
+      <div
+        className={`scrollbar-hidden flex flex-col gap-[10px] transition-[max-height,opacity,padding] duration-[280ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
+          open
+            ? "pointer-events-auto max-h-[min(420px,60vh)] overflow-auto border-t border-frost px-12 pb-12 pt-[10px] opacity-100"
+            : "pointer-events-none max-h-0 overflow-hidden border-t border-transparent px-12 py-0 opacity-0"
+        }`}
+      >
+        <div className="flex flex-wrap gap-[4px]">
           {DATA_ITEMS.map(({ key, label, Icon, color }) => (
             <button
               key={key}
               type="button"
               onClick={() => onPreviewData(key)}
               title={`Lihat data ${label}`}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 4,
-                padding: "3px 7px",
-                borderRadius: "var(--radius-sm)",
-                border: "1px solid transparent",
-                background: "transparent",
-                cursor: "pointer",
-                transition: "border-color 0.15s, background 0.15s",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "var(--color-frost)";
-                e.currentTarget.style.background = "var(--color-mist)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "transparent";
-                e.currentTarget.style.background = "transparent";
-              }}
+              className="flex cursor-pointer items-center gap-[4px] rounded-sm border border-transparent bg-transparent px-[7px] py-[3px] transition-colors hover:border-frost hover:bg-mist"
             >
               <Icon size={12} strokeWidth={2.2} color={color} />
-              <span
-                style={{
-                  fontSize: 12,
-                  color: "var(--color-midnight-ink)",
-                  fontWeight: "var(--font-weight-bold)",
-                  fontVariantNumeric: "tabular-nums",
-                  lineHeight: 1,
-                }}
-              >
+              <span className="text-[12px] font-bold leading-none text-midnight-ink tabular-nums">
                 {counts[key]}
               </span>
-              <span
-                style={{
-                  fontSize: 10,
-                  color: "var(--color-slate)",
-                  fontWeight: "var(--font-weight-semibold)",
-                  lineHeight: 1,
-                }}
-              >
-                {label}
-              </span>
-              <Eye size={10} strokeWidth={2} color="var(--color-smoke)" style={{ marginLeft: 1 }} />
+              <span className="text-[10px] font-semibold leading-none text-slate">{label}</span>
+              <Eye size={10} strokeWidth={2} color="var(--color-smoke)" className="ml-px" />
             </button>
           ))}
         </div>
 
-        <div aria-hidden style={{ height: 1, background: "var(--color-frost)" }} />
+        <div aria-hidden className="h-px bg-frost" />
 
         <PanelSection label="Peta Dasar" noWrap>
-          <div style={{ display: "flex", gap: 6, width: "100%" }}>
+          <div className="flex w-full gap-[6px]">
             {BASE_MAP_OPTIONS.map(({ id, label, tilePreview }) => (
               <BaseMapTile
                 key={id}
@@ -259,7 +178,7 @@ export function MapLayerDock({
           </div>
         </PanelSection>
 
-        <div aria-hidden style={{ height: 1, background: "var(--color-frost)" }} />
+        <div aria-hidden className="h-px bg-frost" />
 
         <PanelSection label="Lapisan Data">
           {OVERLAY_OPTIONS.map(({ id, label, Icon, activeColor }) => (
@@ -295,44 +214,19 @@ function BaseMapTile({
       type="button"
       aria-pressed={active}
       onClick={onClick}
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: 4,
-        padding: 0,
-        border: "2px solid",
-        borderColor: active ? "var(--color-steel)" : "var(--color-frost)",
-        borderRadius: "var(--radius-md)",
-        background: "var(--color-pure-white)",
-        cursor: "pointer",
-        overflow: "hidden",
-        transition: "border-color 0.14s ease",
-        flex: 1,
-        minWidth: 0,
-      }}
+      className={`flex min-w-0 flex-1 cursor-pointer flex-col items-center gap-[4px] overflow-hidden rounded-md border-2 bg-pure-white p-0 transition-colors ${
+        active ? "border-steel" : "border-frost"
+      }`}
     >
       <img
         src={previewUrl}
         alt={label}
-        style={{
-          display: "block",
-          width: "100%",
-          height: 36,
-          objectFit: "cover",
-          objectPosition: "center",
-          borderRadius: "3px 3px 0 0",
-        }}
+        className="block h-[36px] w-full rounded-t-[3px] object-cover object-center"
       />
       <span
-        style={{
-          fontSize: 9.5,
-          fontWeight: active ? "var(--font-weight-bold)" : "var(--font-weight-semibold)",
-          color: active ? "var(--color-midnight-ink)" : "var(--color-steel)",
-          letterSpacing: "-0.05px",
-          paddingBottom: 4,
-          lineHeight: 1,
-        }}
+        className={`pb-[4px] text-[9.5px] leading-none tracking-[-0.05px] ${
+          active ? "font-bold text-midnight-ink" : "font-semibold text-steel"
+        }`}
       >
         {label}
       </span>
@@ -350,28 +244,11 @@ function PanelSection({
   noWrap?: boolean;
 }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-      <div
-        style={{
-          fontSize: 10,
-          textTransform: "uppercase",
-          letterSpacing: "0.9px",
-          fontWeight: "var(--font-weight-bold)",
-          color: "var(--color-slate)",
-          paddingLeft: 2,
-        }}
-      >
+    <div className="flex flex-col gap-[6px]">
+      <div className="pl-[2px] text-[10px] font-bold uppercase tracking-[0.9px] text-slate">
         {label}
       </div>
-      <div
-        style={{
-          display: "flex",
-          flexWrap: noWrap ? "nowrap" : "wrap",
-          gap: 5,
-        }}
-      >
-        {children}
-      </div>
+      <div className={`flex gap-[5px] ${noWrap ? "flex-nowrap" : "flex-wrap"}`}>{children}</div>
     </div>
   );
 }
@@ -394,37 +271,12 @@ function Pill({
       type="button"
       aria-pressed={active}
       onClick={onClick}
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 6,
-        padding: "5px 10px 5px 8px",
-        borderRadius: "var(--radius-md)",
-        border: "1px solid",
-        borderColor: active ? activeColor : "var(--color-frost)",
-        background: active ? activeColor : "var(--color-pure-white)",
-        color: active ? "#ffffff" : "var(--color-steel)",
-        fontSize: 12,
-        fontWeight: "var(--font-weight-semibold)",
-        letterSpacing: "-0.1px",
-        cursor: "pointer",
-        transition: "background 0.14s ease, color 0.14s ease, border-color 0.14s ease",
-        whiteSpace: "nowrap",
-      }}
-      onMouseEnter={(e) => {
-        if (!active) {
-          const t = e.currentTarget as HTMLButtonElement;
-          t.style.background = "var(--color-frost)";
-          t.style.color = "var(--color-midnight-ink)";
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (!active) {
-          const t = e.currentTarget as HTMLButtonElement;
-          t.style.background = "var(--color-pure-white)";
-          t.style.color = "var(--color-steel)";
-        }
-      }}
+      className={`inline-flex cursor-pointer items-center gap-[6px] whitespace-nowrap rounded-md border py-[5px] pl-8 pr-[10px] text-[12px] font-semibold tracking-[-0.1px] transition-colors ${
+        active
+          ? "border-transparent text-white"
+          : "border-frost bg-pure-white text-steel hover:bg-frost hover:text-midnight-ink"
+      }`}
+      style={active ? { background: activeColor, borderColor: activeColor } : undefined}
     >
       {children}
       <span>{label}</span>

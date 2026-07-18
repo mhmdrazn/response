@@ -40,81 +40,35 @@ export function AlgorithmPanel({
   const [open, setOpen] = useState(true);
 
   return (
-    <div
-      style={{
-        background: "var(--color-pure-white)",
-        border: "1px solid var(--color-frost)",
-        borderRadius: "var(--radius-lg)",
-        display: "flex",
-        flexDirection: "column",
-        pointerEvents: "auto",
-      }}
-    >
+    <div className="pointer-events-auto flex flex-col rounded-lg border border-frost bg-pure-white">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          padding: "12px 14px",
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          textAlign: "left",
-          fontFamily: "var(--font-manrope)",
-          width: "100%",
-        }}
+        className="font-manrope flex w-full cursor-pointer items-center gap-8 border-0 bg-transparent px-[14px] py-12 text-left"
       >
-        <span
-          style={{
-            flex: 1,
-            fontSize: 10,
-            textTransform: "uppercase",
-            letterSpacing: "0.9px",
-            fontWeight: "var(--font-weight-bold)",
-            color: "var(--color-slate)",
-          }}
-        >
+        <span className="flex-1 text-[10px] font-bold uppercase tracking-[0.9px] text-slate">
           Algoritma
         </span>
         <ChevronDown
           size={14}
           color="var(--color-slate)"
-          style={{
-            transition: "transform 0.22s ease",
-            transform: open ? "rotate(0deg)" : "rotate(-90deg)",
-          }}
+          className={`transition-transform duration-[220ms] ${open ? "rotate-0" : "-rotate-90"}`}
         />
       </button>
 
       <div
-        className="scrollbar-hidden"
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 12,
-          maxHeight: open ? "min(720px, 78vh)" : 0,
-          padding: open ? "0 14px 14px" : "0 14px",
-          opacity: open ? 1 : 0,
-          overflow: open ? "auto" : "hidden",
-          transition:
-            "max-height 0.32s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, padding 0.28s ease",
-          pointerEvents: open ? "auto" : "none",
-        }}
+        className={`scrollbar-hidden flex flex-col gap-12 transition-[max-height,opacity,padding] duration-[320ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
+          open
+            ? "pointer-events-auto max-h-[min(720px,78vh)] overflow-auto px-[14px] pb-[14px] opacity-100"
+            : "pointer-events-none max-h-0 overflow-hidden px-[14px] py-0 opacity-0"
+        }`}
       >
         {/* Algorithm selector */}
         <div
           role="tablist"
           aria-label="Pilih algoritma"
-          style={{
-            display: "flex",
-            gap: 4,
-            padding: 6,
-            background: "var(--color-periwinkle-wash)",
-            borderRadius: "var(--radius-lg)",
-          }}
+          className="flex gap-[4px] rounded-lg bg-periwinkle-wash p-[6px]"
         >
           <AlgoTab
             active={algorithm === "acs"}
@@ -129,19 +83,7 @@ export function AlgorithmPanel({
         </div>
 
         {/* Description */}
-        <div
-          style={{
-            padding: "7px 10px",
-            background: "var(--color-mist)",
-            border: "1px solid var(--color-frost)",
-            borderRadius: "var(--radius-md)",
-            fontSize: 11,
-            color: "var(--color-steel)",
-            fontWeight: "var(--font-weight-medium)",
-            letterSpacing: "-0.11px",
-            lineHeight: 1.4,
-          }}
-        >
+        <div className="rounded-md border border-frost bg-mist px-[10px] py-[7px] text-[11px] font-medium leading-[1.4] tracking-[-0.11px] text-steel">
           {algorithm === "acs"
             ? "Hybrid Ant Colony System — konstruksi solusi berbasis feromon + pencarian lokal"
             : "Variable Neighborhood Search — eksplorasi lingkungan sistematik + pencarian lokal"}
@@ -150,7 +92,7 @@ export function AlgorithmPanel({
         {/* Parameters */}
         {mode === "advanced" ? (
           algorithm === "acs" ? (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            <div className="grid grid-cols-2 gap-8">
               <NumInput
                 label="Iterasi"
                 min={1}
@@ -201,7 +143,7 @@ export function AlgorithmPanel({
               />
             </div>
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            <div className="grid grid-cols-2 gap-8">
               <NumInput
                 label="Iterasi Maks"
                 min={1}
@@ -221,14 +163,7 @@ export function AlgorithmPanel({
             </div>
           )
         ) : (
-          <div
-            style={{
-              fontSize: 12,
-              color: "var(--color-steel)",
-              fontWeight: "var(--font-weight-medium)",
-              lineHeight: 1.5,
-            }}
-          >
+          <div className="text-[12px] font-medium leading-[1.5] text-steel">
             {algorithm === "acs"
               ? "Menggunakan preset default (60 iterasi · 20 semut · batas 45 detik). Beralih ke mode Analitik untuk mengatur parameter."
               : "Menggunakan preset default (100 iterasi · k_max 3 · batas 45 detik). Beralih ke mode Analitik untuk mengatur parameter."}
@@ -236,34 +171,16 @@ export function AlgorithmPanel({
         )}
 
         {/* Run / Reset buttons */}
-        <div style={{ display: "flex", gap: 8 }}>
+        <div className="flex gap-8">
           <button
             type="button"
             disabled={isLoading}
             onClick={onRun}
-            style={{
-              flex: 1,
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 6,
-              padding: "10px 14px",
-              borderRadius: "var(--radius-md)",
-              border: "none",
-              background: isLoading ? "var(--color-steel)" : "var(--color-indigo-ink)",
-              color: "#ffffff",
-              fontSize: 13,
-              fontWeight: "var(--font-weight-bold)",
-              cursor: isLoading ? "wait" : "pointer",
-              letterSpacing: "-0.13px",
-              transition: "background 0.15s",
-            }}
-            onMouseEnter={(e) => {
-              if (!isLoading) e.currentTarget.style.background = "var(--color-indigo-hover)";
-            }}
-            onMouseLeave={(e) => {
-              if (!isLoading) e.currentTarget.style.background = "var(--color-indigo-ink)";
-            }}
+            className={`inline-flex flex-1 items-center justify-center gap-[6px] rounded-md border-0 px-[14px] py-[10px] text-[13px] font-bold tracking-[-0.13px] text-white transition-colors ${
+              isLoading
+                ? "cursor-wait bg-steel"
+                : "cursor-pointer bg-indigo-ink hover:bg-indigo-hover"
+            }`}
           >
             {isLoading ? (
               <>
@@ -284,18 +201,9 @@ export function AlgorithmPanel({
               disabled={isLoading}
               title="Reset hasil"
               aria-label="Reset hasil"
-              style={{
-                width: 40,
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: 8,
-                borderRadius: "var(--radius-md)",
-                border: "1px solid var(--color-frost)",
-                background: "var(--color-pure-white)",
-                color: "var(--color-steel)",
-                cursor: isLoading ? "wait" : "pointer",
-              }}
+              className={`inline-flex w-[40px] items-center justify-center rounded-md border border-frost bg-pure-white p-8 text-steel ${
+                isLoading ? "cursor-wait" : "cursor-pointer"
+              }`}
             >
               <RotateCcw size={15} strokeWidth={2} />
             </button>
@@ -307,45 +215,15 @@ export function AlgorithmPanel({
           type="button"
           disabled={isLoading}
           onClick={onCompare}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 6,
-            padding: "8px 14px",
-            borderRadius: "var(--radius-md)",
-            border: "1px solid var(--color-frost)",
-            background: "var(--color-pure-white)",
-            color: "var(--color-steel)",
-            fontSize: 12,
-            fontWeight: "var(--font-weight-medium)",
-            cursor: isLoading ? "wait" : "pointer",
-            letterSpacing: "-0.12px",
-            transition: "background 0.15s",
-          }}
-          onMouseEnter={(e) => {
-            if (!isLoading) e.currentTarget.style.background = "var(--color-mist)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "var(--color-pure-white)";
-          }}
+          className={`inline-flex items-center justify-center gap-[6px] rounded-md border border-frost bg-pure-white px-[14px] py-8 text-[12px] font-medium tracking-[-0.12px] text-steel transition-colors hover:bg-mist ${
+            isLoading ? "cursor-wait" : "cursor-pointer"
+          }`}
         >
           Bandingkan ACS vs VNS
         </button>
 
         {error ? (
-          <div
-            style={{
-              padding: "8px 10px",
-              background: "#fef2f2",
-              border: "1px solid #fecaca",
-              borderRadius: "var(--radius-md)",
-              fontSize: 12,
-              color: "#b91c1c",
-              fontWeight: "var(--font-weight-semibold)",
-              lineHeight: 1.4,
-            }}
-          >
+          <div className="rounded-md border border-[#fecaca] bg-[#fef2f2] px-[10px] py-8 text-[12px] font-semibold leading-[1.4] text-[#b91c1c]">
             {error}
           </div>
         ) : null}
@@ -369,20 +247,11 @@ function AlgoTab({
       role="tab"
       aria-selected={active}
       onClick={onClick}
-      style={{
-        flex: 1,
-        padding: "6px 12px",
-        borderRadius: "var(--radius-md)",
-        border: "none",
-        background: active ? "var(--color-active-wash)" : "transparent",
-        color: active ? "var(--color-active-ink)" : "var(--color-slate)",
-        boxShadow: active ? "0 1px 2px 0 rgb(0 0 0 / 0.06)" : "none",
-        fontSize: 12,
-        fontWeight: active ? "var(--font-weight-bold)" : "var(--font-weight-medium)",
-        cursor: "pointer",
-        letterSpacing: "-0.12px",
-        transition: "background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease",
-      }}
+      className={`flex-1 cursor-pointer rounded-md border-0 px-12 py-[6px] text-[12px] tracking-[-0.12px] transition-[background,color,box-shadow] duration-[150ms] ${
+        active
+          ? "bg-active-wash font-bold text-active-ink shadow-[0_1px_2px_0_rgb(0_0_0/0.06)]"
+          : "bg-transparent font-medium text-slate shadow-none"
+      }`}
     >
       {label}
     </button>
@@ -405,18 +274,8 @@ function NumInput({
   step: number;
 }) {
   return (
-    <label style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-      <span
-        style={{
-          fontSize: 10,
-          fontWeight: "var(--font-weight-bold)",
-          color: "var(--color-slate)",
-          textTransform: "uppercase",
-          letterSpacing: "0.5px",
-        }}
-      >
-        {label}
-      </span>
+    <label className="flex flex-col gap-[3px]">
+      <span className="text-[10px] font-bold uppercase tracking-[0.5px] text-slate">{label}</span>
       <input
         type="number"
         min={min}
@@ -424,23 +283,7 @@ function NumInput({
         step={step}
         value={value}
         onChange={(e) => onChange(Number(e.currentTarget.value))}
-        style={{
-          fontFamily: "var(--font-manrope)",
-          fontSize: 13,
-          fontWeight: "var(--font-weight-semibold)",
-          color: "var(--color-midnight-ink)",
-          border: "1px solid var(--color-frost)",
-          borderRadius: "var(--radius-md)",
-          padding: "6px 8px",
-          outline: "none",
-          background: "var(--color-pure-white)",
-        }}
-        onFocus={(e) => {
-          e.currentTarget.style.borderColor = "var(--color-steel)";
-        }}
-        onBlur={(e) => {
-          e.currentTarget.style.borderColor = "var(--color-frost)";
-        }}
+        className="font-manrope rounded-md border border-frost bg-pure-white px-8 py-[6px] text-[13px] font-semibold text-midnight-ink outline-none focus:border-steel"
       />
     </label>
   );
@@ -449,15 +292,8 @@ function NumInput({
 function Spinner() {
   return (
     <span
-      style={{
-        display: "inline-block",
-        width: 12,
-        height: 12,
-        border: "2px solid rgba(255,255,255,0.35)",
-        borderTopColor: "#ffffff",
-        borderRadius: "50%",
-        animation: "response-spin 0.8s linear infinite",
-      }}
+      className="inline-block h-[12px] w-[12px] rounded-full border-2 border-white/35 border-t-white"
+      style={{ animation: "response-spin 0.8s linear infinite" }}
     />
   );
 }

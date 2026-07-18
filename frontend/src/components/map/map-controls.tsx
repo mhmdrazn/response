@@ -8,15 +8,7 @@ export function MapControls() {
   const map = useMap();
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 8,
-        alignItems: "flex-start",
-        pointerEvents: "none",
-      }}
-    >
+    <div className="pointer-events-none flex flex-col items-start gap-8">
       <ControlCluster>
         <IconButton
           label="Kembali ke pusat Surabaya"
@@ -48,15 +40,9 @@ function ControlCluster({
 }) {
   return (
     <div
-      style={{
-        pointerEvents: "auto",
-        background: "var(--color-pure-white)",
-        border: "1px solid var(--color-frost)",
-        borderRadius: "var(--radius-lg)",
-        overflow: "hidden",
-        display: "flex",
-        flexDirection: vertical ? "column" : "row",
-      }}
+      className={`pointer-events-auto flex overflow-hidden rounded-lg border border-frost bg-pure-white ${
+        vertical ? "flex-col" : "flex-row"
+      }`}
     >
       {children}
     </div>
@@ -78,23 +64,7 @@ function IconButton({
       aria-label={label}
       title={label}
       onClick={onClick}
-      style={{
-        width: 36,
-        height: 36,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "var(--color-pure-white)",
-        color: "var(--color-midnight-ink)",
-        border: "none",
-        cursor: "pointer",
-      }}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLButtonElement).style.background = "var(--color-frost)";
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLButtonElement).style.background = "var(--color-pure-white)";
-      }}
+      className="flex h-[36px] w-[36px] cursor-pointer items-center justify-center border-0 bg-pure-white text-midnight-ink transition-colors hover:bg-frost"
     >
       {children}
     </button>
@@ -102,7 +72,7 @@ function IconButton({
 }
 
 function Divider() {
-  return <div aria-hidden style={{ height: 1, background: "var(--color-frost)", width: "100%" }} />;
+  return <div aria-hidden className="h-px w-full bg-frost" />;
 }
 
 function CompassIcon() {

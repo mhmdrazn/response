@@ -12,55 +12,19 @@ interface PopupShellProps {
 
 export function PopupShell({ title, subtitle, children }: PopupShellProps) {
   return (
-    <div
-      style={{
-        maxWidth: 260,
-        minWidth: 180,
-        display: "flex",
-        flexDirection: "column",
-        gap: 6,
-      }}
-    >
-      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        <div
-          style={{
-            fontSize: 13.5,
-            color: "var(--color-midnight-ink)",
-            fontWeight: "var(--font-weight-bold)",
-            letterSpacing: "-0.15px",
-            lineHeight: 1.3,
-            wordBreak: "break-word",
-          }}
-        >
+    <div className="flex min-w-[180px] max-w-[260px] flex-col gap-[6px]">
+      <div className="flex flex-col gap-[2px]">
+        <div className="break-words text-[13.5px] font-bold leading-[1.3] tracking-[-0.15px] text-midnight-ink">
           {title}
         </div>
         {subtitle ? (
-          <div
-            style={{
-              fontSize: 11.5,
-              color: "var(--color-slate)",
-              fontWeight: "var(--font-weight-medium)",
-              letterSpacing: "-0.1px",
-              lineHeight: 1.4,
-              wordBreak: "break-word",
-            }}
-          >
+          <div className="break-words text-[11.5px] font-medium leading-[1.4] tracking-[-0.1px] text-slate">
             {subtitle}
           </div>
         ) : null}
       </div>
       {children ? (
-        <div
-          style={{
-            paddingTop: 6,
-            borderTop: "1px solid var(--color-frost)",
-            display: "flex",
-            flexDirection: "column",
-            gap: 4,
-          }}
-        >
-          {children}
-        </div>
+        <div className="flex flex-col gap-[4px] border-t border-frost pt-[6px]">{children}</div>
       ) : null}
     </div>
   );
@@ -73,36 +37,9 @@ interface PopupRowProps {
 
 export function PopupRow({ label, value }: PopupRowProps) {
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: 12,
-        fontSize: 12.5,
-        minWidth: 0,
-      }}
-    >
-      <span
-        style={{
-          color: "var(--color-slate)",
-          fontWeight: "var(--font-weight-semibold)",
-          flexShrink: 0,
-        }}
-      >
-        {label}
-      </span>
-      <span
-        style={{
-          color: "var(--color-midnight-ink)",
-          fontWeight: "var(--font-weight-bold)",
-          textAlign: "right",
-          wordBreak: "break-word",
-          minWidth: 0,
-        }}
-      >
-        {value}
-      </span>
+    <div className="flex min-w-0 items-center justify-between gap-12 text-[12.5px]">
+      <span className="flex-shrink-0 font-semibold text-slate">{label}</span>
+      <span className="min-w-0 break-words text-right font-bold text-midnight-ink">{value}</span>
     </div>
   );
 }
@@ -115,18 +52,8 @@ interface SiPillProps {
 export function SiPill({ si, label }: SiPillProps) {
   return (
     <span
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        borderRadius: "var(--radius-md)",
-        padding: "1px 8px",
-        fontSize: 11,
-        background: siColor(si),
-        color: "#ffffff",
-        fontWeight: "var(--font-weight-bold)",
-        letterSpacing: "0.2px",
-        whiteSpace: "nowrap",
-      }}
+      className="inline-flex items-center whitespace-nowrap rounded-md px-8 py-px text-[11px] font-bold tracking-[0.2px] text-white"
+      style={{ background: siColor(si) }}
     >
       {label} · {si.toFixed(2)}
     </span>
@@ -142,17 +69,7 @@ export function DescBlock({ text, max = 140 }: DescBlockProps) {
   if (!text) return null;
   const clipped = text.length > max ? text.slice(0, max - 1).trim() + "…" : text;
   return (
-    <div
-      style={{
-        marginTop: 4,
-        fontSize: 12,
-        color: "var(--color-steel)",
-        fontWeight: "var(--font-weight-medium)",
-        lineHeight: 1.5,
-        wordBreak: "break-word",
-        overflowWrap: "anywhere",
-      }}
-    >
+    <div className="mt-[4px] break-words text-[12px] font-medium leading-[1.5] text-steel [overflow-wrap:anywhere]">
       {clipped}
     </div>
   );

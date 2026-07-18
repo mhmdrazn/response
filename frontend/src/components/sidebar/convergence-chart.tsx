@@ -20,19 +20,11 @@ interface ConvergenceChartProps {
 export function ConvergenceChart({ data }: ConvergenceChartProps) {
   if (!data.length) return null;
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-      <div
-        style={{
-          fontSize: 10,
-          textTransform: "uppercase",
-          letterSpacing: "0.9px",
-          fontWeight: "var(--font-weight-bold)",
-          color: "var(--color-slate)",
-        }}
-      >
+    <div className="flex flex-col gap-[6px]">
+      <div className="text-[10px] font-bold uppercase tracking-[0.9px] text-slate">
         Konvergensi (best Z per iterasi)
       </div>
-      <div style={{ width: "100%", height: 140 }}>
+      <div className="h-[140px] w-full">
         <ResponsiveContainer>
           <LineChart data={data} margin={{ top: 6, right: 8, left: -12, bottom: 0 }}>
             <CartesianGrid stroke="var(--color-frost)" strokeDasharray="2 4" />

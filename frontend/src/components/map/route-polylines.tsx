@@ -35,28 +35,17 @@ export function RoutePolylines({ routes, highlightId, onHover }: RoutePolylinesP
             }}
           >
             <Tooltip sticky direction="top" opacity={1}>
-              <div style={{ maxWidth: 230, minWidth: 0 }}>
+              <div className="min-w-0 max-w-[230px]">
                 <div
-                  style={{
-                    fontSize: 13,
-                    fontWeight: "var(--font-weight-bold)",
-                    color,
-                    letterSpacing: "-0.13px",
-                  }}
+                  className="text-[13px] font-bold tracking-[-0.13px]"
+                  style={{ color }}
                 >
                   Kendaraan {r.vehicle_id}
                 </div>
-                <div
-                  style={{
-                    fontSize: 11,
-                    fontWeight: "var(--font-weight-semibold)",
-                    color: "var(--color-slate)",
-                    marginBottom: 4,
-                  }}
-                >
+                <div className="mb-[4px] text-[11px] font-semibold text-slate">
                   {r.depot_name || r.depot_id} · {r.capacity_l.toLocaleString()} L
                 </div>
-                <div style={{ fontSize: 12, color: "var(--color-midnight-ink)" }}>
+                <div className="text-[12px] text-midnight-ink">
                   {r.visit_count_flood} titik genangan · {r.visit_count_if} sungai
                   <br />
                   {formatMeters(r.total_distance_m)} · {formatDuration(r.total_time_s)}

@@ -34,45 +34,23 @@ export function SplashScreen({ onDismiss, autoDismissMs = 3200 }: SplashScreenPr
         if (e.key === "Enter" || e.key === " ") handleSkip();
       }}
       aria-label="Lewati splash screen"
-      className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-[var(--color-pure-white)] transition-opacity duration-500 ${
+      className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-pure-white transition-opacity duration-500 ${
         fading ? "pointer-events-none opacity-0" : "opacity-100"
       }`}
     >
       <RoutingAnimation />
 
-      <h1
-        className="response-splash-title mt-10 text-[56px] leading-none"
-        style={{
-          fontWeight: "var(--font-weight-light)",
-          letterSpacing: "-1.4px",
-          color: "var(--color-midnight-ink)",
-        }}
-      >
+      <h1 className="response-splash-title mt-10 text-[56px] font-light leading-none tracking-[-1.4px] text-midnight-ink">
         Response
       </h1>
 
-      <p
-        className="response-splash-subtitle mt-4 max-w-lg px-6 text-center text-[16px]"
-        style={{
-          fontWeight: "var(--font-weight-medium)",
-          color: "var(--color-steel)",
-          letterSpacing: "-0.16px",
-          lineHeight: 1.45,
-        }}
-      >
+      <p className="response-splash-subtitle mt-4 max-w-lg px-6 text-center text-[16px] font-medium leading-[1.45] tracking-[-0.16px] text-steel">
         Sistem Pendukung Keputusan Optimasi Rute Armada Pemadam Kebakaran
         <br />
         untuk Penanganan Banjir Kota Surabaya
       </p>
 
-      <p
-        className="response-splash-hint mt-10 text-[12px] uppercase"
-        style={{
-          fontWeight: "var(--font-weight-semibold)",
-          color: "var(--color-smoke)",
-          letterSpacing: "1.5px",
-        }}
-      >
+      <p className="response-splash-hint mt-10 text-[12px] font-semibold uppercase tracking-[1.5px] text-smoke">
         Klik untuk lanjut
       </p>
     </div>

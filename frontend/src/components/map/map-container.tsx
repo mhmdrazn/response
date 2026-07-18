@@ -7,19 +7,8 @@ import type { MapInnerProps } from "./map-inner";
 const MapInner = dynamic(() => import("./map-inner").then((m) => m.MapInner), {
   ssr: false,
   loading: () => (
-    <div
-      className="flex h-full w-full items-center justify-center"
-      style={{ background: "var(--color-mist)" }}
-    >
-      <div
-        style={{
-          fontSize: 14,
-          color: "var(--color-steel)",
-          fontWeight: "var(--font-weight-semibold)",
-        }}
-      >
-        Memuat peta...
-      </div>
+    <div className="flex h-full w-full items-center justify-center bg-mist">
+      <div className="text-body-sm font-semibold text-steel">Memuat peta...</div>
     </div>
   ),
 });

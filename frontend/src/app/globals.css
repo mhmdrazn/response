@@ -104,6 +104,13 @@
   --radius-xl: 18px;
   --radius-pill: 9999px;
 
+  /* --- Shadow scale (see DESIGN.md § Elevation) ---
+     Kept intentionally narrow: sm for segmented-control active pills,
+     md for floating overlays that hover over the map, lg for modals. */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.06);
+  --shadow-md: 0 4px 12px -2px rgb(0 0 0 / 0.08);
+  --shadow-lg: 0 12px 32px -8px rgb(0 0 0 / 0.18);
+
   /* --- Active state (shadcn-style: borderless white pill on grey track,
      depth via tint shift instead of box-shadow per DESIGN.md) --- */
   --color-active-wash: #ffffff;

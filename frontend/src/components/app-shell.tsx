@@ -232,10 +232,7 @@ export function AppShell() {
   return (
     <ErrorBoundary>
       <ToastProvider>
-        <div
-          className="relative h-screen w-screen overflow-hidden"
-          style={{ background: "var(--color-mist)" }}
-        >
+        <div className="relative h-screen w-screen overflow-hidden bg-mist">
           {/* Full-viewport map */}
           <div className="absolute inset-0">
             {data ? (
@@ -268,28 +265,10 @@ export function AppShell() {
             <>
               {/* Left panel — bottom offset clears map LeftPanel dock */}
               <div
-                style={{
-                  position: "absolute",
-                  top: 84,
-                  left: 16,
-                  bottom: SIDEBAR_BOTTOM_CLEARANCE,
-                  width: panelW,
-                  zIndex: 900,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 10,
-                  pointerEvents: "none",
-                  overflowY: "auto",
-                }}
+                className="pointer-events-none absolute left-16 top-[84px] z-[900] flex flex-col gap-[10px] overflow-y-auto"
+                style={{ bottom: SIDEBAR_BOTTOM_CLEARANCE, width: panelW }}
               >
-                <div
-                  style={{
-                    pointerEvents: "auto",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 10,
-                  }}
-                >
+                <div className="pointer-events-auto flex flex-col gap-[10px]">
                   {algorithmPanelContent}
                 </div>
               </div>
@@ -298,30 +277,10 @@ export function AppShell() {
                 anchored) and does NOT scroll itself. */}
               {result ? (
                 <div
-                  style={{
-                    position: "absolute",
-                    top: 16,
-                    right: 16,
-                    bottom: 16,
-                    width: resultPanelW,
-                    zIndex: 900,
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 10,
-                    pointerEvents: "none",
-                    overflow: "hidden",
-                  }}
+                  className="pointer-events-none absolute bottom-16 right-16 top-16 z-[900] flex flex-col gap-[10px] overflow-hidden"
+                  style={{ width: resultPanelW }}
                 >
-                  <div
-                    style={{
-                      pointerEvents: "auto",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 10,
-                      flex: 1,
-                      minHeight: 0,
-                    }}
-                  >
+                  <div className="pointer-events-auto flex min-h-0 flex-1 flex-col gap-[10px]">
                     {resultsPanelContent}
                   </div>
                 </div>
@@ -330,19 +289,7 @@ export function AppShell() {
           ) : (
             <>
               {/* ── Mobile: single flex-stacked bottom dock ── */}
-              <div
-                style={{
-                  position: "absolute",
-                  left: 16,
-                  right: 16,
-                  bottom: 16,
-                  zIndex: 950,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 10,
-                  pointerEvents: "none",
-                }}
-              >
+              <div className="pointer-events-none absolute bottom-16 left-16 right-16 z-[950] flex flex-col gap-[10px]">
                 {result ? (
                   <ResultPeekBar
                     objectiveZ={result.objective_z}
@@ -415,46 +362,10 @@ function ResultPeekBar({ objectiveZ, onOpen }: { objectiveZ: number; onOpen: () 
     <button
       type="button"
       onClick={onOpen}
-      style={{
-        pointerEvents: "auto",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        width: "100%",
-        background: "var(--color-pure-white)",
-        border: "1px solid var(--color-frost)",
-        borderRadius: "var(--radius-lg)",
-        padding: "10px 14px",
-        cursor: "pointer",
-        fontFamily: "var(--font-manrope)",
-        transition: "background 0.15s ease, border-color 0.15s ease",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.background = "var(--color-mist)";
-        e.currentTarget.style.borderColor = "var(--color-smoke)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.background = "var(--color-pure-white)";
-        e.currentTarget.style.borderColor = "var(--color-frost)";
-      }}
+      className="font-manrope pointer-events-auto flex w-full cursor-pointer items-center justify-between rounded-lg border border-frost bg-pure-white px-[14px] py-[10px] transition-colors hover:border-smoke hover:bg-mist"
     >
-      <span
-        style={{
-          fontSize: 11,
-          color: "var(--color-slate)",
-          fontWeight: "var(--font-weight-semibold)",
-        }}
-      >
-        Hasil Optimasi
-      </span>
-      <span
-        style={{
-          fontSize: 12,
-          color: "var(--color-midnight-ink)",
-          fontWeight: "var(--font-weight-bold)",
-          fontVariantNumeric: "tabular-nums",
-        }}
-      >
+      <span className="text-[11px] font-semibold text-slate">Hasil Optimasi</span>
+      <span className="text-[12px] font-bold text-midnight-ink tabular-nums">
         Z = {objectiveZ.toFixed(1)} · Lihat Detail →
       </span>
     </button>
@@ -465,29 +376,14 @@ function MapStatusPlaceholder({ loading, error }: { loading: boolean; error: str
   return (
     <div className="flex h-full w-full items-center justify-center">
       <div className="max-w-md px-6 text-center">
-        <p
-          style={{
-            fontSize: 20,
-            color: "var(--color-midnight-ink)",
-            fontWeight: "var(--font-weight-bold)",
-            letterSpacing: "-0.2px",
-          }}
-        >
+        <p className="text-[20px] font-bold tracking-[-0.2px] text-midnight-ink">
           {loading ? "Memuat data peta..." : error ? "Gagal memuat data" : "Menunggu data"}
         </p>
         {error ? (
-          <p
-            className="mt-2"
-            style={{
-              fontSize: 13,
-              color: "var(--color-steel)",
-              fontWeight: "var(--font-weight-medium)",
-              lineHeight: 1.5,
-            }}
-          >
+          <p className="mt-2 text-[13px] font-medium leading-[1.5] text-steel">
             {error}
             <br />
-            <span style={{ color: "var(--color-slate)" }}>
+            <span className="text-slate">
               Pastikan backend berjalan di <code>http://localhost:8000</code>.
             </span>
           </p>

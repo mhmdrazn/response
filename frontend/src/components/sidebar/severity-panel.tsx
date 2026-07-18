@@ -46,53 +46,26 @@ export function SeverityPanel({ severity, embedded = false }: SeverityPanelProps
 
   return (
     <div
-      style={{
-        ...(embedded
-          ? { background: "transparent", border: "none", padding: 0 }
-          : {
-              background: "var(--color-pure-white)",
-              border: "1px solid var(--color-frost)",
-              borderRadius: "var(--radius-lg)",
-              padding: 14,
-            }),
-        display: "flex",
-        flexDirection: "column",
-        gap: 10,
-        pointerEvents: "auto",
-      }}
+      className={`pointer-events-auto flex flex-col gap-[10px] ${
+        embedded
+          ? "border-0 bg-transparent p-0"
+          : "rounded-lg border border-frost bg-pure-white p-[14px]"
+      }`}
     >
       {/* Header — hidden when embedded (the tab already labels the section). */}
       {embedded ? null : (
         <button
           type="button"
           onClick={() => setExpanded((e) => !e)}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            padding: 0,
-          }}
+          className="flex cursor-pointer items-center justify-between border-0 bg-transparent p-0"
         >
-          <span
-            style={{
-              fontSize: 11,
-              textTransform: "uppercase",
-              letterSpacing: "0.9px",
-              fontWeight: "var(--font-weight-bold)",
-              color: "var(--color-slate)",
-            }}
-          >
+          <span className="text-[11px] font-bold uppercase tracking-[0.9px] text-slate">
             Severity Index (AHP + EW)
           </span>
           <span
-            style={{
-              display: "inline-flex",
-              transition: "transform 0.2s ease",
-              transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
-            }}
+            className={`inline-flex transition-transform duration-200 ${
+              expanded ? "rotate-180" : "rotate-0"
+            }`}
           >
             <ChevronDown size={14} color="var(--color-slate)" />
           </span>
@@ -101,23 +74,11 @@ export function SeverityPanel({ severity, embedded = false }: SeverityPanelProps
 
       {expanded ? (
         <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 10,
-            animation: "response-fade-up 0.24s ease-out",
-          }}
+          className="flex flex-col gap-[10px]"
+          style={{ animation: "response-fade-up 0.24s ease-out" }}
         >
           {/* Weights summary */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "auto 1fr 1fr 1fr",
-              gap: "4px 10px",
-              fontSize: 11,
-              lineHeight: 1.6,
-            }}
-          >
+          <div className="grid grid-cols-[auto_1fr_1fr_1fr] gap-x-[10px] gap-y-[4px] text-[11px] leading-[1.6]">
             <WeightHeader />
             {w.criteria.map((c, i) => (
               <WeightRow key={c} label={c} ahp={w.ahp[i]} ew={w.ew[i]} combined={w.combined[i]} />
@@ -125,21 +86,12 @@ export function SeverityPanel({ severity, embedded = false }: SeverityPanelProps
           </div>
 
           {/* CR */}
-          <div
-            style={{
-              fontSize: 11,
-              color: "var(--color-steel)",
-              display: "flex",
-              gap: 4,
-            }}
-          >
+          <div className="flex gap-[4px] text-[11px] text-steel">
             <span>Consistency Ratio:</span>
             <span
-              style={{
-                fontWeight: "var(--font-weight-bold)",
-                color:
-                  w.consistency_ratio <= 0.1 ? "var(--color-si-low)" : "var(--color-si-critical)",
-              }}
+              className={`font-bold ${
+                w.consistency_ratio <= 0.1 ? "text-si-low" : "text-si-critical"
+              }`}
             >
               {w.consistency_ratio.toFixed(4)}
               {w.consistency_ratio <= 0.1 ? " (konsisten)" : " (inkonsisten)"}
@@ -147,17 +99,11 @@ export function SeverityPanel({ severity, embedded = false }: SeverityPanelProps
           </div>
 
           {/* Divider */}
-          <div style={{ height: 1, background: "var(--color-frost)" }} />
+          <div className="h-px bg-frost" />
 
           {/* Flood point SI table */}
-          <div style={{ overflowX: "auto" }}>
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                fontSize: 11,
-              }}
-            >
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-[11px]">
               <thead>
                 <tr>
                   <SortTh
@@ -202,13 +148,7 @@ export function SeverityPanel({ severity, embedded = false }: SeverityPanelProps
           </div>
         </div>
       ) : (
-        <div
-          style={{
-            fontSize: 11,
-            color: "var(--color-steel)",
-            lineHeight: 1.5,
-          }}
-        >
+        <div className="text-[11px] leading-[1.5] text-steel">
           {severity.flood_points.length} titik genangan dianalisis. CR ={" "}
           {w.consistency_ratio.toFixed(4)}. Klik untuk detail.
         </div>
@@ -218,20 +158,13 @@ export function SeverityPanel({ severity, embedded = false }: SeverityPanelProps
 }
 
 function WeightHeader() {
-  const s: React.CSSProperties = {
-    fontSize: 9,
-    textTransform: "uppercase",
-    letterSpacing: "0.5px",
-    fontWeight: "var(--font-weight-bold)",
-    color: "var(--color-slate)",
-    paddingBottom: 2,
-  };
+  const base = "pb-[2px] text-[9px] font-bold uppercase tracking-[0.5px] text-slate";
   return (
     <>
-      <span style={s}>Kriteria</span>
-      <span style={{ ...s, textAlign: "right" }}>AHP</span>
-      <span style={{ ...s, textAlign: "right" }}>EW</span>
-      <span style={{ ...s, textAlign: "right" }}>Gabungan</span>
+      <span className={base}>Kriteria</span>
+      <span className={`${base} text-right`}>AHP</span>
+      <span className={`${base} text-right`}>EW</span>
+      <span className={`${base} text-right`}>Gabungan</span>
     </>
   );
 }
@@ -247,27 +180,13 @@ function WeightRow({
   ew: number;
   combined: number;
 }) {
-  const numStyle: React.CSSProperties = {
-    textAlign: "right",
-    fontVariantNumeric: "tabular-nums",
-    color: "var(--color-midnight-ink)",
-  };
+  const num = "text-right text-midnight-ink tabular-nums";
   return (
     <>
-      <span
-        style={{
-          color: "var(--color-slate)",
-          fontWeight: "var(--font-weight-medium)",
-          textTransform: "capitalize",
-        }}
-      >
-        {label.replace(/_/g, " ")}
-      </span>
-      <span style={numStyle}>{ahp.toFixed(4)}</span>
-      <span style={numStyle}>{ew.toFixed(4)}</span>
-      <span style={{ ...numStyle, fontWeight: "var(--font-weight-bold)" }}>
-        {combined.toFixed(4)}
-      </span>
+      <span className="font-medium capitalize text-slate">{label.replace(/_/g, " ")}</span>
+      <span className={num}>{ahp.toFixed(4)}</span>
+      <span className={num}>{ew.toFixed(4)}</span>
+      <span className={`${num} font-bold`}>{combined.toFixed(4)}</span>
     </>
   );
 }
@@ -291,19 +210,9 @@ function SortTh({
   return (
     <th
       onClick={() => onClick(sortKey)}
-      style={{
-        textAlign: align,
-        padding: "4px 6px",
-        cursor: "pointer",
-        fontWeight: "var(--font-weight-bold)",
-        color: isActive ? "var(--color-midnight-ink)" : "var(--color-slate)",
-        fontSize: 9,
-        textTransform: "uppercase",
-        letterSpacing: "0.5px",
-        borderBottom: "1px solid var(--color-frost)",
-        whiteSpace: "nowrap",
-        userSelect: "none",
-      }}
+      className={`cursor-pointer select-none whitespace-nowrap border-b border-frost px-[6px] py-[4px] text-[9px] font-bold uppercase tracking-[0.5px] ${
+        align === "right" ? "text-right" : "text-left"
+      } ${isActive ? "text-midnight-ink" : "text-slate"}`}
     >
       {label}
       {isActive ? (dir === "asc" ? " ↑" : " ↓") : ""}
@@ -313,72 +222,25 @@ function SortTh({
 
 function FloodRow({ fp }: { fp: SeverityFloodPoint }) {
   const color = siColor(fp.si_value);
+  const cellNum = "border-b border-mist px-[6px] py-[3px] text-right text-midnight-ink tabular-nums";
   return (
     <tr>
-      <td
-        style={{
-          padding: "3px 6px",
-          color: "var(--color-midnight-ink)",
-          fontWeight: "var(--font-weight-medium)",
-          borderBottom: "1px solid var(--color-mist)",
-        }}
-      >
+      <td className="border-b border-mist px-[6px] py-[3px] font-medium text-midnight-ink">
         {fp.id}
       </td>
-      <td
-        style={{
-          padding: "3px 6px",
-          textAlign: "right",
-          borderBottom: "1px solid var(--color-mist)",
-        }}
-      >
-        <span
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 4,
-          }}
-        >
+      <td className="border-b border-mist px-[6px] py-[3px] text-right">
+        <span className="inline-flex items-center gap-[4px]">
           <span
-            style={{
-              width: 7,
-              height: 7,
-              borderRadius: "50%",
-              background: color,
-              flexShrink: 0,
-            }}
+            className="h-[7px] w-[7px] flex-shrink-0 rounded-full"
+            style={{ background: color }}
           />
-          <span
-            style={{
-              fontVariantNumeric: "tabular-nums",
-              fontWeight: "var(--font-weight-bold)",
-              color: "var(--color-midnight-ink)",
-            }}
-          >
+          <span className="font-bold text-midnight-ink tabular-nums">
             {fp.si_value.toFixed(3)}
           </span>
         </span>
       </td>
-      <td
-        style={{
-          padding: "3px 6px",
-          textAlign: "right",
-          fontVariantNumeric: "tabular-nums",
-          color: "var(--color-midnight-ink)",
-          borderBottom: "1px solid var(--color-mist)",
-        }}
-      >
-        {fp.depth_cm} cm
-      </td>
-      <td
-        style={{
-          padding: "3px 6px",
-          textAlign: "right",
-          fontVariantNumeric: "tabular-nums",
-          color: "var(--color-midnight-ink)",
-          borderBottom: "1px solid var(--color-mist)",
-        }}
-      >
+      <td className={cellNum}>{fp.depth_cm} cm</td>
+      <td className={cellNum}>
         {fp.dist_faskes_m < 1000
           ? `${Math.round(fp.dist_faskes_m)} m`
           : `${(fp.dist_faskes_m / 1000).toFixed(1)} km`}

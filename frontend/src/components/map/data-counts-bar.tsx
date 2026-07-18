@@ -34,68 +34,21 @@ export function DataCountsBar({
   };
 
   return (
-    <div
-      style={{
-        pointerEvents: "auto",
-        background: "var(--color-pure-white)",
-        border: "1px solid var(--color-frost)",
-        borderRadius: "var(--radius-lg)",
-        padding: "8px 12px",
-        display: "flex",
-        gap: 10,
-        alignItems: "center",
-        flexWrap: "wrap",
-      }}
-    >
+    <div className="pointer-events-auto flex flex-wrap items-center gap-[10px] rounded-lg border border-frost bg-pure-white px-12 py-8">
       {DATA_ITEMS.map(({ key, label, Icon, color }) => (
         <button
           key={key}
           type="button"
           onClick={() => onPreviewData(key)}
           title={`Lihat data ${label}`}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 5,
-            padding: "4px 8px",
-            borderRadius: "var(--radius-sm)",
-            border: "1px solid transparent",
-            background: "transparent",
-            cursor: "pointer",
-            transition: "border-color 0.15s, background 0.15s",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = "var(--color-frost)";
-            e.currentTarget.style.background = "var(--color-mist)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = "transparent";
-            e.currentTarget.style.background = "transparent";
-          }}
+          className="flex cursor-pointer items-center gap-[5px] rounded-sm border border-transparent bg-transparent px-8 py-4 transition-colors hover:border-frost hover:bg-mist"
         >
           <Icon size={13} strokeWidth={2.2} color={color} />
-          <span
-            style={{
-              fontSize: 13,
-              color: "var(--color-midnight-ink)",
-              fontWeight: "var(--font-weight-bold)",
-              fontVariantNumeric: "tabular-nums",
-              lineHeight: 1,
-            }}
-          >
+          <span className="text-[13px] font-bold leading-none text-midnight-ink tabular-nums">
             {counts[key]}
           </span>
-          <span
-            style={{
-              fontSize: 10.5,
-              color: "var(--color-slate)",
-              fontWeight: "var(--font-weight-semibold)",
-              lineHeight: 1,
-            }}
-          >
-            {label}
-          </span>
-          <Eye size={11} strokeWidth={2} color="var(--color-smoke)" style={{ marginLeft: 2 }} />
+          <span className="text-[10.5px] font-semibold leading-none text-slate">{label}</span>
+          <Eye size={11} strokeWidth={2} color="var(--color-smoke)" className="ml-[2px]" />
         </button>
       ))}
     </div>

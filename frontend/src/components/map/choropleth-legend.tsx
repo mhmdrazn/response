@@ -11,57 +11,16 @@ export function ChoroplethLegend() {
   const gradient = `linear-gradient(90deg, ${SI_PALETTE.map((b) => b.hex).join(", ")})`;
 
   return (
-    <div
-      style={{
-        background: "var(--color-pure-white)",
-        border: "1px solid var(--color-frost)",
-        borderRadius: "var(--radius-lg)",
-        padding: "8px 12px",
-        pointerEvents: "auto",
-        display: "flex",
-        flexDirection: "column",
-        gap: 6,
-        minWidth: 168,
-      }}
-    >
-      <span
-        style={{
-          fontSize: 9.5,
-          textTransform: "uppercase",
-          letterSpacing: "0.9px",
-          fontWeight: "var(--font-weight-bold)",
-          color: "var(--color-slate)",
-        }}
-      >
+    <div className="pointer-events-auto flex min-w-[168px] flex-col gap-[6px] rounded-lg border border-frost bg-pure-white px-12 py-8">
+      <span className="text-[9.5px] font-bold uppercase tracking-[0.9px] text-slate">
         Beban Keparahan Kecamatan
       </span>
-      <div
-        style={{
-          height: 8,
-          borderRadius: "var(--radius-pill)",
-          background: gradient,
-        }}
-      />
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          fontSize: 10,
-          color: "var(--color-steel)",
-          fontWeight: "var(--font-weight-medium)",
-        }}
-      >
+      <div className="h-8 rounded-pill" style={{ background: gradient }} />
+      <div className="flex justify-between text-[10px] font-medium text-steel">
         <span>Rendah</span>
         <span>Tinggi</span>
       </div>
-      <span
-        style={{
-          fontSize: 9.5,
-          color: "var(--color-smoke)",
-          fontWeight: "var(--font-weight-medium)",
-          lineHeight: 1.3,
-        }}
-      >
+      <span className="text-[9.5px] font-medium leading-[1.3] text-smoke">
         Σ SI per kecamatan · relatif antar-wilayah
       </span>
     </div>

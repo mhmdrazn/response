@@ -86,37 +86,25 @@ export function RouteList({
     }
   }
 
+  const chipCls =
+    "inline-flex cursor-pointer items-center gap-[4px] rounded-sm border border-frost bg-pure-white px-8 py-[4px] text-[10.5px] font-bold tracking-[-0.1px] text-steel transition-colors hover:border-smoke hover:bg-mist";
+  const allHidden =
+    hiddenVehicleIds != null &&
+    routes.length > 0 &&
+    routes.every((r) => hiddenVehicleIds.has(r.vehicle_id));
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 8,
-        }}
-      >
-        <div
-          style={{
-            fontSize: 11,
-            textTransform: "uppercase",
-            letterSpacing: "0.9px",
-            fontWeight: "var(--font-weight-bold)",
-            color: "var(--color-slate)",
-          }}
-        >
+    <div className="flex flex-col gap-12">
+      <div className="flex items-center justify-between gap-8">
+        <div className="text-[11px] font-bold uppercase tracking-[0.9px] text-slate">
           Rute per Kendaraan
         </div>
         {routes.length > 0 ? (
-          <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+          <div className="flex flex-shrink-0 gap-[4px]">
             {onToggleVehicleVisibility ? (
               <button
                 type="button"
                 onClick={() => {
-                  const allHidden =
-                    hiddenVehicleIds != null &&
-                    routes.length > 0 &&
-                    routes.every((r) => hiddenVehicleIds.has(r.vehicle_id));
                   if (allHidden) {
                     routes.forEach((r) => onToggleVehicleVisibility(r.vehicle_id));
                   } else {
@@ -127,71 +115,13 @@ export function RouteList({
                   }
                 }}
                 title="Tampil/sembunyikan semua rute"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 4,
-                  padding: "4px 8px",
-                  borderRadius: "var(--radius-sm)",
-                  border: "1px solid var(--color-frost)",
-                  background: "var(--color-pure-white)",
-                  color: "var(--color-steel)",
-                  fontSize: 10.5,
-                  fontWeight: "var(--font-weight-bold)",
-                  letterSpacing: "-0.1px",
-                  cursor: "pointer",
-                  transition: "background 0.15s ease, border-color 0.15s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "var(--color-mist)";
-                  e.currentTarget.style.borderColor = "var(--color-smoke)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "var(--color-pure-white)";
-                  e.currentTarget.style.borderColor = "var(--color-frost)";
-                }}
+                className={chipCls}
               >
-                {hiddenVehicleIds != null &&
-                routes.length > 0 &&
-                routes.every((r) => hiddenVehicleIds.has(r.vehicle_id)) ? (
-                  <Eye size={12} strokeWidth={2} />
-                ) : (
-                  <EyeOff size={12} strokeWidth={2} />
-                )}
-                {hiddenVehicleIds != null &&
-                routes.length > 0 &&
-                routes.every((r) => hiddenVehicleIds.has(r.vehicle_id))
-                  ? "Tampil"
-                  : "Sembunyi"}
+                {allHidden ? <Eye size={12} strokeWidth={2} /> : <EyeOff size={12} strokeWidth={2} />}
+                {allHidden ? "Tampil" : "Sembunyi"}
               </button>
             ) : null}
-            <button
-              type="button"
-              onClick={toggleAll}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 4,
-                padding: "4px 8px",
-                borderRadius: "var(--radius-sm)",
-                border: "1px solid var(--color-frost)",
-                background: "var(--color-pure-white)",
-                color: "var(--color-steel)",
-                fontSize: 10.5,
-                fontWeight: "var(--font-weight-bold)",
-                letterSpacing: "-0.1px",
-                cursor: "pointer",
-                transition: "background 0.15s ease, border-color 0.15s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "var(--color-mist)";
-                e.currentTarget.style.borderColor = "var(--color-smoke)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "var(--color-pure-white)";
-                e.currentTarget.style.borderColor = "var(--color-frost)";
-              }}
-            >
+            <button type="button" onClick={toggleAll} className={chipCls}>
               {allExpanded ? (
                 <ChevronsDownUp size={13} strokeWidth={2} />
               ) : (
@@ -206,23 +136,12 @@ export function RouteList({
       {groups.map((group) => {
         const isDepotCollapsed = collapsedDepots.has(group.depotId);
         return (
-          <div key={group.depotId} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <div key={group.depotId} className="flex flex-col gap-[6px]">
             {/* Depot group header */}
             <button
               type="button"
               onClick={() => toggleDepot(group.depotId)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                padding: "6px 8px",
-                background: "var(--color-periwinkle-wash)",
-                border: "none",
-                borderRadius: "var(--radius-md)",
-                cursor: "pointer",
-                fontFamily: "var(--font-manrope)",
-                textAlign: "left",
-              }}
+              className="font-manrope flex cursor-pointer items-center gap-[6px] rounded-md border-0 bg-periwinkle-wash px-8 py-[6px] text-left"
             >
               {isDepotCollapsed ? (
                 <ChevronRight size={13} color="var(--color-steel)" />
@@ -230,37 +149,13 @@ export function RouteList({
                 <ChevronDown size={13} color="var(--color-steel)" />
               )}
               <span
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: 999,
-                  background: "#f59e0b",
-                  flexShrink: 0,
-                }}
+                className="h-8 w-8 flex-shrink-0 rounded-full bg-[#f59e0b]"
                 aria-hidden
               />
-              <span
-                style={{
-                  fontSize: 12.5,
-                  fontWeight: "var(--font-weight-bold)",
-                  color: "var(--color-midnight-ink)",
-                  flex: 1,
-                  minWidth: 0,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
+              <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-[12.5px] font-bold text-midnight-ink">
                 {group.depotName}
               </span>
-              <span
-                style={{
-                  fontSize: 11,
-                  fontWeight: "var(--font-weight-semibold)",
-                  color: "var(--color-slate)",
-                  flexShrink: 0,
-                }}
-              >
+              <span className="flex-shrink-0 text-[11px] font-semibold text-slate">
                 {group.routes.length} unit
               </span>
             </button>
@@ -318,76 +213,29 @@ function RouteCard({
     <div
       onMouseEnter={() => onHoverRoute(r.vehicle_id)}
       onMouseLeave={() => onHoverRoute(null)}
-      style={{
-        border: "1px solid",
-        borderColor: isActive ? color : "var(--color-frost)",
-        borderRadius: "var(--radius-md)",
-        background: isActive ? "var(--color-mist)" : "var(--color-pure-white)",
-        overflow: "hidden",
-        transition: "border-color 0.14s ease, background 0.14s ease, opacity 0.14s ease",
-        marginLeft: 12,
-        opacity: isHidden ? 0.55 : 1,
-      }}
+      className={`ml-12 overflow-hidden rounded-md border transition-[border-color,background,opacity] duration-[140ms] ${
+        isActive ? "bg-mist" : "bg-pure-white"
+      } ${isHidden ? "opacity-[0.55]" : "opacity-100"}`}
+      style={{ borderColor: isActive ? color : "var(--color-frost)" }}
     >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 4,
-        }}
-      >
+      <div className="flex items-center gap-[4px]">
         <button
           type="button"
           onClick={() => {
             onToggle();
             if (!isHidden) onFocusRoute(r);
           }}
-          style={{
-            flex: 1,
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "8px 10px",
-            minHeight: 38,
-            background: "transparent",
-            border: "none",
-            cursor: "pointer",
-            textAlign: "left",
-            fontFamily: "var(--font-manrope)",
-          }}
+          className="font-manrope flex min-h-[38px] flex-1 cursor-pointer items-center gap-8 border-0 bg-transparent px-[10px] py-8 text-left"
         >
           <span
             aria-hidden
-            style={{
-              width: 10,
-              height: 10,
-              borderRadius: 999,
-              background: color,
-              flexShrink: 0,
-            }}
+            className="h-[10px] w-[10px] flex-shrink-0 rounded-full"
+            style={{ background: color }}
           />
-          <span
-            style={{
-              fontSize: 13,
-              fontWeight: "var(--font-weight-bold)",
-              color: "var(--color-midnight-ink)",
-              flexShrink: 0,
-            }}
-          >
+          <span className="flex-shrink-0 text-[13px] font-bold text-midnight-ink">
             {capLabel} L
           </span>
-          <span
-            style={{
-              fontSize: 12,
-              color: "var(--color-steel)",
-              fontWeight: "var(--font-weight-semibold)",
-              flex: 1,
-              minWidth: 0,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
+          <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-[12px] font-semibold text-steel">
             {r.visit_count_flood} genangan · {formatMeters(r.total_distance_m)}
           </span>
           {isOpen ? (
@@ -405,19 +253,9 @@ function RouteCard({
             }}
             title={isHidden ? "Tampilkan rute" : "Sembunyikan rute"}
             aria-label={isHidden ? "Tampilkan rute" : "Sembunyikan rute"}
-            style={{
-              width: 28,
-              height: 28,
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              borderRadius: "var(--radius-sm)",
-              border: "1px solid var(--color-frost)",
-              background: isHidden ? "var(--color-mist)" : "var(--color-pure-white)",
-              cursor: "pointer",
-              marginRight: 6,
-              flexShrink: 0,
-            }}
+            className={`mr-[6px] inline-flex h-[28px] w-[28px] flex-shrink-0 cursor-pointer items-center justify-center rounded-sm border border-frost ${
+              isHidden ? "bg-mist" : "bg-pure-white"
+            }`}
           >
             {isHidden ? (
               <EyeOff size={13} strokeWidth={2} color="var(--color-slate)" />
@@ -429,97 +267,34 @@ function RouteCard({
       </div>
 
       {isOpen ? (
-        <div
-          style={{
-            padding: "0 10px 10px",
-            borderTop: "1px solid var(--color-frost)",
-            display: "flex",
-            flexDirection: "column",
-            gap: 6,
-          }}
-        >
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 6,
-              marginTop: 8,
-            }}
-          >
+        <div className="flex flex-col gap-[6px] border-t border-frost px-[10px] pb-[10px]">
+          <div className="mt-8 grid grid-cols-2 gap-[6px]">
             <Kv label="Kapasitas" value={formatLiters(r.capacity_l)} />
             <Kv label="Jarak" value={formatMeters(r.total_distance_m)} />
             <Kv label="Waktu" value={formatDuration(r.total_time_s)} />
             <Kv label="Skor" value={formatNumber(r.z_contribution, 0)} />
           </div>
-          <div
-            style={{
-              fontSize: 11,
-              textTransform: "uppercase",
-              letterSpacing: "0.7px",
-              fontWeight: "var(--font-weight-bold)",
-              color: "var(--color-slate)",
-              marginTop: 4,
-            }}
-          >
+          <div className="mt-[4px] text-[11px] font-bold uppercase tracking-[0.7px] text-slate">
             Urutan Kunjungan
           </div>
-          <ol
-            style={{
-              listStyle: "none",
-              padding: 0,
-              margin: 0,
-              display: "flex",
-              flexDirection: "column",
-              gap: 2,
-            }}
-          >
+          <ol className="m-0 flex list-none flex-col gap-[2px] p-0">
             {r.visits.map((v, i) => (
               <li
                 key={i}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  fontSize: 12.5,
-                  padding: "3px 0",
-                  borderBottom: i < r.visits.length - 1 ? "1px dashed var(--color-frost)" : "none",
-                }}
+                className={`flex items-center gap-[6px] py-[3px] text-[12.5px] ${
+                  i < r.visits.length - 1 ? "border-b border-dashed border-frost" : ""
+                }`}
               >
                 <VisitDot type={v.node_type} />
-                <span
-                  style={{
-                    fontWeight: "var(--font-weight-bold)",
-                    color: "var(--color-midnight-ink)",
-                    flex: 1,
-                    minWidth: 0,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
+                <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-bold text-midnight-ink">
                   {v.node_name}
                 </span>
                 {v.node_type === "flood" ? (
-                  <span
-                    style={{
-                      color: "var(--color-steel)",
-                      fontWeight: "var(--font-weight-medium)",
-                      fontSize: 11,
-                      flexShrink: 0,
-                    }}
-                  >
+                  <span className="flex-shrink-0 text-[11px] font-medium text-steel">
                     {formatLiters(v.volume_pumped_l)}
                   </span>
                 ) : null}
-                <span
-                  style={{
-                    color: "var(--color-slate)",
-                    fontWeight: "var(--font-weight-semibold)",
-                    fontVariantNumeric: "tabular-nums",
-                    flexShrink: 0,
-                    fontSize: 11,
-                  }}
-                >
+                <span className="flex-shrink-0 text-[11px] font-semibold text-slate tabular-nums">
                   {formatDuration(v.arrival_time_s)}
                 </span>
               </li>
@@ -533,37 +308,9 @@ function RouteCard({
 
 function Kv({ label, value }: { label: string; value: string }) {
   return (
-    <div
-      style={{
-        padding: "6px 8px",
-        background: "var(--color-mist)",
-        borderRadius: "var(--radius-sm)",
-        display: "flex",
-        flexDirection: "column",
-        gap: 2,
-      }}
-    >
-      <span
-        style={{
-          fontSize: 10.5,
-          textTransform: "uppercase",
-          letterSpacing: "0.6px",
-          color: "var(--color-slate)",
-          fontWeight: "var(--font-weight-bold)",
-        }}
-      >
-        {label}
-      </span>
-      <span
-        style={{
-          fontSize: 13.5,
-          color: "var(--color-midnight-ink)",
-          fontWeight: "var(--font-weight-bold)",
-          fontVariantNumeric: "tabular-nums",
-        }}
-      >
-        {value}
-      </span>
+    <div className="flex flex-col gap-[2px] rounded-sm bg-mist px-8 py-[6px]">
+      <span className="text-[10.5px] font-bold uppercase tracking-[0.6px] text-slate">{label}</span>
+      <span className="text-[13.5px] font-bold text-midnight-ink tabular-nums">{value}</span>
     </div>
   );
 }
@@ -577,13 +324,8 @@ function VisitDot({ type }: { type: "depot" | "flood" | "if" }) {
   return (
     <span
       aria-hidden
-      style={{
-        width: 6,
-        height: 6,
-        borderRadius: 999,
-        background: map[type],
-        flexShrink: 0,
-      }}
+      className="h-[6px] w-[6px] flex-shrink-0 rounded-full"
+      style={{ background: map[type] }}
     />
   );
 }

@@ -12,64 +12,34 @@ interface FloatingNavbarProps {
 export function FloatingNavbar({ mode, onModeChange, compact = false }: FloatingNavbarProps) {
   return (
     <div
-      style={{
-        position: "absolute",
-        top: compact ? 12 : 16,
-        left: compact ? 12 : 16,
-        right: compact ? 12 : undefined,
-        zIndex: 1000,
-        display: "flex",
-        alignItems: "center",
-        gap: compact ? 8 : 12,
-        background: "var(--color-pure-white)",
-        border: "1px solid var(--color-frost)",
-        borderRadius: "var(--radius-lg)",
-        padding: compact ? "6px 10px" : "8px 14px",
-        pointerEvents: "auto",
-      }}
+      className={`pointer-events-auto absolute z-[1000] flex items-center rounded-lg border border-frost bg-pure-white ${
+        compact
+          ? "left-12 right-12 top-12 gap-8 px-[10px] py-[6px]"
+          : "left-16 top-16 gap-12 px-[14px] py-8"
+      }`}
     >
-      <div className="flex items-center gap-16" style={{ minWidth: 0 }}>
+      <div className="flex min-w-0 items-center gap-16">
         <span
           aria-hidden
-          className="navbar-status-dot"
-          style={{
-            display: "inline-block",
-            width: compact ? 8 : 10,
-            height: compact ? 8 : 10,
-            borderRadius: 999,
-            background: "var(--color-indigo-ink)",
-            flexShrink: 0,
-          }}
+          className={`navbar-status-dot inline-block flex-shrink-0 rounded-full bg-indigo-ink ${
+            compact ? "h-8 w-8" : "h-[10px] w-[10px]"
+          }`}
         />
         <span
-          style={{
-            fontSize: compact ? 15 : 17,
-            lineHeight: 1,
-            color: "var(--color-midnight-ink)",
-            fontWeight: "var(--font-weight-bold)",
-            letterSpacing: "-0.2px",
-          }}
+          className={`font-bold leading-none tracking-[-0.2px] text-midnight-ink ${
+            compact ? "text-[15px]" : "text-[17px]"
+          }`}
         >
           Response
         </span>
         {!compact ? (
-          <span
-            style={{
-              fontSize: 12,
-              lineHeight: 1,
-              color: "var(--color-slate)",
-              fontWeight: "var(--font-weight-semibold)",
-              marginLeft: 8,
-              paddingLeft: 10,
-              borderLeft: "1px solid var(--color-frost)",
-            }}
-          >
+          <span className="ml-8 border-l border-frost pl-[10px] text-[12px] font-semibold leading-none text-slate">
             SPK Damkar Surabaya
           </span>
         ) : null}
       </div>
-      <div style={{ flex: 1 }} />
-      <div style={{ width: 1, height: 24, background: "var(--color-frost)", flexShrink: 0 }} />
+      <div className="flex-1" />
+      <div className="h-24 w-px flex-shrink-0 bg-frost" />
       <ModeToggle mode={mode} onChange={onModeChange} compact={compact} />
     </div>
   );

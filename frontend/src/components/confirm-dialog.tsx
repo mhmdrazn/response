@@ -37,8 +37,9 @@ export function ConfirmDialog({
   if (!open) return null;
 
   const isDanger = variant === "danger";
-  const confirmBg = isDanger ? "var(--color-indigo-ink)" : "var(--color-midnight-ink)";
-  const confirmHover = isDanger ? "var(--color-indigo-hover)" : "var(--color-deep-violet)";
+  const confirmCls = isDanger
+    ? "bg-indigo-ink hover:bg-indigo-hover"
+    : "bg-midnight-ink hover:bg-deep-violet";
 
   return (
     <div
@@ -46,104 +47,38 @@ export function ConfirmDialog({
       aria-modal="true"
       aria-labelledby="confirm-dialog-title"
       onClick={onCancel}
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 3000,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "rgba(6,27,49,0.45)",
-        backdropFilter: "blur(4px)",
-        fontFamily: "var(--font-manrope)",
-      }}
+      className="font-manrope fixed inset-0 z-[3000] flex items-center justify-center bg-[rgba(6,27,49,0.45)] backdrop-blur-[4px]"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        style={{
-          background: "var(--color-pure-white)",
-          border: "1px solid var(--color-frost)",
-          borderRadius: "var(--radius-lg)",
-          width: "min(400px, calc(100vw - 32px))",
-          padding: 20,
-          display: "flex",
-          flexDirection: "column",
-          gap: 14,
-        }}
+        className="flex w-[min(400px,calc(100vw-32px))] flex-col gap-[14px] rounded-lg border border-frost bg-pure-white p-[20px]"
       >
-        <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+        <div className="flex items-start gap-12">
           {isDanger ? (
-            <div
-              style={{
-                flexShrink: 0,
-                width: 36,
-                height: 36,
-                borderRadius: "var(--radius-md)",
-                background: "var(--color-mist)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "var(--color-indigo-ink)",
-              }}
-            >
+            <div className="flex h-[36px] w-[36px] flex-shrink-0 items-center justify-center rounded-md bg-mist text-indigo-ink">
               <AlertTriangle size={18} strokeWidth={2.2} />
             </div>
           ) : null}
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          <div className="flex flex-col gap-[4px]">
             <h2
               id="confirm-dialog-title"
-              style={{
-                margin: 0,
-                fontSize: 15,
-                fontWeight: "var(--font-weight-bold)",
-                letterSpacing: "-0.15px",
-                color: "var(--color-midnight-ink)",
-                lineHeight: 1.35,
-              }}
+              className="m-0 text-[15px] font-bold leading-[1.35] tracking-[-0.15px] text-midnight-ink"
             >
               {title}
             </h2>
             {description ? (
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: 12.5,
-                  color: "var(--color-slate)",
-                  lineHeight: 1.5,
-                  fontWeight: "var(--font-weight-medium)",
-                }}
-              >
+              <p className="m-0 text-[12.5px] font-medium leading-[1.5] text-slate">
                 {description}
               </p>
             ) : null}
           </div>
         </div>
 
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            gap: 8,
-            marginTop: 2,
-          }}
-        >
+        <div className="mt-[2px] flex justify-end gap-8">
           <button
             type="button"
             onClick={onCancel}
-            style={{
-              padding: "8px 14px",
-              borderRadius: "var(--radius-md)",
-              border: "1px solid var(--color-frost)",
-              background: "var(--color-pure-white)",
-              color: "var(--color-midnight-ink)",
-              fontSize: 12.5,
-              fontWeight: "var(--font-weight-semibold)",
-              cursor: "pointer",
-              fontFamily: "var(--font-manrope)",
-              transition: "background 0.15s ease",
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--color-mist)")}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "var(--color-pure-white)")}
+            className="font-manrope cursor-pointer rounded-md border border-frost bg-pure-white px-[14px] py-8 text-[12.5px] font-semibold text-midnight-ink transition-colors hover:bg-mist"
           >
             {cancelLabel}
           </button>
@@ -151,20 +86,7 @@ export function ConfirmDialog({
             type="button"
             onClick={onConfirm}
             autoFocus
-            style={{
-              padding: "8px 14px",
-              borderRadius: "var(--radius-md)",
-              border: "none",
-              background: confirmBg,
-              color: "var(--color-pure-white)",
-              fontSize: 12.5,
-              fontWeight: "var(--font-weight-bold)",
-              cursor: "pointer",
-              fontFamily: "var(--font-manrope)",
-              transition: "background 0.15s ease",
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = confirmHover)}
-            onMouseLeave={(e) => (e.currentTarget.style.background = confirmBg)}
+            className={`font-manrope cursor-pointer rounded-md border-0 px-[14px] py-8 text-[12.5px] font-bold text-pure-white transition-colors ${confirmCls}`}
           >
             {confirmLabel}
           </button>

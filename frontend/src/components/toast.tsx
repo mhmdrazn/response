@@ -76,19 +76,7 @@ function ToastViewport({
   onDismiss: (id: number) => void;
 }) {
   return (
-    <div
-      style={{
-        position: "fixed",
-        bottom: 20,
-        right: 20,
-        zIndex: 4000,
-        display: "flex",
-        flexDirection: "column",
-        gap: 8,
-        pointerEvents: "none",
-        fontFamily: "var(--font-manrope)",
-      }}
-    >
+    <div className="font-manrope pointer-events-none fixed bottom-[20px] right-[20px] z-[4000] flex flex-col gap-8">
       {toasts.map((t) => (
         <ToastCard key={t.id} toast={t} onDismiss={() => onDismiss(t.id)} />
       ))}
@@ -104,48 +92,20 @@ function ToastCard({ toast, onDismiss }: { toast: ToastItem; onDismiss: () => vo
     <div
       role="status"
       aria-live="polite"
-      style={{
-        pointerEvents: "auto",
-        minWidth: 240,
-        maxWidth: 380,
-        display: "flex",
-        alignItems: "flex-start",
-        gap: 10,
-        padding: "10px 12px",
-        background: "var(--color-pure-white)",
-        border: `1px solid var(--color-frost)`,
-        borderLeft: `3px solid ${accent}`,
-        borderRadius: "var(--radius-md)",
-        animation: "response-tooltip-fade 0.18s ease-out",
-      }}
+      className="pointer-events-auto flex min-w-[240px] max-w-[380px] items-start gap-[10px] rounded-md border border-frost bg-pure-white px-12 py-[10px]"
+      style={{ borderLeft: `3px solid ${accent}`, animation: "response-tooltip-fade 0.18s ease-out" }}
     >
-      <span style={{ color: accent, display: "inline-flex", paddingTop: 1 }}>
+      <span className="inline-flex pt-px" style={{ color: accent }}>
         <Icon size={16} strokeWidth={2.2} />
       </span>
-      <div
-        style={{
-          flex: 1,
-          fontSize: 12.5,
-          fontWeight: "var(--font-weight-semibold)",
-          color: "var(--color-midnight-ink)",
-          lineHeight: 1.4,
-          wordBreak: "break-word",
-        }}
-      >
+      <div className="flex-1 break-words text-[12.5px] font-semibold leading-[1.4] text-midnight-ink">
         {toast.message}
       </div>
       <button
         type="button"
         onClick={onDismiss}
         aria-label="Tutup"
-        style={{
-          border: "none",
-          background: "none",
-          cursor: "pointer",
-          color: "var(--color-slate)",
-          display: "inline-flex",
-          padding: 2,
-        }}
+        className="inline-flex cursor-pointer border-0 bg-transparent p-[2px] text-slate"
       >
         <X size={14} strokeWidth={2.2} />
       </button>

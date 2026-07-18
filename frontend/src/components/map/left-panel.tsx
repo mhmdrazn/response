@@ -31,19 +31,7 @@ export function LeftPanel({
   onPreviewData,
 }: LeftPanelProps) {
   return (
-    <div
-      style={{
-        position: "absolute",
-        left: 16,
-        bottom: 16,
-        zIndex: 1000,
-        display: "flex",
-        flexDirection: "column",
-        gap: 8,
-        pointerEvents: "none",
-        width: 340,
-      }}
-    >
+    <div className="pointer-events-none absolute bottom-16 left-16 z-[1000] flex w-[340px] flex-col gap-8">
       <MapControls />
 
       <MapLayerDock

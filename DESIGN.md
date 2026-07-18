@@ -128,7 +128,7 @@ A curated set of hues chosen for distinguishability on the map tile background. 
 ### Primary Filled Button
 **Role:** Main action -- "Jalankan Optimasi", "Bandingkan Algoritma"
 
-Background #533afd, white text (#ffffff), 6px radius, padding 10px 20px. Typography: Manrope weight 400 at 14px. On hover, lightens to #7389ff. No shadow. Compact sizing for sidebar context.
+Background #533afd, white text (#ffffff), 6px radius, padding 10px 20px. Typography: Manrope weight 400 at 14px. On hover, lightens to #7389ff. Compact sizing for sidebar context.
 
 ### Ghost Outline Button
 **Role:** Secondary action -- "Reset Parameter", "Export Hasil"
@@ -153,7 +153,7 @@ Number rendered at stat size (Manrope 500 at 32-48px, #061b31, tight letter-spac
 ### Map Marker Popup
 **Role:** Information shown when clicking a flood point, depot, or IF marker
 
-White background, 8px radius, max-width 280px. Title in heading-sm weight. Body in body-sm. SI value shown as a colored pill matching the severity palette. No shadow on popup (override Leaflet default).
+White background, 8px radius, max-width 280px. Title in heading-sm weight. Body in body-sm. SI value shown as a colored pill matching the severity palette. Popup uses hairline border only (override Leaflet's default drop shadow) — elevated components elsewhere may use `--shadow-sm`.
 
 ### Results Table
 **Role:** Per-vehicle breakdown of route results
@@ -185,7 +185,7 @@ White background, 1px #e5edf5 bottom border. Left: app name "FloodRoute" in Manr
 - Separate sidebar sections with 1px #e5edf5 dividers and 24px gaps
 
 ### Don't
-- Do not use shadows, blurs, or any form of CSS elevation on cards, buttons, or panels -- depth comes from background tint, never from box-shadow
+- Do not use large or blurred drop shadows on cards, panels, or full surfaces -- primary depth still comes from background tint, hairline borders, and whitespace. Shadows are reserved for the specific elevated affordances listed in **Elevation** (active pill in a segmented control, floating overlays, modal dialogs).
 - Do not introduce accent colors outside the defined palettes
 - Do not use semibold or bold weights for headings -- weight 300 at display size is the typographic identity
 - Do not fill large areas with #533afd -- the indigo appears in small functional doses
@@ -207,7 +207,20 @@ White background, 1px #e5edf5 bottom border. Left: app name "FloodRoute" in Manr
 
 ## Elevation
 
-No shadows. Depth and hierarchy are created through background tint progression (white -> mist -> frost -> periwinkle -> indigo), hairline 1px dividers, and whitespace. No card has a box-shadow. No button has a shadow on any state.
+Primary depth still comes from background tint progression (white → mist → frost → periwinkle → indigo), hairline 1px dividers, and whitespace. Cards, panels, sidebars, and static buttons do **not** carry a shadow.
+
+A small, tightly-scoped shadow scale exists for the few surfaces that must read as "lifted" without a heavier border:
+
+| Token | Value | Use |
+|-------|-------|-----|
+| `--shadow-sm` | `0 1px 2px 0 rgb(0 0 0 / 0.06)` | Active pill inside a segmented control (mode toggle, algorithm/ACS-VNS tabs, results tabs) — signals which option is currently selected on the periwinkle track. |
+| `--shadow-md` | `0 4px 12px -2px rgb(0 0 0 / 0.08)` | Floating overlays that hover over the map (mobile bottom docks, floating navbar when the map scrolls underneath). Optional — hairline border is still the default. |
+| `--shadow-lg` | `0 12px 32px -8px rgb(0 0 0 / 0.18)` | Modal dialogs and confirm dialogs (data table modal, delete confirmation), paired with the `rgba(6,27,49,0.45)` backdrop. |
+
+Rules:
+- Never stack shadows or apply them to large surfaces (sidebar cards, section panels, the map itself).
+- Never use shadows to imply hover state — hover uses a background tint shift.
+- Blurs (`backdrop-filter: blur`) are permitted only on the modal backdrop.
 
 ---
 

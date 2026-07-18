@@ -18,55 +18,28 @@ interface SiLegendProps {
 export function SiLegend({ inline = false, defaultOpen = false }: SiLegendProps) {
   const [open, setOpen] = useState(defaultOpen);
 
-  const positionStyle: React.CSSProperties = inline
-    ? { position: "static" }
-    : { position: "absolute", bottom: 24, right: 16, zIndex: 800, minWidth: 150 };
+  const positionClass = inline
+    ? "static"
+    : "absolute bottom-24 right-16 z-[800] min-w-[150px]";
 
   const swatches = (
     <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 5,
-        maxHeight: open ? 240 : 0,
-        opacity: open ? 1 : 0,
-        overflow: "hidden",
-        transition:
-          "max-height 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.18s ease, margin-top 0.28s ease, padding-top 0.28s ease",
-        marginTop: open ? 4 : 0,
-        paddingTop: open ? 6 : 0,
-        borderTop: open ? "1px solid var(--color-frost)" : "1px solid transparent",
-      }}
+      className={`flex flex-col gap-[5px] overflow-hidden transition-[max-height,opacity,margin-top,padding-top] duration-[280ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
+        open
+          ? "mt-[4px] max-h-[240px] border-t border-frost pt-[6px] opacity-100"
+          : "mt-0 max-h-0 border-t border-transparent pt-0 opacity-0"
+      }`}
     >
       {SI_PALETTE.map((bucket) => (
-        <div key={bucket.labelId} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div key={bucket.labelId} className="flex items-center gap-8">
           <span
-            style={{
-              width: 10,
-              height: 10,
-              borderRadius: "50%",
-              background: bucket.hex,
-              flexShrink: 0,
-            }}
+            className="h-[10px] w-[10px] flex-shrink-0 rounded-full"
+            style={{ background: bucket.hex }}
           />
-          <span
-            style={{
-              fontSize: 11,
-              color: "var(--color-midnight-ink)",
-              fontWeight: "var(--font-weight-medium)",
-              letterSpacing: "-0.11px",
-            }}
-          >
+          <span className="text-[11px] font-medium tracking-[-0.11px] text-midnight-ink">
             {bucket.labelId}
           </span>
-          <span
-            style={{
-              fontSize: 10,
-              color: "var(--color-steel)",
-              marginLeft: "auto",
-              fontVariantNumeric: "tabular-nums",
-            }}
-          >
+          <span className="ml-auto text-[10px] text-steel tabular-nums">
             ≤ {bucket.max.toFixed(1)}
           </span>
         </div>
@@ -76,51 +49,21 @@ export function SiLegend({ inline = false, defaultOpen = false }: SiLegendProps)
 
   return (
     <div
-      style={{
-        ...positionStyle,
-        background: "var(--color-pure-white)",
-        border: "1px solid var(--color-frost)",
-        borderRadius: "var(--radius-lg)",
-        padding: "8px 12px",
-        pointerEvents: "auto",
-        display: "flex",
-        flexDirection: "column",
-      }}
+      className={`${positionClass} pointer-events-auto flex flex-col rounded-lg border border-frost bg-pure-white px-12 py-8`}
     >
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 6,
-          background: "none",
-          border: "none",
-          padding: 0,
-          cursor: "pointer",
-          width: "100%",
-        }}
+        className="flex w-full cursor-pointer items-center justify-between gap-[6px] border-0 bg-transparent p-0"
       >
-        <span
-          style={{
-            fontSize: 9.5,
-            textTransform: "uppercase",
-            letterSpacing: "0.9px",
-            fontWeight: "var(--font-weight-bold)",
-            color: "var(--color-slate)",
-          }}
-        >
+        <span className="text-[9.5px] font-bold uppercase tracking-[0.9px] text-slate">
           Severity Index
         </span>
         <ChevronDown
           size={14}
           color="var(--color-slate)"
-          style={{
-            transition: "transform 0.22s ease",
-            transform: open ? "rotate(0deg)" : "rotate(-90deg)",
-          }}
+          className={`transition-transform duration-[220ms] ${open ? "rotate-0" : "-rotate-90"}`}
         />
       </button>
       {swatches}

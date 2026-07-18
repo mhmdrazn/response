@@ -29,52 +29,18 @@ export class ErrorBoundary extends Component<Props, State> {
     if (!this.state.hasError) return this.props.children;
 
     return (
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          height: "100vh",
-          width: "100vw",
-          background: "var(--color-mist)",
-          padding: 32,
-        }}
-      >
-        <div style={{ textAlign: "center", maxWidth: 420 }}>
-          <p
-            style={{
-              fontSize: 18,
-              color: "var(--color-midnight-ink)",
-              fontWeight: "var(--font-weight-medium)",
-              marginBottom: 8,
-            }}
-          >
+      <div className="flex h-screen w-screen items-center justify-center bg-mist p-32">
+        <div className="max-w-[420px] text-center">
+          <p className="mb-8 text-[18px] font-medium text-midnight-ink">
             Terjadi kesalahan pada aplikasi
           </p>
-          <p
-            style={{
-              fontSize: 13,
-              color: "var(--color-steel)",
-              lineHeight: 1.5,
-              marginBottom: 20,
-            }}
-          >
+          <p className="mb-[20px] text-[13px] leading-[1.5] text-steel">
             {this.state.error?.message ?? "Kesalahan tidak diketahui"}
           </p>
           <button
             type="button"
             onClick={() => window.location.reload()}
-            style={{
-              padding: "10px 24px",
-              borderRadius: "var(--radius-md)",
-              border: "none",
-              background: "var(--color-indigo-ink)",
-              color: "#fff",
-              fontSize: 13,
-              fontWeight: "var(--font-weight-medium)",
-              cursor: "pointer",
-              letterSpacing: "-0.13px",
-            }}
+            className="cursor-pointer rounded-md border-0 bg-indigo-ink px-24 py-[10px] text-[13px] font-medium tracking-[-0.13px] text-white"
           >
             Muat Ulang
           </button>

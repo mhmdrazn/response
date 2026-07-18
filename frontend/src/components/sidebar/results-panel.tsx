@@ -12,8 +12,8 @@ interface ResultsPanelProps {
 
 export function ResultsPanel({ result, mode }: ResultsPanelProps) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+    <div className="flex flex-col gap-[10px]">
+      <div className="grid grid-cols-2 gap-8">
         <Metric
           Icon={TrendingDown}
           label="Skor Respons"
@@ -45,20 +45,7 @@ export function ResultsPanel({ result, mode }: ResultsPanelProps) {
       </div>
 
       {mode === "advanced" ? (
-        <div
-          style={{
-            display: "flex",
-            gap: 8,
-            padding: "8px 10px",
-            background: "var(--color-mist)",
-            border: "1px solid var(--color-frost)",
-            borderRadius: "var(--radius-md)",
-            fontSize: 11,
-            color: "var(--color-steel)",
-            fontWeight: "var(--font-weight-semibold)",
-            letterSpacing: "-0.11px",
-          }}
-        >
+        <div className="flex gap-8 rounded-md border border-frost bg-mist px-[10px] py-8 text-[11px] font-semibold tracking-[-0.11px] text-steel">
           <Truck size={14} strokeWidth={2} />
           <span>
             Revisit: {result.total_revisits} · Algoritma: {result.algorithm.toUpperCase()}
@@ -79,54 +66,17 @@ interface MetricProps {
 
 function Metric({ Icon, label, value, hint, accent }: MetricProps) {
   return (
-    <div
-      style={{
-        padding: 10,
-        border: "1px solid var(--color-frost)",
-        borderRadius: "var(--radius-md)",
-        background: "var(--color-pure-white)",
-        display: "flex",
-        flexDirection: "column",
-        gap: 4,
-        minWidth: 0,
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+    <div className="flex min-w-0 flex-col gap-[4px] rounded-md border border-frost bg-pure-white p-[10px]">
+      <div className="flex items-center gap-[6px]">
         <Icon size={13} strokeWidth={2.2} color={accent} />
-        <span
-          style={{
-            fontSize: 10.5,
-            textTransform: "uppercase",
-            letterSpacing: "0.7px",
-            fontWeight: "var(--font-weight-bold)",
-            color: "var(--color-slate)",
-          }}
-        >
+        <span className="text-[10.5px] font-bold uppercase tracking-[0.7px] text-slate">
           {label}
         </span>
       </div>
-      <div
-        style={{
-          fontSize: 20,
-          fontWeight: "var(--font-weight-bold)",
-          color: "var(--color-midnight-ink)",
-          letterSpacing: "-0.4px",
-          fontVariantNumeric: "tabular-nums",
-        }}
-      >
+      <div className="text-[20px] font-bold tracking-[-0.4px] text-midnight-ink tabular-nums">
         {value}
       </div>
-      {hint ? (
-        <div
-          style={{
-            fontSize: 11.5,
-            color: "var(--color-steel)",
-            fontWeight: "var(--font-weight-medium)",
-          }}
-        >
-          {hint}
-        </div>
-      ) : null}
+      {hint ? <div className="text-[11.5px] font-medium text-steel">{hint}</div> : null}
     </div>
   );
 }

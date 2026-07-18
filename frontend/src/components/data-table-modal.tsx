@@ -209,84 +209,26 @@ export function DataTableModal({ datasetKey, data, onClose, onReload }: DataTabl
         onCancel={() => setPendingDeleteId(null)}
       />
       <div
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 2000,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "rgba(6,27,49,0.45)",
-          backdropFilter: "blur(4px)",
-        }}
+        className="fixed inset-0 z-[2000] flex items-center justify-center bg-[rgba(6,27,49,0.45)] backdrop-blur-[4px]"
         onClick={(e) => {
           if (e.target === e.currentTarget) onClose();
         }}
       >
-        <div
-          style={{
-            background: "var(--color-pure-white)",
-            border: "1px solid var(--color-frost)",
-            borderRadius: "var(--radius-lg)",
-            width: "min(90vw, 960px)",
-            maxHeight: "85vh",
-            display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
-          }}
-        >
+        <div className="flex max-h-[85vh] w-[min(90vw,960px)] flex-col overflow-hidden rounded-lg border border-frost bg-pure-white">
           {/* Header */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "16px 20px",
-              borderBottom: "1px solid var(--color-frost)",
-              flexShrink: 0,
-            }}
-          >
+          <div className="flex flex-shrink-0 items-center justify-between border-b border-frost px-[20px] py-16">
             <div>
-              <h2
-                style={{
-                  fontSize: 16,
-                  fontWeight: "var(--font-weight-bold)",
-                  color: "var(--color-midnight-ink)",
-                  letterSpacing: "-0.16px",
-                  margin: 0,
-                }}
-              >
+              <h2 className="m-0 text-[16px] font-bold tracking-[-0.16px] text-midnight-ink">
                 {config.title}
               </h2>
-              <span
-                style={{
-                  fontSize: 12,
-                  color: "var(--color-steel)",
-                  fontWeight: "var(--font-weight-medium)",
-                }}
-              >
-                {data.length} data
-              </span>
+              <span className="text-[12px] font-medium text-steel">{data.length} data</span>
             </div>
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <div className="flex items-center gap-8">
               <button
                 type="button"
                 onClick={startAdd}
                 disabled={isAdding || busy}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 5,
-                  padding: "7px 14px",
-                  borderRadius: "var(--radius-md)",
-                  border: "none",
-                  background: "var(--color-indigo-ink)",
-                  color: "#fff",
-                  fontSize: 12,
-                  fontWeight: "var(--font-weight-bold)",
-                  cursor: "pointer",
-                  letterSpacing: "-0.12px",
-                }}
+                className="inline-flex cursor-pointer items-center gap-[5px] rounded-md border-0 bg-indigo-ink px-[14px] py-[7px] text-[12px] font-bold tracking-[-0.12px] text-white"
               >
                 <Plus size={13} strokeWidth={2.5} />
                 Tambah
@@ -294,18 +236,7 @@ export function DataTableModal({ datasetKey, data, onClose, onReload }: DataTabl
               <button
                 type="button"
                 onClick={onClose}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: 32,
-                  height: 32,
-                  borderRadius: "var(--radius-md)",
-                  border: "1px solid var(--color-frost)",
-                  background: "var(--color-pure-white)",
-                  color: "var(--color-slate)",
-                  cursor: "pointer",
-                }}
+                className="inline-flex h-32 w-32 cursor-pointer items-center justify-center rounded-md border border-frost bg-pure-white text-slate"
               >
                 <X size={16} strokeWidth={2} />
               </button>
@@ -313,70 +244,33 @@ export function DataTableModal({ datasetKey, data, onClose, onReload }: DataTabl
           </div>
 
           {/* Table */}
-          <div style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "auto" }}>
+          <div className="min-h-0 flex-1 overflow-auto">
             <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                fontFamily: "var(--font-manrope)",
-                fontSize: 12,
-                minWidth: config.columns.reduce((s, c) => s + (c.width ?? 100), 0) + 80,
-              }}
+              className="font-manrope w-full border-collapse text-[12px]"
+              style={{ minWidth: config.columns.reduce((s, c) => s + (c.width ?? 100), 0) + 80 }}
             >
               <thead>
                 <tr>
                   {config.columns.map((col) => (
                     <th
                       key={col.key}
-                      style={{
-                        position: "sticky",
-                        top: 0,
-                        background: "var(--color-mist)",
-                        padding: "10px 12px",
-                        textAlign: "left",
-                        fontWeight: "var(--font-weight-bold)",
-                        color: "var(--color-slate)",
-                        fontSize: 10,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.7px",
-                        borderBottom: "1px solid var(--color-frost)",
-                        width: col.width,
-                        whiteSpace: "nowrap",
-                        zIndex: 1,
-                      }}
+                      className="sticky top-0 z-[1] whitespace-nowrap border-b border-frost bg-mist px-12 py-[10px] text-left text-[10px] font-bold uppercase tracking-[0.7px] text-slate"
+                      style={{ width: col.width }}
                     >
                       {col.label}
                     </th>
                   ))}
-                  <th
-                    style={{
-                      position: "sticky",
-                      top: 0,
-                      background: "var(--color-mist)",
-                      padding: "10px 12px",
-                      width: 80,
-                      borderBottom: "1px solid var(--color-frost)",
-                      zIndex: 1,
-                    }}
-                  />
+                  <th className="sticky top-0 z-[1] w-[80px] border-b border-frost bg-mist px-12 py-[10px]" />
                 </tr>
               </thead>
               <tbody>
                 {/* Add row */}
                 {isAdding ? (
-                  <tr style={{ background: "var(--color-periwinkle-wash)" }}>
+                  <tr className="bg-periwinkle-wash">
                     {config.columns.map((col) => (
-                      <td key={col.key} style={{ padding: "6px 12px" }}>
+                      <td key={col.key} className="px-12 py-[6px]">
                         {col.key === "id" ? (
-                          <span
-                            style={{
-                              fontSize: 11,
-                              color: "var(--color-steel)",
-                              fontStyle: "italic",
-                            }}
-                          >
-                            auto
-                          </span>
+                          <span className="text-[11px] italic text-steel">auto</span>
                         ) : (
                           <input
                             type={col.type === "number" ? "number" : "text"}
@@ -387,22 +281,13 @@ export function DataTableModal({ datasetKey, data, onClose, onReload }: DataTabl
                                 [col.key]: e.target.value,
                               }))
                             }
-                            style={{
-                              width: "100%",
-                              padding: "5px 7px",
-                              fontSize: 12,
-                              border: "1px solid var(--color-lavender-border)",
-                              borderRadius: "var(--radius-sm)",
-                              background: "var(--color-pure-white)",
-                              fontFamily: "var(--font-manrope)",
-                              outline: "none",
-                            }}
+                            className="font-manrope w-full rounded-sm border border-lavender-border bg-pure-white px-[7px] py-[5px] text-[12px] outline-none"
                           />
                         )}
                       </td>
                     ))}
-                    <td style={{ padding: "6px 8px" }}>
-                      <div style={{ display: "flex", gap: 4 }}>
+                    <td className="px-8 py-[6px]">
+                      <div className="flex gap-[4px]">
                         <ActionBtn
                           onClick={handleAdd}
                           disabled={busy}
@@ -432,26 +317,17 @@ export function DataTableModal({ datasetKey, data, onClose, onReload }: DataTabl
                   return (
                     <tr
                       key={id}
-                      style={{
-                        borderBottom: "1px solid var(--color-frost)",
-                        background: isEditing ? "var(--color-periwinkle-wash)" : "transparent",
-                      }}
+                      className={`border-b border-frost ${
+                        isEditing ? "bg-periwinkle-wash" : "bg-transparent"
+                      }`}
                     >
                       {config.columns.map((col) => (
                         <td
                           key={col.key}
-                          style={{
-                            padding: "8px 12px",
-                            color: "var(--color-midnight-ink)",
-                            fontWeight:
-                              col.key === "id"
-                                ? "var(--font-weight-semibold)"
-                                : "var(--font-weight-regular)",
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            maxWidth: col.width,
-                          }}
+                          className={`overflow-hidden text-ellipsis whitespace-nowrap px-12 py-8 text-midnight-ink ${
+                            col.key === "id" ? "font-semibold" : "font-normal"
+                          }`}
+                          style={{ maxWidth: col.width }}
                         >
                           {isEditing && col.key !== "id" ? (
                             <input
@@ -463,24 +339,15 @@ export function DataTableModal({ datasetKey, data, onClose, onReload }: DataTabl
                                   [col.key]: e.target.value,
                                 }))
                               }
-                              style={{
-                                width: "100%",
-                                padding: "4px 6px",
-                                fontSize: 12,
-                                border: "1px solid var(--color-lavender-border)",
-                                borderRadius: "var(--radius-sm)",
-                                background: "var(--color-pure-white)",
-                                fontFamily: "var(--font-manrope)",
-                                outline: "none",
-                              }}
+                              className="font-manrope w-full rounded-sm border border-lavender-border bg-pure-white px-[6px] py-[4px] text-[12px] outline-none"
                             />
                           ) : (
                             <span>{rec[col.key] != null ? String(rec[col.key]) : "—"}</span>
                           )}
                         </td>
                       ))}
-                      <td style={{ padding: "8px 8px" }}>
-                        <div style={{ display: "flex", gap: 4 }}>
+                      <td className="px-8 py-8">
+                        <div className="flex gap-[4px]">
                           {isEditing ? (
                             <>
                               <ActionBtn
@@ -553,19 +420,10 @@ function ActionBtn({
       onClick={onClick}
       disabled={disabled}
       title={title}
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        width: 28,
-        height: 28,
-        borderRadius: "var(--radius-sm)",
-        border: "1px solid var(--color-frost)",
-        background: "var(--color-pure-white)",
-        color,
-        cursor: disabled ? "wait" : "pointer",
-        opacity: disabled ? 0.5 : 1,
-      }}
+      className={`inline-flex h-[28px] w-[28px] items-center justify-center rounded-sm border border-frost bg-pure-white ${
+        disabled ? "cursor-wait opacity-50" : "cursor-pointer opacity-100"
+      }`}
+      style={{ color }}
     >
       {children}
     </button>

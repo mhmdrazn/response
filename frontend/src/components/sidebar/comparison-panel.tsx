@@ -70,116 +70,66 @@ export function ComparisonPanel({ comparison }: ComparisonPanelProps) {
     vns: i < vns.convergence.length ? vns.convergence[i].best_z : null,
   }));
 
+  const colHeaderCls =
+    "border-b border-frost px-[6px] py-[4px] text-right text-[9px] font-bold uppercase tracking-[0.5px] text-slate";
+  const labelCellCls = "border-b border-mist px-[6px] py-[4px] font-medium text-slate";
+  const valueCellCls = (isWinner: boolean) =>
+    `border-b border-mist px-[6px] py-[4px] text-right tabular-nums ${
+      isWinner ? "font-bold text-midnight-ink" : "font-normal text-steel"
+    }`;
+
   return (
-    <div
-      style={{
-        background: "var(--color-pure-white)",
-        border: "1px solid var(--color-frost)",
-        borderRadius: "var(--radius-lg)",
-        display: "flex",
-        flexDirection: "column",
-        pointerEvents: "auto",
-      }}
-    >
+    <div className="pointer-events-auto flex flex-col rounded-lg border border-frost bg-pure-white">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          padding: "12px 14px",
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          textAlign: "left",
-          fontFamily: "var(--font-manrope)",
-          width: "100%",
-        }}
+        className="font-manrope flex w-full cursor-pointer items-center gap-8 border-0 bg-transparent px-[14px] py-12 text-left"
       >
-        <span
-          style={{
-            flex: 1,
-            fontSize: 10,
-            textTransform: "uppercase",
-            letterSpacing: "0.9px",
-            fontWeight: "var(--font-weight-bold)",
-            color: "var(--color-slate)",
-          }}
-        >
+        <span className="flex-1 text-[10px] font-bold uppercase tracking-[0.9px] text-slate">
           Perbandingan ACS vs VNS
         </span>
         <ChevronDown
           size={14}
           color="var(--color-slate)"
-          style={{
-            transition: "transform 0.22s ease",
-            transform: open ? "rotate(0deg)" : "rotate(-90deg)",
-          }}
+          className={`transition-transform duration-[220ms] ${open ? "rotate-0" : "-rotate-90"}`}
         />
       </button>
 
       <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 12,
-          maxHeight: open ? "min(560px, 65vh)" : 0,
-          padding: open ? "0 14px 14px" : "0 14px",
-          opacity: open ? 1 : 0,
-          overflow: "hidden",
-          transition:
-            "max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, padding 0.28s ease",
-          pointerEvents: open ? "auto" : "none",
-        }}
+        className={`flex flex-col gap-12 overflow-hidden transition-[max-height,opacity,padding] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+          open
+            ? "pointer-events-auto max-h-[min(560px,65vh)] px-[14px] pb-[14px] opacity-100"
+            : "pointer-events-none max-h-0 px-[14px] py-0 opacity-0"
+        }`}
       >
         {/* Metrics table */}
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
+        <table className="w-full border-collapse text-[11px]">
           <thead>
             <tr>
-              <th
-                style={{
-                  textAlign: "left",
-                  padding: "4px 6px",
-                  fontSize: 9,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.5px",
-                  fontWeight: "var(--font-weight-bold)",
-                  color: "var(--color-slate)",
-                  borderBottom: "1px solid var(--color-frost)",
-                }}
-              >
+              <th className="border-b border-frost px-[6px] py-[4px] text-left text-[9px] font-bold uppercase tracking-[0.5px] text-slate">
                 Metrik
               </th>
-              <th style={colHeaderStyle}>ACS</th>
-              <th style={colHeaderStyle}>VNS</th>
+              <th className={colHeaderCls}>ACS</th>
+              <th className={colHeaderCls}>VNS</th>
             </tr>
           </thead>
           <tbody>
             {metrics.map((m) => (
               <tr key={m.label}>
-                <td style={labelCellStyle}>{m.label}</td>
-                <td style={valueCellStyle(m.winner === "acs")}>{m.acs}</td>
-                <td style={valueCellStyle(m.winner === "vns")}>{m.vns}</td>
+                <td className={labelCellCls}>{m.label}</td>
+                <td className={valueCellCls(m.winner === "acs")}>{m.acs}</td>
+                <td className={valueCellCls(m.winner === "vns")}>{m.vns}</td>
               </tr>
             ))}
           </tbody>
         </table>
 
         {/* Convergence overlay chart */}
-        <div
-          style={{
-            fontSize: 10,
-            textTransform: "uppercase",
-            letterSpacing: "0.9px",
-            fontWeight: "var(--font-weight-bold)",
-            color: "var(--color-slate)",
-          }}
-        >
+        <div className="text-[10px] font-bold uppercase tracking-[0.9px] text-slate">
           Konvergensi
         </div>
-        <div style={{ width: "100%", height: 160 }}>
+        <div className="h-[160px] w-full">
           <ResponsiveContainer>
             <LineChart data={chartData} margin={{ top: 6, right: 8, left: -12, bottom: 0 }}>
               <CartesianGrid stroke="var(--color-frost)" strokeDasharray="2 4" />
@@ -251,70 +201,24 @@ interface MetricRow {
   winner: "acs" | "vns";
 }
 
-const colHeaderStyle: React.CSSProperties = {
-  textAlign: "right",
-  padding: "4px 6px",
-  fontSize: 9,
-  textTransform: "uppercase",
-  letterSpacing: "0.5px",
-  fontWeight: "var(--font-weight-bold)",
-  color: "var(--color-slate)",
-  borderBottom: "1px solid var(--color-frost)",
-};
-
-const labelCellStyle: React.CSSProperties = {
-  padding: "4px 6px",
-  color: "var(--color-slate)",
-  fontWeight: "var(--font-weight-medium)",
-  borderBottom: "1px solid var(--color-mist)",
-};
-
-function valueCellStyle(isWinner: boolean): React.CSSProperties {
-  return {
-    textAlign: "right",
-    padding: "4px 6px",
-    fontVariantNumeric: "tabular-nums",
-    fontWeight: isWinner ? "var(--font-weight-bold)" : "var(--font-weight-regular)",
-    color: isWinner ? "var(--color-midnight-ink)" : "var(--color-steel)",
-    borderBottom: "1px solid var(--color-mist)",
-  };
-}
-
 function DeltaSummary({ acs, vns }: { acs: number; vns: number }) {
   const diff = vns - acs;
   const pct = vns > 0 ? (diff / vns) * 100 : 0;
   const acsWins = acs <= vns;
 
   return (
-    <div
-      style={{
-        padding: "8px 10px",
-        background: "var(--color-mist)",
-        border: "1px solid var(--color-frost)",
-        borderRadius: "var(--radius-md)",
-        fontSize: 11,
-        color: "var(--color-steel)",
-        fontWeight: "var(--font-weight-medium)",
-        lineHeight: 1.5,
-      }}
-    >
+    <div className="rounded-md border border-frost bg-mist px-[10px] py-8 text-[11px] font-medium leading-[1.5] text-steel">
       {acsWins ? (
         <>
-          <strong style={{ color: "var(--color-midnight-ink)" }}>ACS</strong> menghasilkan Z lebih
-          baik sebesar{" "}
-          <strong style={{ color: "var(--color-midnight-ink)" }}>
-            {formatNumber(Math.abs(diff), 2)}
-          </strong>{" "}
-          ({Math.abs(pct).toFixed(1)}% lebih rendah)
+          <strong className="text-midnight-ink">ACS</strong> menghasilkan Z lebih baik sebesar{" "}
+          <strong className="text-midnight-ink">{formatNumber(Math.abs(diff), 2)}</strong> (
+          {Math.abs(pct).toFixed(1)}% lebih rendah)
         </>
       ) : (
         <>
-          <strong style={{ color: "var(--color-midnight-ink)" }}>VNS</strong> menghasilkan Z lebih
-          baik sebesar{" "}
-          <strong style={{ color: "var(--color-midnight-ink)" }}>
-            {formatNumber(Math.abs(diff), 2)}
-          </strong>{" "}
-          ({Math.abs(pct).toFixed(1)}% lebih rendah)
+          <strong className="text-midnight-ink">VNS</strong> menghasilkan Z lebih baik sebesar{" "}
+          <strong className="text-midnight-ink">{formatNumber(Math.abs(diff), 2)}</strong> (
+          {Math.abs(pct).toFixed(1)}% lebih rendah)
         </>
       )}
     </div>
