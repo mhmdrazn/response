@@ -90,85 +90,77 @@ export function AlgorithmPanel({
         </div>
 
         {/* Parameters */}
-        {mode === "advanced" ? (
-          algorithm === "acs" ? (
-            <div className="grid grid-cols-2 gap-8">
-              <NumInput
-                label="Iterasi"
-                min={1}
-                max={500}
-                step={1}
-                value={acsParams.iterations}
-                onChange={(v) => updateACS("iterations", v)}
-              />
-              <NumInput
-                label="Semut"
-                min={1}
-                max={100}
-                step={1}
-                value={acsParams.n_ants}
-                onChange={(v) => updateACS("n_ants", v)}
-              />
-              <NumInput
-                label="α (feromon)"
-                min={0.1}
-                max={5}
-                step={0.1}
-                value={acsParams.alpha}
-                onChange={(v) => updateACS("alpha", v)}
-              />
-              <NumInput
-                label="β (heuristik)"
-                min={0.1}
-                max={10}
-                step={0.1}
-                value={acsParams.beta}
-                onChange={(v) => updateACS("beta", v)}
-              />
-              <NumInput
-                label="ρ (evaporasi)"
-                min={0.01}
-                max={0.9}
-                step={0.01}
-                value={acsParams.rho}
-                onChange={(v) => updateACS("rho", v)}
-              />
-              <NumInput
-                label="q₀ (eksploitasi)"
-                min={0}
-                max={1}
-                step={0.01}
-                value={acsParams.q0}
-                onChange={(v) => updateACS("q0", v)}
-              />
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-8">
-              <NumInput
-                label="Iterasi Maks"
-                min={1}
-                max={1000}
-                step={1}
-                value={vnsParams.max_iterations}
-                onChange={(v) => updateVNS("max_iterations", v)}
-              />
-              <NumInput
-                label="k Maks"
-                min={1}
-                max={6}
-                step={1}
-                value={vnsParams.k_max}
-                onChange={(v) => updateVNS("k_max", v)}
-              />
-            </div>
-          )
-        ) : (
-          <div className="text-[12px] font-medium leading-[1.5] text-steel">
-            {algorithm === "acs"
-              ? "Menggunakan preset default (60 iterasi · 20 semut · batas 45 detik). Beralih ke mode Analitik untuk mengatur parameter."
-              : "Menggunakan preset default (100 iterasi · k_max 3 · batas 45 detik). Beralih ke mode Analitik untuk mengatur parameter."}
+        algorithm === "acs" ? (
+          <div className="grid grid-cols-2 gap-8">
+            <NumInput
+              label="Iterasi"
+              min={1}
+              max={500}
+              step={1}
+              value={acsParams.iterations}
+              onChange={(v) => updateACS("iterations", v)}
+            />
+            <NumInput
+              label="Semut"
+              min={1}
+              max={100}
+              step={1}
+              value={acsParams.n_ants}
+              onChange={(v) => updateACS("n_ants", v)}
+            />
+            <NumInput
+              label="α (feromon)"
+              min={0.1}
+              max={5}
+              step={0.1}
+              value={acsParams.alpha}
+              onChange={(v) => updateACS("alpha", v)}
+            />
+            <NumInput
+              label="β (heuristik)"
+              min={0.1}
+              max={10}
+              step={0.1}
+              value={acsParams.beta}
+              onChange={(v) => updateACS("beta", v)}
+            />
+            <NumInput
+              label="ρ (evaporasi)"
+              min={0.01}
+              max={0.9}
+              step={0.01}
+              value={acsParams.rho}
+              onChange={(v) => updateACS("rho", v)}
+            />
+            <NumInput
+              label="q₀ (eksploitasi)"
+              min={0}
+              max={1}
+              step={0.01}
+              value={acsParams.q0}
+              onChange={(v) => updateACS("q0", v)}
+            />
           </div>
-        )}
+        ) : (
+          <div className="grid grid-cols-2 gap-8">
+            <NumInput
+              label="Iterasi Maks"
+              min={1}
+              max={1000}
+              step={1}
+              value={vnsParams.max_iterations}
+              onChange={(v) => updateVNS("max_iterations", v)}
+            />
+            <NumInput
+              label="k Maks"
+              min={1}
+              max={6}
+              step={1}
+              value={vnsParams.k_max}
+              onChange={(v) => updateVNS("k_max", v)}
+            />
+          </div>
+        )
 
         {/* Run / Reset buttons */}
         <div className="flex gap-8">
