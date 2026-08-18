@@ -2,6 +2,7 @@
 
 import type { DatasetKey } from "../data-table-modal";
 import type { BaseMapId, OverlayLayerId } from "../../lib/map-constants";
+import { DataDock } from "./data-dock";
 import { MapControls } from "./map-controls";
 import { MapLayerDock } from "./map-layer-dock";
 
@@ -17,8 +18,6 @@ interface LeftPanelProps {
   onPreviewData: (key: DatasetKey) => void;
 }
 
-/** Desktop/tablet only — mobile uses the flex-stacked MobileDataLayerDock
- *  in app-shell.tsx instead, to guarantee no overlap with other docks. */
 export function LeftPanel({
   floodCount,
   depotCount,
@@ -35,14 +34,18 @@ export function LeftPanel({
       <MapControls />
 
       <MapLayerDock
-        floodCount={floodCount}
-        depotCount={depotCount}
-        ifCount={ifCount}
-        faskesCount={faskesCount}
         overlays={overlays}
         setOverlay={setOverlay}
         baseMap={baseMap}
         setBaseMap={setBaseMap}
+        defaultOpen={false}
+      />
+
+      <DataDock
+        floodCount={floodCount}
+        depotCount={depotCount}
+        ifCount={ifCount}
+        faskesCount={faskesCount}
         onPreviewData={onPreviewData}
         defaultOpen={false}
       />

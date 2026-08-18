@@ -2,7 +2,7 @@
 
 import type { LatLngBoundsExpression } from "leaflet";
 import L from "leaflet";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 
 import {
@@ -55,6 +55,22 @@ function FitBounds({ route }: { route: RouteOut | null }) {
   return null;
 }
 
+function PlayPauseIcon({ playing }: { playing: boolean }) {
+  if (playing) {
+    return (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor" />
+        <rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor" />
+      </svg>
+    );
+  }
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M7 4v16l13-8L7 4Z" fill="currentColor" />
+    </svg>
+  );
+}
+
 export function MapInner({
   floods,
   depots,
@@ -72,6 +88,7 @@ export function MapInner({
   isMobile = false,
 }: MapInnerProps) {
   const base = BASE_MAP_LAYERS[baseMap];
+  const [animating, setAnimating] = useState(false);
 
   return (
     <MapContainer
@@ -103,6 +120,7 @@ export function MapInner({
           <RouteDecorators
             routes={routes}
             highlightId={highlightVehicleId}
+            animating={animating}
           />
         </>
       ) : null}
@@ -115,10 +133,34 @@ export function MapInner({
         </div>
       ) : null}
 
-      {!isMobile && (overlays.choropleth || routes.length === 0) ? (
+      {routes.length > 0 ? (
         <div className="pointer-events-none absolute bottom-24 right-16 z-[800] flex flex-col items-end gap-8">
+          <button
+            type="button"
+            onClick={() => setAnimating((v) => !v)}
+            title={animating ? "Hentikan animasi" : "Jalankan animasi kendaraan"}
+            className={`pointer-events-auto flex h-[36px] cursor-pointer items-center gap-[6px] rounded-lg border px-[10px] text-[11px] font-bold tracking-[-0.1px] transition-colors ${
+              animating
+                ? "border-transparent bg-[var(--color-indigo-ink)] text-white"
+                : "border-frost bg-pure-white text-midnight-ink hover:bg-frost"
+            }`}
+          >
+            <PlayPauseIcon playing={animating} />
+            <span>{animating ? "Hentikan" : "Animasi"}</span>
+          </button>
           {overlays.choropleth ? <ChoroplethLegend /> : null}
-          {routes.length === 0 ? <SiLegend inline /> : null}
+        </div>
+      ) : null}
+
+      {!isMobile && routes.length === 0 && overlays.choropleth ? (
+        <div className="pointer-events-none absolute bottom-24 right-16 z-[800] flex flex-col items-end gap-8">
+          <ChoroplethLegend />
+        </div>
+      ) : null}
+
+      {!isMobile && routes.length === 0 ? (
+        <div className="pointer-events-none absolute bottom-24 right-16 z-[800]">
+          <SiLegend inline />
         </div>
       ) : null}
 

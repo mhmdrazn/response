@@ -4,7 +4,6 @@ import {
   Building2,
   ChevronDown,
   Droplets,
-  Eye,
   Hospital,
   Layers,
   Map as MapIcon,
@@ -13,35 +12,15 @@ import {
 } from "lucide-react";
 import { type ReactNode, useState } from "react";
 
-import type { DatasetKey } from "../data-table-modal";
 import { BASE_MAP_LAYERS, type BaseMapId, type OverlayLayerId } from "../../lib/map-constants";
 
 interface MapLayerDockProps {
-  floodCount: number;
-  depotCount: number;
-  ifCount: number;
-  faskesCount: number;
   overlays: Record<OverlayLayerId, boolean>;
   setOverlay: (id: OverlayLayerId, visible: boolean) => void;
   baseMap: BaseMapId;
   setBaseMap: (id: BaseMapId) => void;
-  onPreviewData: (key: DatasetKey) => void;
   defaultOpen?: boolean;
 }
-
-interface DataCountItem {
-  key: DatasetKey;
-  label: string;
-  Icon: LucideIcon;
-  color: string;
-}
-
-const DATA_ITEMS: DataCountItem[] = [
-  { key: "floods", label: "Genangan", Icon: Droplets, color: "#ef4444" },
-  { key: "depots", label: "Depo", Icon: Building2, color: "#f59e0b" },
-  { key: "ifs", label: "Sungai", Icon: Waves, color: "#0284c7" },
-  { key: "faskes", label: "Faskes", Icon: Hospital, color: "#059669" },
-];
 
 interface BaseMapOption {
   id: BaseMapId;
@@ -92,25 +71,13 @@ const OVERLAY_OPTIONS: OverlayOption[] = [
 ];
 
 export function MapLayerDock({
-  floodCount,
-  depotCount,
-  ifCount,
-  faskesCount,
   overlays,
   setOverlay,
   baseMap,
   setBaseMap,
-  onPreviewData,
   defaultOpen = false,
 }: MapLayerDockProps) {
   const [open, setOpen] = useState(defaultOpen);
-
-  const counts: Record<string, number> = {
-    floods: floodCount,
-    depots: depotCount,
-    ifs: ifCount,
-    faskes: faskesCount,
-  };
 
   return (
     <div className="pointer-events-auto flex flex-col rounded-lg border border-frost bg-pure-white">
@@ -122,7 +89,7 @@ export function MapLayerDock({
       >
         <Layers size={14} strokeWidth={2} color="var(--color-slate)" />
         <span className="flex-1 text-[11px] font-bold tracking-[-0.1px] text-midnight-ink">
-          Lapisan Peta &amp; Data
+          Lapisan Peta
         </span>
         <ChevronDown
           size={14}
@@ -138,27 +105,6 @@ export function MapLayerDock({
             : "pointer-events-none max-h-0 overflow-hidden border-t border-transparent px-12 py-0 opacity-0"
         }`}
       >
-        <div className="flex flex-wrap gap-[4px]">
-          {DATA_ITEMS.map(({ key, label, Icon, color }) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => onPreviewData(key)}
-              title={`Lihat data ${label}`}
-              className="flex cursor-pointer items-center gap-[4px] rounded-sm border border-transparent bg-transparent px-[7px] py-[3px] transition-colors hover:border-frost hover:bg-mist"
-            >
-              <Icon size={12} strokeWidth={2.2} color={color} />
-              <span className="text-[12px] font-bold leading-none text-midnight-ink tabular-nums">
-                {counts[key]}
-              </span>
-              <span className="text-[10px] font-semibold leading-none text-slate">{label}</span>
-              <Eye size={10} strokeWidth={2} color="var(--color-smoke)" className="ml-px" />
-            </button>
-          ))}
-        </div>
-
-        <div aria-hidden className="h-px bg-frost" />
-
         <PanelSection label="Peta Dasar" noWrap>
           <div className="flex w-full gap-[6px]">
             {BASE_MAP_OPTIONS.map(({ id, label, tilePreview }) => (

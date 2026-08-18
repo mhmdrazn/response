@@ -2,6 +2,7 @@
 
 import type { DatasetKey } from "../data-table-modal";
 import type { BaseMapId, OverlayLayerId } from "../../lib/map-constants";
+import { DataDock } from "./data-dock";
 import { MapLayerDock } from "./map-layer-dock";
 
 interface MobileDataLayerDockProps {
@@ -16,8 +17,6 @@ interface MobileDataLayerDockProps {
   onPreviewData: (key: DatasetKey) => void;
 }
 
-/** Mobile counterpart to LeftPanel — no absolute positioning of its own.
- *  Meant to be a plain flex child inside app-shell's bottom dock stack. */
 export function MobileDataLayerDock({
   floodCount,
   depotCount,
@@ -30,17 +29,22 @@ export function MobileDataLayerDock({
   onPreviewData,
 }: MobileDataLayerDockProps) {
   return (
-    <MapLayerDock
-      floodCount={floodCount}
-      depotCount={depotCount}
-      ifCount={ifCount}
-      faskesCount={faskesCount}
-      overlays={overlays}
-      setOverlay={setOverlay}
-      baseMap={baseMap}
-      setBaseMap={setBaseMap}
-      onPreviewData={onPreviewData}
-      defaultOpen={false}
-    />
+    <div className="flex flex-col gap-8">
+      <MapLayerDock
+        overlays={overlays}
+        setOverlay={setOverlay}
+        baseMap={baseMap}
+        setBaseMap={setBaseMap}
+        defaultOpen={false}
+      />
+      <DataDock
+        floodCount={floodCount}
+        depotCount={depotCount}
+        ifCount={ifCount}
+        faskesCount={faskesCount}
+        onPreviewData={onPreviewData}
+        defaultOpen={false}
+      />
+    </div>
   );
 }

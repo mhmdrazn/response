@@ -10,6 +10,7 @@ import type { RouteOut } from "../../types";
 interface RouteDecoratorsProps {
   routes: RouteOut[];
   highlightId: string | null;
+  animating: boolean;
 }
 
 const ARROW_SPACING_PX = 90;
@@ -69,7 +70,7 @@ function pixelDist(map: L.Map, a: [number, number], b: [number, number]): number
   return Math.sqrt((pa.x - pb.x) ** 2 + (pa.y - pb.y) ** 2);
 }
 
-export function RouteDecorators({ routes, highlightId }: RouteDecoratorsProps) {
+export function RouteDecorators({ routes, highlightId, animating }: RouteDecoratorsProps) {
   const map = useMap();
   const arrowLayer = useRef<L.LayerGroup>(L.layerGroup());
   const vehicleMarkers = useRef<Map<string, L.Marker>>(new Map());
@@ -125,16 +126,14 @@ export function RouteDecorators({ routes, highlightId }: RouteDecoratorsProps) {
     };
   }, [map, buildArrows]);
 
+  // Vehicle animation — only when animating=true
   useEffect(() => {
-    const oldIds = new Set(vehicleMarkers.current.keys());
-    const newIds = new Set(routes.map((r) => r.vehicle_id));
-
-    for (const id of oldIds) {
-      if (!newIds.has(id)) {
-        vehicleMarkers.current.get(id)?.remove();
-        vehicleMarkers.current.delete(id);
-        routeDataRef.current.delete(id);
-      }
+    if (!animating) {
+      for (const m of vehicleMarkers.current.values()) m.remove();
+      vehicleMarkers.current.clear();
+      routeDataRef.current.clear();
+      cancelAnimationFrame(animRef.current);
+      return;
     }
 
     for (const r of routes) {
@@ -184,16 +183,17 @@ export function RouteDecorators({ routes, highlightId }: RouteDecoratorsProps) {
     return () => {
       cancelAnimationFrame(animRef.current);
     };
-  }, [routes, map]);
+  }, [routes, map, animating]);
 
   useEffect(() => {
+    if (!animating) return;
     for (const r of routes) {
       const marker = vehicleMarkers.current.get(r.vehicle_id);
       if (!marker) continue;
       const dimmed = highlightId !== null && highlightId !== r.vehicle_id;
       marker.setOpacity(dimmed ? 0.3 : 1);
     }
-  }, [highlightId, routes]);
+  }, [highlightId, routes, animating]);
 
   return null;
 }
