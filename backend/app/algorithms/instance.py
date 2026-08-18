@@ -1,16 +1,4 @@
-"""Assemble the runtime routing instance from the loaded DataFrames.
-
-The MDCVRP-IF-SI instance combines depots, flood points, and IFs into a
-single node index space so distance / pheromone matrices can address every
-node uniformly:
-
-    indices 0                        .. n_depots - 1              depots
-    indices n_depots                 .. n_depots + n_floods - 1   flood points
-    indices n_depots + n_floods      .. total - 1                 IFs
-
-Everything algorithm code sees is a plain dict of numpy arrays + lists,
-never a DataFrame.
-"""
+# Unified node index: [0..n_depots) depots, [n_depots..+n_floods) floods, [..total) IFs
 
 from __future__ import annotations
 
@@ -65,6 +53,11 @@ class Instance:
 
     # Vehicles: each entry is (depot_node_index, capacity_liters)
     vehicles: list[tuple[int, int]] = field(default_factory=list)
+
+    # Geometry constraint: each flood assigned to its nearest depot
+    nearest_depot: np.ndarray = field(default_factory=lambda: np.array([], dtype=int))
+    # Quick lookup: depot_node_index -> set of flood node indices assigned to it
+    depot_flood_sets: dict[int, set[int]] = field(default_factory=dict)
 
 
 def _row_to_dict(row: pd.Series) -> dict[str, Any]:
@@ -146,6 +139,19 @@ def build_instance(
         for cap in VEHICLE_CAPACITIES_L:
             vehicles.append((di, cap))
 
+    # Geometry constraint: assign each flood to its nearest depot
+    depot_arr = np.array(depot_indices, dtype=int)
+    flood_arr = np.array(flood_indices, dtype=int)
+    if n_depots > 0 and n_floods > 0:
+        sub = dist_matrix[np.ix_(flood_arr, depot_arr)]
+        nearest_depot = depot_arr[np.argmin(sub, axis=1)]
+    else:
+        nearest_depot = np.zeros(n_floods, dtype=int)
+
+    depot_flood_sets: dict[int, set[int]] = {di: set() for di in depot_indices}
+    for k, fi in enumerate(flood_indices):
+        depot_flood_sets[int(nearest_depot[k])].add(fi)
+
     return Instance(
         depots=depots,
         floods=floods,
@@ -162,4 +168,6 @@ def build_instance(
         flood_indices=flood_indices,
         if_indices=if_indices,
         vehicles=vehicles,
+        nearest_depot=nearest_depot,
+        depot_flood_sets=depot_flood_sets,
     )

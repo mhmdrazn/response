@@ -1,9 +1,4 @@
-"""Lightweight local search operators for post-processing an ACS solution.
-
-Each function accepts an in-progress ``list[list[int]]`` routes structure
-plus the ``Instance`` and returns an improved copy (or the input unchanged).
-Feasibility is re-checked via ``evaluate_solution``.
-"""
+# Local search operators: 2-opt, relocate, or-opt, swap, composite
 
 from __future__ import annotations
 
@@ -28,7 +23,6 @@ def two_opt(
     current_z: float,
     max_passes: int = 5,
 ) -> tuple[list[list[int]], float]:
-    """Intra-route 2-opt: reverse each segment [i, j] and keep improving ones."""
     best_routes = [list(r) for r in routes]
     best_z = current_z
     for ri, route in enumerate(best_routes):
@@ -65,22 +59,23 @@ def relocate_between_routes(
     capacities: list[int],
     current_z: float,
 ) -> tuple[list[list[int]], float]:
-    """Move a single flood-point visit from route A into a slot in route B."""
     best_routes = [list(r) for r in routes]
     best_z = current_z
     n_routes = len(best_routes)
     for a in range(n_routes):
         for i in range(1, len(best_routes[a]) - 1):
             node = best_routes[a][i]
-            if node < inst.n_depots or node >= inst.n_depots + inst.n_floods:
+            if not _is_flood(inst, node):
                 continue
+            flood_slot = node - inst.n_depots
+            assigned_depot = int(inst.nearest_depot[flood_slot])
             for b in range(n_routes):
                 if a == b:
                     continue
+                # Hard constraint: only relocate to route from flood's assigned depot
+                if best_routes[b][0] != assigned_depot:
+                    continue
                 for j in range(1, len(best_routes[b])):
-                    # Shallow-copy the routes list, then only clone the two
-                    # routes we mutate — avoids deepcopy of 24 routes per
-                    # candidate (was ~1ms × thousands of trials = seconds).
                     trial = list(best_routes)
                     trial[a] = best_routes[a][:i] + best_routes[a][i + 1 :]
                     trial[b] = best_routes[b][:j] + [node] + best_routes[b][j:]
@@ -91,7 +86,7 @@ def relocate_between_routes(
                     ):
                         best_routes = trial
                         best_z = ev.objective_z
-                        return best_routes, best_z  # first-improvement
+                        return best_routes, best_z
     return best_routes, best_z
 
 
@@ -103,12 +98,6 @@ def or_opt(
     max_seg_len: int = 2,
     max_passes: int = 3,
 ) -> tuple[list[list[int]], float]:
-    """Move a segment of 1–``max_seg_len`` consecutive flood nodes between routes.
-
-    Or-opt complements relocate (single node) by allowing chains of nearby
-    high-SI floods to migrate together to a shorter/faster route.
-    Capped by ``max_passes`` per segment length to keep runtime predictable.
-    """
     best_routes = [list(r) for r in routes]
     best_z = current_z
     for seg_len in range(1, max_seg_len + 1):
@@ -123,6 +112,12 @@ def or_opt(
                         continue
                     for b in range(len(best_routes)):
                         if a == b:
+                            continue
+                        dst_depot = best_routes[b][0]
+                        if not all(
+                            int(inst.nearest_depot[n - inst.n_depots]) == dst_depot
+                            for n in seg
+                        ):
                             continue
                         for j in range(1, len(best_routes[b])):
                             trial = [list(r) for r in best_routes]
@@ -154,21 +149,25 @@ def exchange(
     capacities: list[int],
     current_z: float,
 ) -> tuple[list[list[int]], float]:
-    """Swap one flood visit from route A with one flood visit from route B.
-
-    Useful when two routes carry each other's better-suited floods
-    (high-SI floods stuck in a long route, low-SI stuck in a short one).
-    """
     best_routes = [list(r) for r in routes]
     best_z = current_z
     n_routes = len(best_routes)
     for a in range(n_routes):
+        depot_a = best_routes[a][0]
         for i in range(1, len(best_routes[a]) - 1):
-            if not _is_flood(inst, best_routes[a][i]):
+            node_a = best_routes[a][i]
+            if not _is_flood(inst, node_a):
                 continue
             for b in range(a + 1, n_routes):
+                depot_b = best_routes[b][0]
                 for j in range(1, len(best_routes[b]) - 1):
-                    if not _is_flood(inst, best_routes[b][j]):
+                    node_b = best_routes[b][j]
+                    if not _is_flood(inst, node_b):
+                        continue
+                    # Only swap if both floods are compatible with destination depot
+                    if int(inst.nearest_depot[node_a - inst.n_depots]) != depot_b:
+                        continue
+                    if int(inst.nearest_depot[node_b - inst.n_depots]) != depot_a:
                         continue
                     trial = [list(r) for r in best_routes]
                     trial[a][i], trial[b][j] = trial[b][j], trial[a][i]
@@ -179,7 +178,7 @@ def exchange(
                     ):
                         best_routes = trial
                         best_z = ev.objective_z
-                        return best_routes, best_z  # first improvement
+                        return best_routes, best_z
     return best_routes, best_z
 
 
@@ -191,12 +190,7 @@ def polish(
     max_rounds: int = 5,
     quick: bool = False,
 ) -> tuple[list[list[int]], float, SolutionEval]:
-    """Cycle local-search operators until no Z improvement or ``max_rounds``.
-
-    ``quick=True`` skips the expensive or-opt and exchange operators — use it
-    for per-iteration polish where budget is tight. ``quick=False`` runs all
-    four operators — use it periodically or for final intensive polish.
-    """
+    # quick=True: only 2-opt + relocate; quick=False: all four operators
     cur_routes = [list(r) for r in routes]
     cur_z = current_z
     for _ in range(max_rounds):

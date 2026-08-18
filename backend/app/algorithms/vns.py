@@ -1,17 +1,5 @@
-"""Variable Neighborhood Search (VNS) baseline for MDCVRP-IF-SI.
-
-Used as the comparison algorithm against Hybrid ACS in the thesis.
-The solver follows the General VNS (GVNS) framework:
-
-    1. Construct an initial solution via a greedy nearest-neighbor heuristic
-       that prioritises high-SI, nearby flood points.
-    2. For k = 1 .. k_max:
-       a. Shaking — apply k random perturbations to the current solution.
-       b. Local search — polish the shaken solution with 2-opt + relocate.
-       c. Move or not — if the polished solution improves Z, accept it
-          and reset k = 1; otherwise k += 1.
-    3. Repeat until max_iterations or time_limit_s is reached.
-"""
+# VNS baseline for MDCVRP-IF-SI (comparison algorithm)
+# GVNS: greedy init, shaking (k perturbations), local search, accept-or-increment-k
 
 from __future__ import annotations
 
@@ -55,10 +43,6 @@ class VNSSolution:
 
 
 class VNS:
-    # Multiplier on the SI/d score for a flood whose nearest depot equals
-    # the home depot of the vehicle currently under construction.
-    DEPOT_PROXIMITY_BONUS = 3.0
-
     def __init__(self, instance: Instance, params: VNSParams):
         self.inst = instance
         self.p = params
@@ -70,22 +54,8 @@ class VNS:
             fi: k for k, fi in enumerate(instance.flood_indices)
         }
 
-        # Depot-proximity soft constraint: for each flood, which depot NODE INDEX
-        # is closest. Used to bias greedy selection toward "own" territory.
-        if instance.n_depots > 0 and instance.n_floods > 0:
-            depot_nodes = np.array(instance.depot_indices, dtype=int)
-            flood_nodes = np.array(instance.flood_indices, dtype=int)
-            sub = instance.dist_matrix[np.ix_(flood_nodes, depot_nodes)]
-            self.nearest_depot = depot_nodes[np.argmin(sub, axis=1)]
-        else:
-            self.nearest_depot = np.zeros(instance.n_floods, dtype=int)
-
     def _greedy_initial(self) -> tuple[list[list[int]], list[int]]:
-        """Build a feasible initial solution using nearest-neighbor + SI bias.
-
-        Tries multiple random vehicle orderings and applies a repair phase
-        after each attempt to ensure all flood volumes are served.
-        """
+        # Nearest-neighbor + SI bias; tries multiple orderings with repair phase
         max_attempts = 20
         for _attempt in range(max_attempts):
             volumes_left = self.inst.volumes.copy()
@@ -106,6 +76,22 @@ class VNS:
                 route, _ = self._build_greedy_route(depot, cap, volumes_left)
                 route_map[vi] = route
                 cap_map[vi] = cap
+
+            # Overflow: if own-depot constraint left unserved floods, allow any
+            # Only use vehicles with empty routes to avoid discarding existing visits
+            if np.any(volumes_left > 0.5):
+                for vi in order:
+                    if np.all(volumes_left <= 0.5):
+                        break
+                    if len(route_map.get(vi, [])) > 2:
+                        continue
+                    depot, cap = self.inst.vehicles[vi]
+                    route, _ = self._build_greedy_route(
+                        depot, cap, volumes_left, allow_all=True,
+                    )
+                    if len(route) > 2:
+                        route_map[vi] = route
+                        cap_map[vi] = cap
 
             routes = [route_map[i] for i in range(n_vehicles)]
             capacities = [cap_map[i] for i in range(n_vehicles)]
@@ -130,8 +116,8 @@ class VNS:
         depot: int,
         cap: int,
         volumes_left: np.ndarray,
+        allow_all: bool = False,
     ) -> tuple[list[int], float]:
-        """Nearest-neighbour greedy route with SI-weighted selection."""
         route: list[int] = [depot]
         tank = 0.0
         current = depot
@@ -140,13 +126,19 @@ class VNS:
             3, (self.inst.n_floods * 2) // max(len(self.inst.vehicles), 1) + 1
         )
         max_steps = self.inst.n_floods * 2 + self.inst.n_ifs + 5
+        own_floods = self.inst.depot_flood_sets.get(depot, set())
 
         for _ in range(max_steps):
-            served = [
-                fi
-                for k, fi in enumerate(self.inst.flood_indices)
-                if volumes_left[k] > 0.5
-            ]
+            if allow_all:
+                served = [
+                    fi for k, fi in enumerate(self.inst.flood_indices)
+                    if volumes_left[k] > 0.5
+                ]
+            else:
+                served = [
+                    fi for fi in own_floods
+                    if volumes_left[self._flood_lookup[fi]] > 0.5
+                ]
             if not served or flood_visits >= max_flood_visits:
                 break
 
@@ -157,7 +149,7 @@ class VNS:
                 current = nearest_if
                 continue
 
-            nxt = self._greedy_next(current, served, home_depot=depot)
+            nxt = self._greedy_next(current, served)
             flood_slot = self._flood_lookup[nxt]
             free = cap - tank
             pump = min(volumes_left[flood_slot], free)
@@ -174,20 +166,12 @@ class VNS:
         self,
         current: int,
         candidates: list[int],
-        home_depot: int,
     ) -> int:
-        """Pick the candidate with best SI / distance ratio (with noise)."""
         slots = [self._flood_lookup[c] for c in candidates]
         dists = self.inst.dist_matrix[current, candidates]
         si = self.inst.si_values[slots]
         with np.errstate(divide="ignore", invalid="ignore"):
             scores = si / np.where(dists < 1e-6, 1e-6, dists)
-        bonus = np.where(
-            self.nearest_depot[slots] == home_depot,
-            self.DEPOT_PROXIMITY_BONUS,
-            1.0,
-        )
-        scores = scores * bonus
         noise = self._np_rng.uniform(0.8, 1.2, size=len(scores))
         scores = scores * noise
         return int(candidates[int(np.argmax(scores))])
@@ -198,7 +182,6 @@ class VNS:
         capacities: list[int],
         remaining_volume: np.ndarray,
     ) -> None:
-        """Add one IF+flood visit for the first unserved flood."""
         unserved = [
             (k, fi)
             for k, fi in enumerate(self.inst.flood_indices)
@@ -207,16 +190,29 @@ class VNS:
         if not unserved:
             return
 
-        _flood_slot, flood_node = unserved[0]
+        flood_slot, flood_node = unserved[0]
+        assigned_depot = int(self.inst.nearest_depot[flood_slot])
 
+        # Prefer vehicles from flood's assigned depot, fall back to nearest any
         best_vi = -1
         best_dist = float("inf")
         for vi in range(len(routes)):
+            depot_of_vehicle = routes[vi][0]
+            if depot_of_vehicle != assigned_depot:
+                continue
             last_stop = routes[vi][-2] if len(routes[vi]) >= 2 else routes[vi][0]
             d = float(self.inst.dist_matrix[last_stop, flood_node])
             if d < best_dist:
                 best_dist = d
                 best_vi = vi
+
+        if best_vi < 0:
+            for vi in range(len(routes)):
+                last_stop = routes[vi][-2] if len(routes[vi]) >= 2 else routes[vi][0]
+                d = float(self.inst.dist_matrix[last_stop, flood_node])
+                if d < best_dist:
+                    best_dist = d
+                    best_vi = vi
 
         if best_vi < 0:
             return
@@ -241,7 +237,6 @@ class VNS:
         capacities: list[int],
         k: int,
     ) -> list[list[int]]:
-        """Apply k random perturbation moves to produce a neighbour."""
         shaken = [list(r) for r in routes]
         for _ in range(k):
             move = self._rng.randint(0, 2)
@@ -254,14 +249,12 @@ class VNS:
         return shaken
 
     def _active_routes(self, routes: list[list[int]]) -> list[int]:
-        """Return indices of routes that visit at least one flood."""
         return [
             ri for ri, r in enumerate(routes)
             if any(n in self._flood_set for n in r[1:-1])
         ]
 
     def _shake_swap_within(self, routes: list[list[int]]) -> None:
-        """Swap two random internal nodes within a random active route."""
         active = self._active_routes(routes)
         if not active:
             return
@@ -274,7 +267,6 @@ class VNS:
         r[a], r[b] = r[b], r[a]
 
     def _shake_relocate_between(self, routes: list[list[int]]) -> None:
-        """Move a random flood visit from one route to another."""
         active = self._active_routes(routes)
         if len(active) < 2:
             return
@@ -286,15 +278,26 @@ class VNS:
         if not flood_positions:
             return
         pos = self._rng.choice(flood_positions)
-        node = src.pop(pos)
+        node = src[pos]
 
-        dst_ri = self._rng.choice([r for r in active if r != src_ri])
+        flood_slot = node - self.inst.n_depots
+        assigned_depot = int(self.inst.nearest_depot[flood_slot])
+        eligible = [
+            r for r in active
+            if r != src_ri and routes[r][0] == assigned_depot
+        ]
+        if not eligible:
+            eligible = [r for r in active if r != src_ri]
+        if not eligible:
+            return
+
+        src.pop(pos)
+        dst_ri = self._rng.choice(eligible)
         dst = routes[dst_ri]
         insert_pos = self._rng.randint(1, max(1, len(dst) - 1))
         dst.insert(insert_pos, node)
 
     def _shake_reverse_segment(self, routes: list[list[int]]) -> None:
-        """Reverse a random segment within a random active route (2-opt style)."""
         active = self._active_routes(routes)
         if not active:
             return

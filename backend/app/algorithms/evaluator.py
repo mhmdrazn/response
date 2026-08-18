@@ -1,12 +1,4 @@
-"""Route evaluator — compute Z, arrival times, tank loads, feasibility.
-
-A **route** is a list of node indices (in the unified index space defined by
-``Instance``) that starts and ends at the same depot. A **solution** is a
-list of routes, one per vehicle used.
-
-Every ACS / VNS iteration hands its candidate solutions to this module so
-scoring stays deterministic and constraint checks are centralized.
-"""
+# Route evaluator: Z score, arrival times, tank loads, feasibility checks
 
 from __future__ import annotations
 
@@ -67,11 +59,6 @@ def evaluate_solution(
     routes: list[list[int]],
     capacities: list[int] | None = None,
 ) -> SolutionEval:
-    """Score a solution end-to-end.
-
-    ``routes[k]`` is the full node sequence for vehicle *k* (first == last).
-    ``capacities[k]`` is optional; defaults to ``DEFAULT_CAPACITY_L`` per vehicle.
-    """
     if capacities is None:
         capacities = [VEHICLE_CAPACITIES_L[-1]] * len(routes)
 
@@ -180,7 +167,6 @@ def validate_hard_constraints(
     ev: SolutionEval,
     tol: float = 1.0,
 ) -> list[str]:
-    """Check all 6 hard constraints. Returns a list of violation descriptions (empty = feasible)."""
     violations: list[str] = []
 
     # HC1: All flood volume served.
@@ -223,7 +209,17 @@ def validate_hard_constraints(
                 )
                 break
 
-    # HC6: No subtours — every route touches a depot. Already guaranteed by
-    # construction (route[0] == route[-1] == depot), so HC2 check covers it.
+    # HC6: Depot-geometry constraint — floods should be served by nearest depot.
+    for k, r in enumerate(ev.routes):
+        depot = r.depot_index
+        for v in r.visits:
+            if v.node_type == "flood":
+                flood_slot = v.node_index - inst.n_depots
+                assigned = int(inst.nearest_depot[flood_slot])
+                if assigned != depot:
+                    violations.append(
+                        f"HC6 depot-geometry: route {k} (depot {depot}) "
+                        f"serves flood {v.node_index} assigned to depot {assigned}"
+                    )
 
     return violations
