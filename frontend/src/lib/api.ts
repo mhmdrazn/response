@@ -40,8 +40,6 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     }
     throw new ApiError(res.status, detail || `Request failed: ${res.status}`);
   }
-  // Handle empty bodies (204 No Content, HEAD, or endpoints that return nothing).
-  // res.json() throws "Unexpected end of JSON input" on empty body.
   if (res.status === 204) return undefined as T;
   const text = await res.text();
   if (!text) return undefined as T;
@@ -51,21 +49,17 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 export { ApiError };
 
 export const api = {
-  // Meta
   health: (): Promise<{ status: string; service: string }> => request("/health"),
 
-  // Data
   getFloodPoints: (): Promise<FloodPoint[]> => request<FloodPoint[]>("/api/data/floods"),
   getDepots: (): Promise<Depot[]> => request<Depot[]>("/api/data/depo"),
   getIntermediateFacilities: (): Promise<IntermediateFacility[]> =>
     request<IntermediateFacility[]>("/api/data/if"),
   getFaskes: (): Promise<Faskes[]> => request<Faskes[]>("/api/data/faskes"),
 
-  // Severity Index
   getSeverityIndex: (): Promise<SeverityIndexResponse> =>
     request<SeverityIndexResponse>("/api/severity-index"),
 
-  // Optimization
   runACS: (params: ACSParams): Promise<OptimizationResult> =>
     request<OptimizationResult>("/api/optimize/acs", {
       method: "POST",
@@ -77,7 +71,6 @@ export const api = {
       body: JSON.stringify(params),
     }),
 
-  // CRUD — Floods
   createFlood: (body: Omit<FloodPoint, "id" | "si_value">): Promise<FloodPoint> =>
     request<FloodPoint>("/api/data/floods", {
       method: "POST",
@@ -91,7 +84,6 @@ export const api = {
   deleteFlood: (id: string): Promise<void> =>
     request<void>(`/api/data/floods/${encodeURIComponent(id)}`, { method: "DELETE" }),
 
-  // CRUD — Depots
   createDepot: (body: Omit<Depot, "id">): Promise<Depot> =>
     request<Depot>("/api/data/depo", {
       method: "POST",
@@ -105,7 +97,6 @@ export const api = {
   deleteDepot: (id: string): Promise<void> =>
     request<void>(`/api/data/depo/${encodeURIComponent(id)}`, { method: "DELETE" }),
 
-  // CRUD — IF
   createIF: (body: Omit<IntermediateFacility, "id">): Promise<IntermediateFacility> =>
     request<IntermediateFacility>("/api/data/if", {
       method: "POST",
@@ -119,7 +110,6 @@ export const api = {
   deleteIF: (id: string): Promise<void> =>
     request<void>(`/api/data/if/${encodeURIComponent(id)}`, { method: "DELETE" }),
 
-  // CRUD — Faskes
   createFaskes: (body: Omit<Faskes, "id">): Promise<Faskes> =>
     request<Faskes>("/api/data/faskes", {
       method: "POST",

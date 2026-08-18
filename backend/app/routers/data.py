@@ -1,4 +1,3 @@
-"""Static data endpoints backing the frontend map layer, with CRUD support."""
 
 from __future__ import annotations
 
@@ -35,21 +34,18 @@ _CSV_MAP: dict[str, str] = {
     "faskes": "faskes.csv",
 }
 
-# Track CSV mtimes so external edits (e.g. manual `depo.csv` edit) are picked
-# up automatically. Without this the in-memory data.depots stays stale until
-# the next uvicorn reload, and stale rows leak into optimization results.
+# Auto-reload CSVs modified externally between requests
 _MTIME_CACHE: dict[str, float] = {}
 
 
 def _refresh_from_disk_if_stale(name: str) -> None:
-    """If the underlying CSV was modified after we last loaded it, reload."""
     path = DATA_DIR / _CSV_MAP[name]
     if not path.exists():
         return
     mtime = path.stat().st_mtime
     if _MTIME_CACHE.get(name) == mtime:
         return
-    # Delayed import to avoid the routers ↔ main circular import at module load.
+    # Delayed import: avoids routers/main circular import at module load
     from app.main import _load_depots, _load_faskes, _load_floods, _load_ifs
 
     if name == "floods":
@@ -61,7 +57,6 @@ def _refresh_from_disk_if_stale(name: str) -> None:
     elif name == "faskes":
         data.faskes = _load_faskes(path)
     _MTIME_CACHE[name] = mtime
-    # Coordinates changed → distance/time matrices may be stale too.
     _invalidate_matrices()
 
 
@@ -115,8 +110,6 @@ def _save_csv(name: str) -> None:
     df = _get_df(name)
     path = DATA_DIR / _CSV_MAP[name]
     df.to_csv(path, index=False)
-    # Record the mtime we just wrote so our own writes don't trigger a
-    # redundant reload on the very next request.
     _MTIME_CACHE[name] = path.stat().st_mtime
 
 
@@ -133,7 +126,6 @@ def _find_row(df: pd.DataFrame, row_id: str, dataset: str) -> int:
     return idxs[0]
 
 
-# ──────────────────── READ ────────────────────
 
 @router.get("/floods", response_model=list[FloodPoint])
 async def get_floods() -> list[FloodPoint]:
@@ -155,7 +147,6 @@ async def get_faskes() -> list[Faskes]:
     return [Faskes(**row) for row in _rows(_get_df("faskes"), "faskes")]
 
 
-# ──────────────────── FLOODS CRUD ────────────────────
 
 @router.post("/floods", response_model=FloodPoint, status_code=201)
 async def create_flood(body: FloodPointCreate) -> FloodPoint:
@@ -192,7 +183,6 @@ async def delete_flood(flood_id: str) -> None:
     _invalidate_matrices()
 
 
-# ──────────────────── DEPOTS CRUD ────────────────────
 
 @router.post("/depo", response_model=Depot, status_code=201)
 async def create_depot(body: DepotCreate) -> Depot:
@@ -229,7 +219,6 @@ async def delete_depot(depot_id: str) -> None:
     _invalidate_matrices()
 
 
-# ──────────────────── IF CRUD ────────────────────
 
 @router.post("/if", response_model=IntermediateFacility, status_code=201)
 async def create_if(body: IFCreate) -> IntermediateFacility:
@@ -266,7 +255,6 @@ async def delete_if(if_id: str) -> None:
     _invalidate_matrices()
 
 
-# ──────────────────── FASKES CRUD ────────────────────
 
 @router.post("/faskes", response_model=Faskes, status_code=201)
 async def create_faskes(body: FaskesCreate) -> Faskes:

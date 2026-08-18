@@ -103,7 +103,6 @@ export function ComparisonPanel({ comparison }: ComparisonPanelProps) {
             : "pointer-events-none max-h-0 px-[14px] py-0 opacity-0"
         }`}
       >
-        {/* Metrics table */}
         <table className="w-full border-collapse text-[11px]">
           <thead>
             <tr>
@@ -125,7 +124,6 @@ export function ComparisonPanel({ comparison }: ComparisonPanelProps) {
           </tbody>
         </table>
 
-        {/* Convergence overlay chart */}
         <div className="text-[10px] font-bold uppercase tracking-[0.9px] text-slate">
           Konvergensi
         </div>
@@ -187,7 +185,6 @@ export function ComparisonPanel({ comparison }: ComparisonPanelProps) {
           </ResponsiveContainer>
         </div>
 
-        {/* Delta summary */}
         <DeltaSummary acs={acs.objective_z} vns={vns.objective_z} />
       </div>
     </div>

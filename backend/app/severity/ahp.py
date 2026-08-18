@@ -1,7 +1,4 @@
-"""Analytic Hierarchy Process — priority vector and consistency ratio.
-
-Only the parts used by the SI computation are implemented; nothing fancy.
-"""
+# AHP: priority vector and consistency ratio for SI computation
 
 from __future__ import annotations
 
@@ -23,10 +20,7 @@ RANDOM_INDEX: dict[int, float] = {
 
 
 def ahp_weights(pairwise: np.ndarray) -> np.ndarray:
-    """Return the priority vector from an n×n pairwise-comparison matrix.
-
-    Uses the principal eigenvector method. Result is normalized to sum to 1.
-    """
+    # Principal eigenvector method, normalized to sum to 1
     m = np.asarray(pairwise, dtype=float)
     if m.ndim != 2 or m.shape[0] != m.shape[1]:
         raise ValueError("pairwise must be a square matrix")
@@ -40,7 +34,7 @@ def ahp_weights(pairwise: np.ndarray) -> np.ndarray:
 
 
 def consistency_ratio(pairwise: np.ndarray) -> float:
-    """Saaty's CR. Values <= 0.10 are conventionally acceptable."""
+    # CR <= 0.10 is conventionally acceptable
     m = np.asarray(pairwise, dtype=float)
     n = m.shape[0]
     if n < 3:

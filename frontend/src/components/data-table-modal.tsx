@@ -215,7 +215,6 @@ export function DataTableModal({ datasetKey, data, onClose, onReload }: DataTabl
         }}
       >
         <div className="flex max-h-[85vh] w-[min(90vw,960px)] flex-col overflow-hidden rounded-lg border border-frost bg-pure-white">
-          {/* Header */}
           <div className="flex flex-shrink-0 items-center justify-between border-b border-frost px-[20px] py-16">
             <div>
               <h2 className="m-0 text-[16px] font-bold tracking-[-0.16px] text-midnight-ink">
@@ -243,7 +242,6 @@ export function DataTableModal({ datasetKey, data, onClose, onReload }: DataTabl
             </div>
           </div>
 
-          {/* Table */}
           <div className="min-h-0 flex-1 overflow-auto">
             <table
               className="font-manrope w-full border-collapse text-[12px]"
@@ -264,7 +262,6 @@ export function DataTableModal({ datasetKey, data, onClose, onReload }: DataTabl
                 </tr>
               </thead>
               <tbody>
-                {/* Add row */}
                 {isAdding ? (
                   <tr className="bg-periwinkle-wash">
                     {config.columns.map((col) => (
@@ -309,7 +306,6 @@ export function DataTableModal({ datasetKey, data, onClose, onReload }: DataTabl
                   </tr>
                 ) : null}
 
-                {/* Data rows */}
                 {data.map((item) => {
                   const rec = item as unknown as Record<string, unknown>;
                   const id = rec.id as string;

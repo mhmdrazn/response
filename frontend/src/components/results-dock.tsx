@@ -37,7 +37,6 @@ export function ResultsDock({
   const [summaryOpen, setSummaryOpen] = useState(true);
   const [detailsOpen, setDetailsOpen] = useState(true);
   const hasSeverity = severity != null;
-  // Without severity data there's nothing to switch to, so skip the tab bar.
   const activeTab = hasSeverity ? tab : "routes";
 
   const cardCls =
@@ -49,7 +48,6 @@ export function ResultsDock({
 
   return (
     <>
-      {/* Summary panel — collapsible header + body */}
       <div className={`${cardCls} flex-shrink-0`}>
         <button
           type="button"
@@ -75,7 +73,6 @@ export function ResultsDock({
         >
           <ResultsPanel result={result} mode={mode} />
 
-          {/* Export buttons */}
           <div className="flex gap-[6px]">
             <ExportBtn label="PDF" onClick={() => exportReport(result)} />
             <ExportBtn label="JSON" onClick={() => exportJSON(result)} />
@@ -84,7 +81,6 @@ export function ResultsDock({
         </div>
       </div>
 
-      {/* Details panel — collapsible header, then tab bar and scrolling body */}
       <div
         className={`${cardCls} min-h-0 overflow-hidden transition-[flex] duration-[280ms] ${
           detailsOpen ? "flex-1" : "flex-none"
@@ -107,10 +103,10 @@ export function ResultsDock({
         </button>
 
         <div
-          className={`flex min-h-0 flex-col gap-12 overflow-hidden transition-[opacity,padding,flex] duration-[280ms] ${
+          className={`flex min-h-0 flex-col gap-12 overflow-hidden transition-[opacity,padding,flex,max-height] duration-[280ms] ${
             detailsOpen
-              ? "pointer-events-auto flex-1 px-[14px] pb-[14px] opacity-100"
-              : "pointer-events-none flex-none px-[14px] py-0 opacity-0"
+              ? "pointer-events-auto max-h-none flex-1 px-[14px] pb-[14px] opacity-100"
+              : "pointer-events-none max-h-0 flex-none px-[14px] py-0 opacity-0"
           }`}
         >
           {hasSeverity ? (

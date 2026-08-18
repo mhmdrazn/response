@@ -26,8 +26,6 @@ interface StoredPayload {
   comparison: ComparisonResult | null;
 }
 
-/** Persist result+comparison to localStorage so a refresh does not lose
- *  the current optimization. Uses window guards for SSR safety. */
 function loadStored(): StoredPayload | null {
   if (typeof window === "undefined") return null;
   try {
@@ -67,7 +65,6 @@ export function useOptimization(): UseOptimization {
   const [hydrated, setHydrated] = useState(false);
   const skipNextPersist = useRef(true);
 
-  // Hydrate from localStorage on mount (client-side only)
   useEffect(() => {
     const stored = loadStored();
     if (stored) {
@@ -77,9 +74,7 @@ export function useOptimization(): UseOptimization {
     setHydrated(true);
   }, []);
 
-  // Persist whenever result/comparison changes, but skip the very first
-  // effect run so we don't wipe a stored payload with initial nulls before
-  // hydration finishes.
+  // Skip first effect run to avoid overwriting stored payload before hydration
   useEffect(() => {
     if (!hydrated) return;
     if (skipNextPersist.current) {

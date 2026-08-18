@@ -91,9 +91,6 @@ const OVERLAY_OPTIONS: OverlayOption[] = [
   { id: "choropleth", label: "Keparahan Kecamatan", Icon: MapIcon, activeColor: "#f97316" },
 ];
 
-/** Single unified dock combining the data-counts row and the layer controls
- *  (Peta Dasar + Lapisan Data) into one panel. Replaces the previous
- *  DataCountsBar + LayerControls pair. */
 export function MapLayerDock({
   floodCount,
   depotCount,
@@ -117,7 +114,6 @@ export function MapLayerDock({
 
   return (
     <div className="pointer-events-auto flex flex-col rounded-lg border border-frost bg-pure-white">
-      {/* Header row: layers icon + title + chevron toggle (whole row clickable) */}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -135,7 +131,6 @@ export function MapLayerDock({
         />
       </button>
 
-      {/* Collapsible body: data counts + Peta Dasar + Lapisan Data */}
       <div
         className={`scrollbar-hidden flex flex-col gap-[10px] transition-[max-height,opacity,padding] duration-[280ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
           open

@@ -1,9 +1,3 @@
-"""Pydantic response models for the /api/data/* endpoints.
-
-Fields mirror the actual CSV columns after normalization in
-``app.main._load_*``. Optional fields tolerate missing values in the raw
-data (e.g. depots without an OSM city tag).
-"""
 
 from __future__ import annotations
 

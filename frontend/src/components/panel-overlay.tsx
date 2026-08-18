@@ -24,15 +24,12 @@ export function PanelOverlay({ open, onClose, title, children }: PanelOverlayPro
 
   return (
     <div className="fixed inset-0 z-[1100] flex flex-col justify-end">
-      {/* Backdrop */}
       <div onClick={onClose} className="absolute inset-0 bg-[rgba(6,27,49,0.4)]" />
 
-      {/* Panel */}
       <div
         className="relative flex max-h-[85vh] flex-col rounded-t-lg bg-pure-white"
         style={{ animation: "slideUp 0.25s ease-out" }}
       >
-        {/* Handle + header */}
         <div className="flex flex-shrink-0 items-center justify-between border-b border-frost px-16 py-12">
           <div className="text-[12px] font-bold uppercase tracking-[0.8px] text-slate">
             {title}
@@ -47,7 +44,6 @@ export function PanelOverlay({ open, onClose, title, children }: PanelOverlayPro
           </button>
         </div>
 
-        {/* Scrollable content */}
         <div className="flex flex-col gap-12 overflow-y-auto p-16">{children}</div>
       </div>
     </div>

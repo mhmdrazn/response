@@ -17,7 +17,7 @@ SBY_LON_MIN, SBY_LON_MAX = 112.58, 112.87
 
 
 def _fix_longitude(val: float) -> float:
-    """Repair common data-entry errors where the decimal point is missing."""
+    # Repair missing decimal point in longitude data-entry errors
     if val > 1000:
         s = str(int(round(val)))
         if s.startswith("112"):
@@ -26,7 +26,6 @@ def _fix_longitude(val: float) -> float:
 
 
 def _bbox_filter(df: pd.DataFrame, label: str) -> pd.DataFrame:
-    """Drop rows with lat/lon outside the Surabaya bounding box."""
     mask = (
         (df["lat"] >= SBY_LAT_MIN)
         & (df["lat"] <= SBY_LAT_MAX)
@@ -94,7 +93,6 @@ def _load_faskes(path: Path) -> pd.DataFrame:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Load all static datasets once at startup."""
     import app.data as data
 
     if (DATA_DIR / "floods.csv").exists():

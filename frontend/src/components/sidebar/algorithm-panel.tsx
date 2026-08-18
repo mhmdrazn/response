@@ -64,7 +64,6 @@ export function AlgorithmPanel({
             : "pointer-events-none max-h-0 overflow-hidden px-[14px] py-0 opacity-0"
         }`}
       >
-        {/* Algorithm selector */}
         <div
           role="tablist"
           aria-label="Pilih algoritma"
@@ -82,15 +81,13 @@ export function AlgorithmPanel({
           />
         </div>
 
-        {/* Description */}
         <div className="rounded-md border border-frost bg-mist px-[10px] py-[7px] text-[11px] font-medium leading-[1.4] tracking-[-0.11px] text-steel">
           {algorithm === "acs"
             ? "Hybrid Ant Colony System — konstruksi solusi berbasis feromon + pencarian lokal"
             : "Variable Neighborhood Search — eksplorasi lingkungan sistematik + pencarian lokal"}
         </div>
 
-        {/* Parameters */}
-        algorithm === "acs" ? (
+        {algorithm === "acs" ? (
           <div className="grid grid-cols-2 gap-8">
             <NumInput
               label="Iterasi"
@@ -160,9 +157,8 @@ export function AlgorithmPanel({
               onChange={(v) => updateVNS("k_max", v)}
             />
           </div>
-        )
+        )}
 
-        {/* Run / Reset buttons */}
         <div className="flex gap-8">
           <button
             type="button"
@@ -202,7 +198,6 @@ export function AlgorithmPanel({
           ) : null}
         </div>
 
-        {/* Compare button */}
         <button
           type="button"
           disabled={isLoading}

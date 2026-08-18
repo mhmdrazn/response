@@ -1,15 +1,5 @@
-"""Compose the Severity Index from AHP + Entropy Weight criteria.
-
-Two criteria are used, both derivable from the raw datasets:
-
-1. **depth_cm** — benefit criterion; deeper floods are more severe.
-2. **dist_faskes_m** — cost criterion; floods closer to healthcare
-   facilities are more critical because they block access.
-
-The AHP pairwise matrix is a starting point derived from domain intuition
-(depth is ~3× more important than accessibility to faskes). Adjust
-``PAIRWISE`` when the thesis provides definitive weights.
-"""
+# SI = AHP + Entropy Weight over depth_cm (benefit) + dist_faskes_m (cost)
+# Depth ~3x more important than faskes accessibility (PAIRWISE ratio)
 
 from __future__ import annotations
 
@@ -36,7 +26,6 @@ PAIRWISE = np.array(
 
 @dataclass
 class SeverityResult:
-    """Everything the API surfaces about the SI computation."""
 
     weights_ahp: np.ndarray
     weights_ew: np.ndarray
@@ -63,7 +52,6 @@ def _normalize_cost(col: np.ndarray) -> np.ndarray:
 def _distance_to_nearest_faskes(
     floods: pd.DataFrame, faskes: pd.DataFrame
 ) -> np.ndarray:
-    """Great-circle distance from each flood point to its nearest faskes (m)."""
     if len(faskes) == 0:
         return np.full(len(floods), 1000.0)
     lats = np.concatenate(
@@ -97,13 +85,12 @@ def compute_severity_index(
     depths = np.where(np.isnan(depths), np.nanmedian(depths[~np.isnan(depths)]) if np.any(~np.isnan(depths)) else 20.0, depths)
     dist_faskes = _distance_to_nearest_faskes(floods, faskes)
 
-    # Normalize each criterion into [0, 1] with direction.
     norm_depth = _normalize_benefit(depths)
     norm_dist = _normalize_cost(dist_faskes)
     decision_matrix = np.column_stack([norm_depth, norm_dist])
 
     w_ahp = ahp_weights(PAIRWISE)
-    # Entropy expects positive values; shift the [0,1] matrix off zero.
+    # Entropy needs positive values; shift off zero
     w_ew = entropy_weights(decision_matrix + 1e-9)
 
     if combine == "geometric":

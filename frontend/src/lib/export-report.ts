@@ -11,7 +11,6 @@ export function exportReport(result: OptimizationResult): void {
   const cw = pw - margin * 2;
   let y = margin;
 
-  // ── Header ──
   doc.setFillColor(83, 58, 253);
   doc.rect(0, 0, pw, 36, "F");
 
@@ -34,7 +33,6 @@ export function exportReport(result: OptimizationResult): void {
 
   y = 46;
 
-  // ── Summary metrics ──
   doc.setTextColor(100, 116, 141);
   doc.setFontSize(8);
   doc.setFont("helvetica", "bold");
@@ -73,13 +71,11 @@ export function exportReport(result: OptimizationResult): void {
 
   y += Math.ceil(metrics.length / 3) * 14 + 6;
 
-  // ── Divider ──
   doc.setDrawColor(229, 237, 245);
   doc.setLineWidth(0.4);
   doc.line(margin, y, pw - margin, y);
   y += 8;
 
-  // ── Route summary table ──
   doc.setTextColor(100, 116, 141);
   doc.setFontSize(8);
   doc.setFont("helvetica", "bold");
@@ -124,10 +120,9 @@ export function exportReport(result: OptimizationResult): void {
     theme: "grid",
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  y = (doc as any).lastAutoTable.finalY + 10;
+  // jspdf-autotable exposes finalY only on the untyped doc instance
+  y = (doc as any).lastAutoTable.finalY + 10; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-  // ── Visit details per route ──
   for (const route of result.routes) {
     if (y > 250) {
       doc.addPage();
@@ -184,11 +179,9 @@ export function exportReport(result: OptimizationResult): void {
       },
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    y = (doc as any).lastAutoTable.finalY + 8;
+    y = (doc as any).lastAutoTable.finalY + 8; // eslint-disable-line @typescript-eslint/no-explicit-any
   }
 
-  // ── Footer ──
   const pageCount = doc.getNumberOfPages();
   for (let p = 1; p <= pageCount; p++) {
     doc.setPage(p);

@@ -77,7 +77,6 @@ export function SeverityPanel({ severity, embedded = false }: SeverityPanelProps
           className="flex flex-col gap-[10px]"
           style={{ animation: "response-fade-up 0.24s ease-out" }}
         >
-          {/* Weights summary */}
           <div className="grid grid-cols-[auto_1fr_1fr_1fr] gap-x-[10px] gap-y-[4px] text-[11px] leading-[1.6]">
             <WeightHeader />
             {w.criteria.map((c, i) => (
@@ -85,7 +84,6 @@ export function SeverityPanel({ severity, embedded = false }: SeverityPanelProps
             ))}
           </div>
 
-          {/* CR */}
           <div className="flex gap-[4px] text-[11px] text-steel">
             <span>Consistency Ratio:</span>
             <span
@@ -98,10 +96,8 @@ export function SeverityPanel({ severity, embedded = false }: SeverityPanelProps
             </span>
           </div>
 
-          {/* Divider */}
           <div className="h-px bg-frost" />
 
-          {/* Flood point SI table */}
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-[11px]">
               <thead>

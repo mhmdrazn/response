@@ -1,8 +1,4 @@
-"""Module-level placeholders for static datasets.
-
-Populated once by the FastAPI lifespan in ``app.main``. Import as
-``import app.data as data`` and read ``data.flood_points`` etc.
-"""
+# Populated by FastAPI lifespan in app.main
 
 from __future__ import annotations
 

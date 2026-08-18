@@ -80,7 +80,6 @@ export function RouteList({
     if (allExpanded) {
       setExpandedVehicles(new Set());
     } else {
-      // Expand every route card and reveal any collapsed depot groups.
       setExpandedVehicles(new Set(routes.map((r) => r.vehicle_id)));
       setCollapsedDepots(new Set());
     }
@@ -137,7 +136,6 @@ export function RouteList({
         const isDepotCollapsed = collapsedDepots.has(group.depotId);
         return (
           <div key={group.depotId} className="flex flex-col gap-[6px]">
-            {/* Depot group header */}
             <button
               type="button"
               onClick={() => toggleDepot(group.depotId)}
@@ -160,7 +158,6 @@ export function RouteList({
               </span>
             </button>
 
-            {/* Routes under this depot */}
             {!isDepotCollapsed
               ? group.routes.map((r) => (
                   <RouteCard

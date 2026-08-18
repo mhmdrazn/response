@@ -75,7 +75,6 @@ function RoutingAnimation() {
 
       <rect width="480" height="240" fill="url(#response-grid)" opacity="0.55" />
 
-      {/* Route polyline — depot → critical → high → elevated → moderate → low → depot */}
       <polyline
         className="response-route-path"
         points="60,190 150,80 230,140 310,60 380,130 430,195 60,190"
@@ -86,7 +85,6 @@ function RoutingAnimation() {
         strokeLinejoin="round"
       />
 
-      {/* Depot chip */}
       <g transform="translate(52 182)">
         <rect width="16" height="16" rx="3" fill="var(--color-indigo-ink)" />
         <path
@@ -95,7 +93,6 @@ function RoutingAnimation() {
         />
       </g>
 
-      {/* Flood point circles, sequenced fade-in matching route draw */}
       <g>
         <circle
           className="response-node critical"
@@ -144,7 +141,6 @@ function RoutingAnimation() {
         />
       </g>
 
-      {/* Persistent critical pulse to signal priority */}
       <circle
         className="response-node-pulse"
         cx="150"

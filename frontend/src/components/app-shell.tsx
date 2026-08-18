@@ -34,18 +34,13 @@ const PANEL_WIDTH: Record<string, number> = {
   desktop: 340,
 };
 
-/** The right-hand results panel is wider than the left algorithm panel —
- *  it holds per-vehicle route lists and comparison tables that need the
- *  extra horizontal room. */
 const RESULT_PANEL_WIDTH: Record<string, number> = {
   mobile: 0,
   tablet: 360,
   desktop: 420,
 };
 
-/** Distance the desktop/tablet algorithm sidebar keeps from the viewport
- * bottom, so it never overlaps the map's LeftPanel dock in its resting
- * (layers-collapsed) state: compass + zoom + collapsed layer/data dock. */
+// Clears the collapsed layer/data dock at bottom of map
 const SIDEBAR_BOTTOM_CLEARANCE = 220;
 
 const HIDDEN_ROUTES_STORAGE_KEY = "floodroute:hidden-routes:v1";
@@ -86,7 +81,6 @@ export function AppShell() {
   const [hiddenRoutes, setHiddenRoutes] = useState<Set<string>>(new Set());
   const hydratedHidden = useRef(false);
 
-  // Basemap to restore when the choropleth overlay is turned back off.
   const preChoroplethBaseMap = useRef<BaseMapId>("standard");
 
   useEffect(() => {
@@ -120,8 +114,7 @@ export function AppShell() {
   } = useOptimization();
   const algoCfg = useAlgorithmConfig();
 
-  // Drop stale hidden-route ids whenever result changes so the persisted
-  // set does not carry vehicle ids that no longer exist in the new solution.
+  // Prune stale hidden-route ids when solution changes
   useEffect(() => {
     if (!result) return;
     setHiddenRoutes((prev) => {
@@ -139,9 +132,7 @@ export function AppShell() {
   function setOverlay(id: OverlayLayerId, visible: boolean) {
     setOverlays((prev) => ({ ...prev, [id]: visible }));
 
-    // The choropleth's tinted districts read best over a light basemap, so
-    // enabling it auto-switches to "Terang" and disabling it restores the
-    // previous basemap (unless the user changed it manually in between).
+    // Choropleth auto-switches to light basemap; disabling restores previous
     if (id === "choropleth") {
       if (visible) {
         setBaseMap((prev) => {
@@ -187,7 +178,6 @@ export function AppShell() {
     if (isMobile) setMobilePanel("none");
   }
 
-  // Only show routes on the map that are not hidden by the user.
   const visibleRoutes = (result?.routes ?? []).filter((r) => !hiddenRoutes.has(r.vehicle_id));
 
   const algorithmPanelContent = (
@@ -233,7 +223,6 @@ export function AppShell() {
     <ErrorBoundary>
       <ToastProvider>
         <div className="relative h-screen w-screen overflow-hidden bg-mist">
-          {/* Full-viewport map */}
           <div className="absolute inset-0">
             {data ? (
               <MapCanvas
@@ -257,13 +246,10 @@ export function AppShell() {
             )}
           </div>
 
-          {/* Top-left: floating navbar */}
           <FloatingNavbar mode={mode} onModeChange={setMode} compact={isMobile} />
 
-          {/* ── Desktop / Tablet: side panels ── */}
           {!isMobile ? (
             <>
-              {/* Left panel — bottom offset clears map LeftPanel dock */}
               <div
                 className="pointer-events-none absolute left-16 top-[84px] z-[900] flex flex-col gap-[10px] overflow-y-auto"
                 style={{ bottom: SIDEBAR_BOTTOM_CLEARANCE, width: panelW }}
@@ -273,8 +259,6 @@ export function AppShell() {
                 </div>
               </div>
 
-              {/* Right panel — the container has a definite height (top/bottom
-                anchored) and does NOT scroll itself. */}
               {result ? (
                 <div
                   className="pointer-events-none absolute bottom-16 right-16 top-16 z-[900] flex flex-col gap-[10px] overflow-hidden"
@@ -288,7 +272,6 @@ export function AppShell() {
             </>
           ) : (
             <>
-              {/* ── Mobile: single flex-stacked bottom dock ── */}
               <div className="pointer-events-none absolute bottom-16 left-16 right-16 z-[950] flex flex-col gap-[10px]">
                 {result ? (
                   <ResultPeekBar
@@ -343,7 +326,6 @@ export function AppShell() {
           )}
         </div>
 
-        {/* Data table modal */}
         {previewDataset && data ? (
           <DataTableModal
             datasetKey={previewDataset}

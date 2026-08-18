@@ -1,4 +1,3 @@
-"""GET /api/severity-index — AHP + Entropy Weight Severity Index per flood point."""
 
 from __future__ import annotations
 
