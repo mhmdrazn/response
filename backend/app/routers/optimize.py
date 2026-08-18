@@ -1,4 +1,3 @@
-"""POST /api/optimize/{acs|vns} — run a solver and return an interactive result."""
 
 from __future__ import annotations
 
@@ -12,7 +11,7 @@ from app.routers.data import _refresh_from_disk_if_stale
 from app.algorithms.acs import ACSParams, HybridACS
 from app.algorithms.vns import VNS, VNSParams
 from app.algorithms.evaluator import SolutionEval, validate_hard_constraints
-from app.algorithms.osrm import fetch_road_geometry
+from app.algorithms.osrm import fetch_road_geometries_batch
 from app.algorithms.instance import (
     SBY_LAT_MAX,
     SBY_LAT_MIN,
@@ -37,7 +36,6 @@ router = APIRouter(prefix="/api/optimize", tags=["optimize"])
 
 
 def _build_ready_instance() -> Instance:
-    # Pick up any external CSV edits before we snapshot the coordinates.
     for _name in ("floods", "depo", "if", "faskes"):
         _refresh_from_disk_if_stale(_name)
     if data.flood_points is None or data.depots is None or data.ifs is None:
@@ -58,7 +56,6 @@ def _build_ready_instance() -> Instance:
 
 
 def _node_meta(inst: Instance, idx: int) -> tuple[str, str, str, float, float]:
-    """Return (node_id, node_type, node_name, lat, lon) for a unified index."""
     if idx < inst.n_depots:
         n = inst.depots[idx]
         name = str(n.get("name") or f"Depo {idx + 1}")
@@ -98,10 +95,14 @@ def _to_response(
     computation_time_s: float,
     algorithm: str,
 ) -> OptimizationResponse:
-    routes_out: list[RouteOut] = []
+    # First pass: build visits and collect waypoints per active route
+    active_indices: list[int] = []
+    all_visits: list[list[VisitOut]] = []
+    all_waypoints: list[list[tuple[float, float]]] = []
+
     for k, r_eval in enumerate(ev.routes):
         if not any(_node_meta(inst, i)[1] == "flood" for i in r_eval.node_indices):
-            continue  # skip vehicles that did nothing
+            continue
         visits_out: list[VisitOut] = []
         waypoints: list[tuple[float, float]] = []
         for v in r_eval.visits:
@@ -125,12 +126,17 @@ def _to_response(
                 )
             )
             waypoints.append((lat, lon))
+        active_indices.append(k)
+        all_visits.append(visits_out)
+        all_waypoints.append(waypoints)
 
-        road_poly = fetch_road_geometry(waypoints)
-        polyline: list[list[float]] = (
-            road_poly if road_poly is not None
-            else [[lat, lon] for lat, lon in waypoints]
-        )
+    # Batch-fetch OSRM road geometry for all routes concurrently
+    road_polys = fetch_road_geometries_batch(all_waypoints)
+
+    routes_out: list[RouteOut] = []
+    for i, k in enumerate(active_indices):
+        r_eval = ev.routes[k]
+        polyline = road_polys[i]
 
         depot_id, _, depot_name, _, _ = _node_meta(inst, r_eval.depot_index)
         n_flood = sum(1 for v in r_eval.visits if v.node_type == "flood")
@@ -149,7 +155,7 @@ def _to_response(
                 visit_count_flood=n_flood,
                 visit_count_if=n_if,
                 polyline=polyline,
-                visits=visits_out,
+                visits=all_visits[i],
             )
         )
 
