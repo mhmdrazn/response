@@ -22,6 +22,7 @@ import { FloodMarkers } from "./flood-markers";
 import { IfMarkers } from "./if-markers";
 import { LeftPanel } from "./left-panel";
 import { MapControls } from "./map-controls";
+import { RouteDecorators } from "./route-decorators";
 import { RoutePolylines } from "./route-polylines";
 import { SiLegend } from "./si-legend";
 
@@ -93,27 +94,27 @@ export function MapInner({
       {overlays.faskes ? <FaskesMarkers faskes={faskes} /> : null}
 
       {routes.length > 0 ? (
-        <RoutePolylines
-          routes={routes}
-          highlightId={highlightVehicleId}
-          onHover={setHighlightVehicleId}
-        />
+        <>
+          <RoutePolylines
+            routes={routes}
+            highlightId={highlightVehicleId}
+            onHover={setHighlightVehicleId}
+          />
+          <RouteDecorators
+            routes={routes}
+            highlightId={highlightVehicleId}
+          />
+        </>
       ) : null}
 
       <FitBounds route={focusedRoute} />
 
-      {/* MapControls at top-right on mobile (extracted from LeftPanel).
-          top:78 clears the compact FloatingNavbar (top:12 + ~46px tall)
-          with a visible gap instead of nearly touching it. */}
       {isMobile ? (
         <div className="pointer-events-none absolute right-12 top-[78px] z-[1000]">
           <MapControls />
         </div>
       ) : null}
 
-      {/* Bottom-right legends. The choropleth legend (relative load scale)
-          shows whenever that overlay is on; the point SI legend (absolute
-          thresholds) shows when no routes occupy the results panel. */}
       {!isMobile && (overlays.choropleth || routes.length === 0) ? (
         <div className="pointer-events-none absolute bottom-24 right-16 z-[800] flex flex-col items-end gap-8">
           {overlays.choropleth ? <ChoroplethLegend /> : null}
@@ -121,8 +122,6 @@ export function MapInner({
         </div>
       ) : null}
 
-      {/* Mobile renders its own flex-stacked data/layer dock in app-shell.tsx
-          instead, to guarantee consistent spacing with the other mobile docks. */}
       {!isMobile ? (
         <LeftPanel
           floodCount={floods.length}
