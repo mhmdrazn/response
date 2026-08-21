@@ -8,7 +8,6 @@ from typing import Literal
 import numpy as np
 import pandas as pd
 
-from app.algorithms.geo import haversine_matrix
 from app.severity.ahp import ahp_weights, consistency_ratio
 from app.severity.entropy import entropy_weights
 
@@ -50,26 +49,9 @@ def _normalize_cost(col: np.ndarray) -> np.ndarray:
     return (col.max() - col) / span
 
 
-def _distance_to_nearest_faskes(
-    floods: pd.DataFrame, faskes: pd.DataFrame
-) -> np.ndarray:
-    if len(faskes) == 0:
-        return np.full(len(floods), 1000.0)
-    lats = np.concatenate(
-        [floods["lat"].to_numpy(dtype=float), faskes["lat"].to_numpy(dtype=float)]
-    )
-    lons = np.concatenate(
-        [floods["lon"].to_numpy(dtype=float), faskes["lon"].to_numpy(dtype=float)]
-    )
-    m = haversine_matrix(lats, lons)
-    n_floods = len(floods)
-    sub = m[:n_floods, n_floods:]
-    return sub.min(axis=1)
-
-
 def compute_severity_index(
     floods: pd.DataFrame,
-    faskes: pd.DataFrame,
+    faskes: pd.DataFrame,  # unused: dist_faskes_m is pre-computed via OSRM offline, see notebooks/6__Jarak_Faskes_OSRM.ipynb
     combine: Literal["average", "geometric"] = "average",
 ) -> SeverityResult:
     if len(floods) == 0:
@@ -88,7 +70,12 @@ def compute_severity_index(
     road_class = floods["road_class"].to_numpy(dtype=float)
     road_class = np.where(np.isnan(road_class), 3.0, road_class)
 
-    dist_faskes = _distance_to_nearest_faskes(floods, faskes)
+    dist_faskes = floods["dist_faskes_m"].to_numpy(dtype=float)
+    dist_faskes = np.where(
+        np.isnan(dist_faskes),
+        np.nanmedian(dist_faskes[~np.isnan(dist_faskes)]) if np.any(~np.isnan(dist_faskes)) else 1000.0,
+        dist_faskes,
+    )
 
     norm_depth = _normalize_benefit(depths)
     norm_road = _normalize_benefit(road_class)
