@@ -42,6 +42,8 @@ Thumbs.db
 # ---- Data artifacts (large binaries, keep small samples committed if needed) ----
 backend/app/data/*.npy
 !backend/app/data/.gitkeep
+!backend/app/data/distance_matrix.npy
+!backend/app/data/time_matrix.npy
 
 # ---- Logs ----
 *.log
