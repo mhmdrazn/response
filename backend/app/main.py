@@ -54,6 +54,7 @@ def _load_floods(path: Path) -> pd.DataFrame:
         }
     )
     df["ketinggian_cm"] = pd.to_numeric(df["ketinggian_cm"], errors="coerce")
+    df["road_class"] = pd.to_numeric(df["road_class"], errors="coerce")
     df["lat"] = pd.to_numeric(df["lat"], errors="coerce")
     df["lon"] = pd.to_numeric(df["lon"], errors="coerce")
     df = df.dropna(subset=["lat", "lon"]).reset_index(drop=True)

@@ -129,6 +129,7 @@ export interface SeverityFloodPoint {
   id: string;
   si_value: number;
   depth_cm: number;
+  road_class: number;
   dist_faskes_m: number;
 }
 

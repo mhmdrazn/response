@@ -40,6 +40,7 @@ async def get_severity_index() -> SeverityIndexResponse:
                 id=str(row["id"]),
                 si_value=float(row["si_value"]),
                 depth_cm=float(row["depth_cm"]),
+                road_class=float(row["road_class"]),
                 dist_faskes_m=float(row["dist_faskes_m"]),
             )
             for row in result.per_point

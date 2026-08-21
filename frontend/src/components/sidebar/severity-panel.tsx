@@ -13,7 +13,7 @@ interface SeverityPanelProps {
   embedded?: boolean;
 }
 
-type SortKey = "id" | "si_value" | "depth_cm" | "dist_faskes_m";
+type SortKey = "id" | "si_value" | "depth_cm" | "road_class" | "dist_faskes_m";
 type SortDir = "asc" | "desc";
 
 export function SeverityPanel({ severity, embedded = false }: SeverityPanelProps) {
@@ -120,6 +120,14 @@ export function SeverityPanel({ severity, embedded = false }: SeverityPanelProps
                   <SortTh
                     label="Kedalaman"
                     sortKey="depth_cm"
+                    active={sortKey}
+                    dir={sortDir}
+                    onClick={toggleSort}
+                    align="right"
+                  />
+                  <SortTh
+                    label="Kelas Jalan"
+                    sortKey="road_class"
                     active={sortKey}
                     dir={sortDir}
                     onClick={toggleSort}
@@ -236,6 +244,7 @@ function FloodRow({ fp }: { fp: SeverityFloodPoint }) {
         </span>
       </td>
       <td className={cellNum}>{fp.depth_cm} cm</td>
+      <td className={cellNum}>{fp.road_class}</td>
       <td className={cellNum}>
         {fp.dist_faskes_m < 1000
           ? `${Math.round(fp.dist_faskes_m)} m`

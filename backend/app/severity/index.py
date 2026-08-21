@@ -1,5 +1,4 @@
-# SI = AHP + Entropy Weight over depth_cm (benefit) + dist_faskes_m (cost)
-# Depth ~3x more important than faskes accessibility (PAIRWISE ratio)
+# SI = AHP + Entropy Weight over depth_cm (benefit) + road_class (benefit) + dist_faskes_m (cost)
 
 from __future__ import annotations
 
@@ -13,13 +12,15 @@ from app.algorithms.geo import haversine_matrix
 from app.severity.ahp import ahp_weights, consistency_ratio
 from app.severity.entropy import entropy_weights
 
-CRITERIA = ["depth_cm", "dist_faskes_m"]
+CRITERIA = ["depth_cm", "road_class", "dist_faskes_m"]
 
-# Row/col order matches CRITERIA. Depth ≻ dist_faskes with ratio 3:1.
+# PLACEHOLDER pairwise matrix — ratio depth:road_class:faskes = 3:2:1.
+# Replace with AHP weights from expert interviews when available.
 PAIRWISE = np.array(
     [
-        [1.0, 3.0],
-        [1.0 / 3.0, 1.0],
+        [1.0, 1.5, 3.0],
+        [1 / 1.5, 1.0, 2.0],
+        [1 / 3.0, 1 / 2.0, 1.0],
     ]
 )
 
@@ -31,7 +32,7 @@ class SeverityResult:
     weights_ew: np.ndarray
     weights_combined: np.ndarray
     si_values: np.ndarray                 # length = len(floods)
-    per_point: list[dict[str, float | str]]  # id, si_value, depth, dist_faskes
+    per_point: list[dict[str, float | str]]  # id, si_value, depth, road_class, dist_faskes
     consistency_ratio: float
 
 
@@ -83,14 +84,18 @@ def compute_severity_index(
 
     depths = floods["ketinggian_cm"].to_numpy(dtype=float)
     depths = np.where(np.isnan(depths), np.nanmedian(depths[~np.isnan(depths)]) if np.any(~np.isnan(depths)) else 20.0, depths)
+
+    road_class = floods["road_class"].to_numpy(dtype=float)
+    road_class = np.where(np.isnan(road_class), 3.0, road_class)
+
     dist_faskes = _distance_to_nearest_faskes(floods, faskes)
 
     norm_depth = _normalize_benefit(depths)
+    norm_road = _normalize_benefit(road_class)
     norm_dist = _normalize_cost(dist_faskes)
-    decision_matrix = np.column_stack([norm_depth, norm_dist])
+    decision_matrix = np.column_stack([norm_depth, norm_road, norm_dist])
 
     w_ahp = ahp_weights(PAIRWISE)
-    # Entropy needs positive values; shift off zero
     w_ew = entropy_weights(decision_matrix + 1e-9)
 
     if combine == "geometric":
@@ -110,6 +115,7 @@ def compute_severity_index(
                 "id": str(node_id),
                 "si_value": float(si[i]),
                 "depth_cm": float(depths[i]),
+                "road_class": float(road_class[i]),
                 "dist_faskes_m": float(dist_faskes[i]),
             }
         )

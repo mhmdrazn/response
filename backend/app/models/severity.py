@@ -19,6 +19,7 @@ class SeverityFloodPoint(_Base):
     id: str
     si_value: float
     depth_cm: float
+    road_class: float
     dist_faskes_m: float
 
 
