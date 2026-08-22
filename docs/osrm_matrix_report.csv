@@ -1,6 +1,6 @@
 metric,value
-n_total_node,184.0
-n_total_cells,33856.0
-n_osrm_cells,33856.0
+n_total_node,185.0
+n_total_cells,34225.0
+n_osrm_cells,34225.0
 n_fallback_cells,0.0
 pct_fallback,0.0

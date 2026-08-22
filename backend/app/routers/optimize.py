@@ -45,6 +45,18 @@ def _build_ready_instance() -> Instance:
         )
     faskes_df = data.faskes if data.faskes is not None else data.flood_points.iloc[0:0]
     sev = compute_severity_index(data.flood_points, faskes_df)
+
+    n_expected = len(data.depots) + len(data.flood_points) + len(data.ifs)
+    if data.distance_matrix is not None and data.distance_matrix.shape[0] != n_expected:
+        _log.warning(
+            "distance_matrix shape %s != expected (%d,%d). Falling back to Manhattan.",
+            data.distance_matrix.shape,
+            n_expected,
+            n_expected,
+        )
+        data.distance_matrix = None
+        data.time_matrix = None
+
     return build_instance(
         depots_df=data.depots,
         floods_df=data.flood_points,
