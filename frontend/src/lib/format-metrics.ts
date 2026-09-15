@@ -21,6 +21,5 @@ export function formatNumber(n: number, digits: number = 0): string {
 }
 
 export function formatLiters(l: number): string {
-  if (l >= 1000) return `${(l / 1000).toFixed(1)} kL`;
-  return `${Math.round(l)} L`;
+  return `${formatNumber(Math.round(l), 0)} Liter`;
 }
