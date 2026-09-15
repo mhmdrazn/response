@@ -160,7 +160,10 @@ def _to_response(
                 depot_id=depot_id,
                 depot_name=depot_name,
                 capacity_l=r_eval.capacity,
-                route_color_index=k % 8,
+                # Color by depot ordinal (stable & geographic) so the same area
+                # keeps the same hue across runs — routes are comparable visually.
+                # Route order k is stochastic and would reshuffle colors per run.
+                route_color_index=r_eval.depot_index % 8,
                 total_distance_m=r_eval.total_distance,
                 total_time_s=r_eval.total_time,
                 z_contribution=r_eval.z_contribution,
