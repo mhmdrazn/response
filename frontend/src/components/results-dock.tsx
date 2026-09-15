@@ -114,7 +114,7 @@ export function ResultsDock({
               }`}
             >
               {animating ? <Pause size={12} strokeWidth={2.4} /> : <Play size={12} strokeWidth={2.4} />}
-              {animating ? "Hentikan" : "Animasi"}
+              {animating ? "Hentikan" : "Simulasi"}
             </button>
           ) : null}
 
