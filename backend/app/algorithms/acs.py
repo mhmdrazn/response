@@ -63,8 +63,11 @@ class HybridACS:
         nn_len = float(d.min(axis=1).mean() * (instance.n_floods + 1))
         self.tau0 = 1.0 / max(n_total * nn_len, 1.0)
         self.pheromone = np.full((n_total, n_total), self.tau0)
-        with np.errstate(divide="ignore"):
-            self.inv_dist = 1.0 / np.where(d == np.inf, 1.0, d)
+        # Floor off-diagonal distances at 1 m before inverting. Coincident nodes
+        # (dist 0, e.g. duplicate flood coordinates) would otherwise give an
+        # infinite heuristic that turns transition probabilities into NaN.
+        d_eff = np.where(d == np.inf, 1.0, np.maximum(d, 1.0))
+        self.inv_dist = 1.0 / d_eff
 
         self.node_si = np.zeros(n_total)
         for k, fi in enumerate(instance.flood_indices):
@@ -91,11 +94,13 @@ class HybridACS:
         tau = self.pheromone[current, candidates]
         eta = np.array([self._eta(current, j) for j in candidates])
         score = (tau ** self.p.alpha) * (eta ** self.p.beta)
+        # Defensive: never let a non-finite heuristic reach argmax/choice.
+        score = np.nan_to_num(score, nan=0.0, posinf=0.0, neginf=0.0)
         if self._rng.random() < self.p.q0:
             return int(candidates[int(np.argmax(score))])
 
         total = score.sum()
-        if total <= 0:
+        if not np.isfinite(total) or total <= 0:
             return int(self._rng.choice(candidates))
         probs = score / total
         idx = int(self._np_rng.choice(len(candidates), p=probs))
