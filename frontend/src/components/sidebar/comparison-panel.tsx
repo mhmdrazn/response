@@ -122,8 +122,8 @@ export function ComparisonPanel({ comparison }: ComparisonPanelProps) {
           <tbody>
             {metrics.map((m) => (
               <tr key={m.label}>
-                <td className={`${labelCellCls} cursor-help`} title={m.hint}>
-                  <span className="border-b border-dotted border-smoke">{m.label}</span>
+                <td className={labelCellCls}>
+                  <InfoTip label={m.label} hint={m.hint} />
                 </td>
                 <td className={valueCellCls(m.winner === "acs")}>{m.acs}</td>
                 <td className={valueCellCls(m.winner === "vns")}>{m.vns}</td>
@@ -135,78 +135,72 @@ export function ComparisonPanel({ comparison }: ComparisonPanelProps) {
         <div className="text-[10px] font-bold uppercase tracking-[0.9px] text-slate">
           Konvergensi
         </div>
-        <div className="h-[176px] w-full">
-          <ResponsiveContainer>
-            <LineChart data={chartData} margin={{ top: 6, right: 8, left: 4, bottom: 14 }}>
-              <CartesianGrid stroke="var(--color-frost)" strokeDasharray="2 4" />
-              <XAxis
-                dataKey="iteration"
-                stroke="var(--color-slate)"
-                fontSize={10}
-                tickLine={false}
-                label={{
-                  value: "Iterasi",
-                  position: "insideBottom",
-                  offset: -6,
-                  fontSize: 10,
-                  fill: "var(--color-slate)",
-                }}
-              />
-              <YAxis
-                stroke="var(--color-slate)"
-                fontSize={10}
-                tickLine={false}
-                width={56}
-                domain={[
-                  (min: number) => Math.floor(min * 0.98),
-                  (max: number) => Math.ceil(max * 1.02),
-                ]}
-                allowDecimals={false}
-                tickFormatter={(v: number) => formatNumber(v, 0)}
-                label={{
-                  value: "Skor Z",
-                  angle: -90,
-                  position: "insideLeft",
-                  offset: 14,
-                  fontSize: 10,
-                  fill: "var(--color-slate)",
-                  style: { textAnchor: "middle" },
-                }}
-              />
-              <Tooltip
-                contentStyle={{
-                  border: "1px solid var(--color-frost)",
-                  borderRadius: "var(--radius-md)",
-                  boxShadow: "none",
-                  fontFamily: "var(--font-manrope)",
-                  fontSize: 12,
-                }}
-                formatter={(value) => formatNumber(Number(value ?? 0), 2)}
-                labelFormatter={(l) => `Iterasi ${l}`}
-              />
-              <Legend wrapperStyle={{ fontSize: 11, paddingTop: 4 }} />
-              <Line
-                type="monotone"
-                dataKey="acs"
-                stroke="var(--color-route-0)"
-                strokeWidth={2}
-                dot={false}
-                activeDot={{ r: 4, strokeWidth: 0 }}
-                name="ACS"
-                connectNulls
-              />
-              <Line
-                type="monotone"
-                dataKey="vns"
-                stroke="var(--color-route-7)"
-                strokeWidth={2}
-                dot={false}
-                activeDot={{ r: 4, strokeWidth: 0 }}
-                name="VNS"
-                connectNulls
-              />
-            </LineChart>
-          </ResponsiveContainer>
+        <div className="flex gap-[6px]">
+          <span className="flex items-center justify-center whitespace-nowrap text-[9px] font-bold uppercase tracking-[0.6px] text-slate [writing-mode:vertical-rl] [transform:rotate(180deg)]">
+            Skor Z
+          </span>
+          <div className="flex min-w-0 flex-1 flex-col">
+            <div className="h-[168px] w-full">
+              <ResponsiveContainer>
+                <LineChart data={chartData} margin={{ top: 6, right: 8, left: 4, bottom: 2 }}>
+                  <CartesianGrid stroke="var(--color-frost)" strokeDasharray="2 4" />
+                  <XAxis
+                    dataKey="iteration"
+                    stroke="var(--color-slate)"
+                    fontSize={10}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    stroke="var(--color-slate)"
+                    fontSize={10}
+                    tickLine={false}
+                    width={48}
+                    domain={[
+                      (min: number) => Math.floor(min * 0.98),
+                      (max: number) => Math.ceil(max * 1.02),
+                    ]}
+                    allowDecimals={false}
+                    tickFormatter={(v: number) => formatNumber(v, 0)}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      border: "1px solid var(--color-frost)",
+                      borderRadius: "var(--radius-md)",
+                      boxShadow: "none",
+                      fontFamily: "var(--font-manrope)",
+                      fontSize: 12,
+                    }}
+                    formatter={(value) => formatNumber(Number(value ?? 0), 2)}
+                    labelFormatter={(l) => `Iterasi ${l}`}
+                  />
+                  <Legend wrapperStyle={{ fontSize: 11, paddingTop: 2 }} />
+                  <Line
+                    type="monotone"
+                    dataKey="acs"
+                    stroke="var(--color-route-0)"
+                    strokeWidth={2}
+                    dot={false}
+                    activeDot={{ r: 4, strokeWidth: 0 }}
+                    name="ACS"
+                    connectNulls
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="vns"
+                    stroke="var(--color-route-7)"
+                    strokeWidth={2}
+                    dot={false}
+                    activeDot={{ r: 4, strokeWidth: 0 }}
+                    name="VNS"
+                    connectNulls
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+            <span className="text-center text-[9px] font-bold uppercase tracking-[0.6px] text-slate">
+              Iterasi
+            </span>
+          </div>
         </div>
 
         <DeltaSummary acs={acs.objective_z} vns={vns.objective_z} />
@@ -221,6 +215,22 @@ interface MetricRow {
   acs: string;
   vns: string;
   winner: "acs" | "vns";
+}
+
+/** Metric label with a styled hover tooltip (matches the app card styling:
+ *  frost border, white ground, no shadow). Replaces the native title tooltip. */
+function InfoTip({ label, hint }: { label: string; hint: string }) {
+  return (
+    <span className="group relative inline-flex cursor-help">
+      <span className="border-b border-dotted border-smoke">{label}</span>
+      <span
+        role="tooltip"
+        className="pointer-events-none invisible absolute left-0 top-[calc(100%+5px)] z-[60] w-[220px] rounded-md border border-frost bg-pure-white px-[10px] py-[7px] text-left text-[11px] font-medium normal-case leading-[1.45] tracking-normal text-steel opacity-0 transition-opacity duration-150 group-hover:visible group-hover:opacity-100"
+      >
+        {hint}
+      </span>
+    </span>
+  );
 }
 
 function DeltaSummary({ acs, vns }: { acs: number; vns: number }) {
