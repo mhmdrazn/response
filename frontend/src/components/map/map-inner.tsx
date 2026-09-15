@@ -43,6 +43,10 @@ export interface MapInnerProps {
   isMobile?: boolean;
   /** Route animation on/off — controlled from the results panel toggle. */
   animating?: boolean;
+  /** "fullscreen": map fills the viewport with floating panels (default).
+   *  "embedded": map is a card in the windowed dashboard; the layer/data
+   *  controls live in the sidebar, so only zoom + legends stay on the map. */
+  variant?: "fullscreen" | "embedded";
 }
 
 function FitBounds({ route }: { route: RouteOut | null }) {
@@ -73,6 +77,7 @@ export function MapInner({
   onPreviewData,
   isMobile = false,
   animating = false,
+  variant = "fullscreen",
 }: MapInnerProps) {
   const base = BASE_MAP_LAYERS[baseMap];
 
@@ -119,36 +124,47 @@ export function MapInner({
         </div>
       ) : null}
 
-      {routes.length > 0 && overlays.choropleth ? (
-        <div className="pointer-events-none absolute bottom-24 right-16 z-[800] flex flex-col items-end gap-8">
-          <ChoroplethLegend />
-        </div>
+      {/* --- Fullscreen chrome: floating controls + docks over the map --- */}
+      {!isMobile && variant === "fullscreen" ? (
+        <>
+          {/* Choropleth legend sits on the left, just right of the Data dock. */}
+          {overlays.choropleth ? (
+            <div className="pointer-events-none absolute bottom-16 left-[364px] z-[1000]">
+              <ChoroplethLegend />
+            </div>
+          ) : null}
+
+          {routes.length === 0 ? (
+            <div className="pointer-events-none absolute bottom-24 right-16 z-[800]">
+              <SiLegend inline />
+            </div>
+          ) : null}
+
+          <LeftPanel
+            floodCount={floods.length}
+            depotCount={depots.length}
+            ifCount={ifs.length}
+            faskesCount={faskes.length}
+            overlays={overlays}
+            setOverlay={setOverlay}
+            baseMap={baseMap}
+            setBaseMap={setBaseMap}
+            onPreviewData={onPreviewData}
+          />
+        </>
       ) : null}
 
-      {!isMobile && routes.length === 0 && overlays.choropleth ? (
-        <div className="pointer-events-none absolute bottom-24 right-16 z-[800] flex flex-col items-end gap-8">
-          <ChoroplethLegend />
-        </div>
-      ) : null}
-
-      {!isMobile && routes.length === 0 ? (
-        <div className="pointer-events-none absolute bottom-24 right-16 z-[800]">
-          <SiLegend inline />
-        </div>
-      ) : null}
-
-      {!isMobile ? (
-        <LeftPanel
-          floodCount={floods.length}
-          depotCount={depots.length}
-          ifCount={ifs.length}
-          faskesCount={faskes.length}
-          overlays={overlays}
-          setOverlay={setOverlay}
-          baseMap={baseMap}
-          setBaseMap={setBaseMap}
-          onPreviewData={onPreviewData}
-        />
+      {/* --- Embedded (windowed dashboard): only zoom + legends on the map --- */}
+      {!isMobile && variant === "embedded" ? (
+        <>
+          <div className="pointer-events-none absolute bottom-16 left-16 z-[1000]">
+            <MapControls />
+          </div>
+          <div className="pointer-events-none absolute bottom-16 right-16 z-[800] flex flex-col items-end gap-8">
+            {overlays.choropleth ? <ChoroplethLegend /> : null}
+            {routes.length === 0 ? <SiLegend inline /> : null}
+          </div>
+        </>
       ) : null}
     </MapContainer>
   );
