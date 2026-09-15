@@ -2,7 +2,7 @@
 
 import L from "leaflet";
 import { useMemo } from "react";
-import { Marker, Tooltip } from "react-leaflet";
+import { Marker, Popup } from "react-leaflet";
 
 import { formatDateTimeId } from "../../lib/format";
 import { SI_PALETTE, siColor } from "../../lib/map-constants";
@@ -73,15 +73,16 @@ function FloodMarker({ point: p, index }: { point: FloodPoint; index: number }) 
 
   return (
     <Marker position={[p.lat, p.lon]} icon={icon}>
-      <Tooltip direction="top" offset={[0, -18]} opacity={1}>
+      <Popup autoPan closeButton maxWidth={280} minWidth={210} offset={[0, -14]}>
         <PopupShell title={`Genangan ${index + 1}`} subtitle={when ?? undefined}>
+          <PopupRow label="Severity" value={<SiPill si={si} label={siLabel(si)} />} />
           {p.ketinggian_cm != null ? (
             <PopupRow label="Ketinggian" value={`${p.ketinggian_cm} cm`} />
           ) : null}
-          <PopupRow label="Severity" value={<SiPill si={si} label={siLabel(si)} />} />
-          <DescBlock text={p.deskripsi} max={140} />
+          <PopupRow label="Koordinat" value={`${p.lat.toFixed(5)}, ${p.lon.toFixed(5)}`} />
+          <DescBlock text={p.deskripsi} max={160} />
         </PopupShell>
-      </Tooltip>
+      </Popup>
     </Marker>
   );
 }
