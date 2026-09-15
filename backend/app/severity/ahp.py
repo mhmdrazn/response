@@ -45,4 +45,7 @@ def consistency_ratio(pairwise: np.ndarray) -> float:
     ri = RANDOM_INDEX.get(n)
     if ri is None or ri == 0:
         return 0.0
-    return float(ci / ri)
+    # CR is non-negative by definition; a near-consistent matrix can yield a
+    # tiny negative CI from floating-point error in lambda_max. Clamp to 0 so
+    # the UI never shows values like "-0.0000".
+    return float(max(0.0, ci / ri))
