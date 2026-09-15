@@ -76,6 +76,7 @@ export function AppShell() {
   const [baseMap, setBaseMap] = useState<BaseMapId>("standard");
   const [highlightVehicleId, setHighlightVehicleId] = useState<string | null>(null);
   const [focusedRoute, setFocusedRoute] = useState<RouteOut | null>(null);
+  const [animating, setAnimating] = useState(false);
   const [previewDataset, setPreviewDataset] = useState<DatasetKey | null>(null);
 
   const [mobilePanel, setMobilePanel] = useState<"none" | "algorithm" | "results">("none");
@@ -172,6 +173,7 @@ export function AppShell() {
   function handleRun() {
     setFocusedRoute(null);
     setHiddenRoutes(new Set());
+    setAnimating(false);
     run(algoCfg.buildRunRequest());
     if (isMobile) setMobilePanel("none");
   }
@@ -179,6 +181,7 @@ export function AppShell() {
   function handleCompare() {
     setFocusedRoute(null);
     setHiddenRoutes(new Set());
+    setAnimating(false);
     runComparison();
     if (isMobile) setMobilePanel("none");
   }
@@ -221,6 +224,8 @@ export function AppShell() {
         onFocusRoute={setFocusedRoute}
         hiddenVehicleIds={hiddenRoutes}
         onToggleVehicleVisibility={toggleRouteVisibility}
+        animating={animating}
+        onToggleAnimating={() => setAnimating((v) => !v)}
       />
     </>
   ) : null;
@@ -247,6 +252,7 @@ export function AppShell() {
                 focusedRoute={focusedRoute}
                 onPreviewData={handlePreviewData}
                 isMobile={isMobile}
+                animating={animating}
               />
             ) : (
               <MapStatusPlaceholder loading={loading} error={dataError} />

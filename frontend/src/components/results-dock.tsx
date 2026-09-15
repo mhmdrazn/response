@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, FileDown } from "lucide-react";
+import { ChevronDown, FileDown, Pause, Play } from "lucide-react";
 import { useState } from "react";
 
 import { exportReport, exportJSON, exportCSV } from "../lib/export-report";
@@ -22,6 +22,8 @@ interface ResultsDockProps {
   onFocusRoute: (route: RouteOut) => void;
   hiddenVehicleIds?: Set<string>;
   onToggleVehicleVisibility?: (vehicleId: string) => void;
+  animating?: boolean;
+  onToggleAnimating?: () => void;
 }
 
 export function ResultsDock({
@@ -34,6 +36,8 @@ export function ResultsDock({
   onFocusRoute,
   hiddenVehicleIds,
   onToggleVehicleVisibility,
+  animating = false,
+  onToggleAnimating,
 }: ResultsDockProps) {
   const [tab, setTab] = useState<DetailsTab>("routes");
   const [summaryOpen, setSummaryOpen] = useState(true);
@@ -88,21 +92,47 @@ export function ResultsDock({
           detailsOpen ? "flex-1" : "flex-none"
         }`}
       >
-        <button
-          type="button"
-          onClick={() => setDetailsOpen((v) => !v)}
-          aria-expanded={detailsOpen}
-          className={headerBtnCls}
-        >
-          <span className={headerLabelCls}>Detail Rute</span>
-          <ChevronDown
-            size={14}
-            color="var(--color-slate)"
-            className={`transition-transform duration-[220ms] ${
-              detailsOpen ? "rotate-0" : "-rotate-90"
-            }`}
-          />
-        </button>
+        <div className="flex w-full flex-shrink-0 items-center gap-8 px-[14px] py-12">
+          <button
+            type="button"
+            onClick={() => setDetailsOpen((v) => !v)}
+            aria-expanded={detailsOpen}
+            className="font-manrope flex flex-1 cursor-pointer items-center border-0 bg-transparent p-0 text-left"
+          >
+            <span className={headerLabelCls}>Detail Rute</span>
+          </button>
+
+          {onToggleAnimating ? (
+            <button
+              type="button"
+              onClick={onToggleAnimating}
+              title={animating ? "Hentikan animasi kendaraan" : "Jalankan animasi kendaraan"}
+              className={`inline-flex flex-shrink-0 cursor-pointer items-center gap-[5px] rounded-md border px-8 py-[5px] text-[11px] font-bold tracking-[-0.1px] transition-colors ${
+                animating
+                  ? "border-transparent bg-[var(--color-indigo-ink)] text-white"
+                  : "border-frost bg-pure-white text-steel hover:bg-mist"
+              }`}
+            >
+              {animating ? <Pause size={12} strokeWidth={2.4} /> : <Play size={12} strokeWidth={2.4} />}
+              {animating ? "Hentikan" : "Animasi"}
+            </button>
+          ) : null}
+
+          <button
+            type="button"
+            onClick={() => setDetailsOpen((v) => !v)}
+            aria-label={detailsOpen ? "Tutup detail rute" : "Buka detail rute"}
+            className="inline-flex flex-shrink-0 cursor-pointer border-0 bg-transparent p-0"
+          >
+            <ChevronDown
+              size={14}
+              color="var(--color-slate)"
+              className={`transition-transform duration-[220ms] ${
+                detailsOpen ? "rotate-0" : "-rotate-90"
+              }`}
+            />
+          </button>
+        </div>
 
         <div
           className={`flex min-h-0 flex-col gap-12 overflow-hidden transition-[opacity,padding,flex,max-height] duration-[280ms] ${
