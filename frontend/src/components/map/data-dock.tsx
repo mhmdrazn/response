@@ -7,10 +7,11 @@ import {
   Droplets,
   Eye,
   Hospital,
+  RefreshCw,
   Waves,
   type LucideIcon,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { api } from "../../lib/api";
 import { formatDateTimeId } from "../../lib/format";
@@ -31,6 +32,9 @@ interface DataDockProps {
   faskesCount: number;
   onPreviewData: (key: DatasetKey) => void;
   defaultOpen?: boolean;
+  /** Refetch all map data from the backend (floods/depo/if/faskes/severity). */
+  onReloadData?: () => void;
+  reloadingData?: boolean;
 }
 
 interface DataCountItem {
@@ -54,24 +58,29 @@ export function DataDock({
   faskesCount,
   onPreviewData,
   defaultOpen = false,
+  onReloadData,
+  reloadingData = false,
 }: DataDockProps) {
   const [open, setOpen] = useState(defaultOpen);
   const [meta, setMeta] = useState<DataMetaResponse | null>(null);
 
-  useEffect(() => {
-    let alive = true;
+  const loadMeta = useCallback(() => {
     api
       .getDataMeta()
-      .then((m) => {
-        if (alive) setMeta(m);
-      })
+      .then(setMeta)
       .catch(() => {
         /* freshness is best-effort; ignore fetch failure */
       });
-    return () => {
-      alive = false;
-    };
   }, []);
+
+  useEffect(() => {
+    loadMeta();
+  }, [loadMeta]);
+
+  function handleReload() {
+    onReloadData?.(); // refetch map data
+    loadMeta(); // refresh freshness timestamps
+  }
 
   const latestUpdated = meta
     ? Object.values(meta)
@@ -137,11 +146,29 @@ export function DataDock({
             );
           })}
         </div>
-        {latestUpdated ? (
-          <div className="mt-[6px] text-[10px] font-medium leading-none text-steel">
-            Data diperbarui: {formatDateTimeId(latestUpdated)}
-          </div>
-        ) : null}
+        <div className="mt-[8px] flex items-center justify-between gap-8">
+          <span className="min-w-0 text-[10px] font-medium leading-[1.3] text-steel">
+            {latestUpdated ? `Data diperbarui: ${formatDateTimeId(latestUpdated)}` : ""}
+          </span>
+          {onReloadData ? (
+            <button
+              type="button"
+              onClick={handleReload}
+              disabled={reloadingData}
+              title="Muat ulang data dari server"
+              className={`inline-flex flex-shrink-0 items-center gap-[5px] rounded-md border border-frost bg-pure-white px-8 py-[5px] text-[10.5px] font-bold tracking-[-0.1px] text-steel transition-colors hover:bg-mist ${
+                reloadingData ? "cursor-wait opacity-60" : "cursor-pointer"
+              }`}
+            >
+              <RefreshCw
+                size={11}
+                strokeWidth={2.4}
+                className={reloadingData ? "animate-spin" : ""}
+              />
+              Muat ulang
+            </button>
+          ) : null}
+        </div>
       </div>
     </div>
   );

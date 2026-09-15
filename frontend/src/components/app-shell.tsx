@@ -274,6 +274,8 @@ export function AppShell() {
                   ifCount={data?.ifs.length ?? 0}
                   faskesCount={data?.faskes.length ?? 0}
                   onPreviewData={handlePreviewData}
+                  onReloadData={reload}
+                  reloadingData={loading}
                   defaultOpen
                 />
               </aside>
@@ -347,6 +349,8 @@ export function AppShell() {
                 onPreviewData={handlePreviewData}
                 isMobile={isMobile}
                 animating={animating}
+                onReloadData={reload}
+                reloadingData={loading}
               />
             ) : (
               <MapStatusPlaceholder loading={loading} error={dataError} />

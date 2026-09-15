@@ -47,6 +47,8 @@ export interface MapInnerProps {
    *  "embedded": map is a card in the windowed dashboard; the layer/data
    *  controls live in the sidebar, so only zoom + legends stay on the map. */
   variant?: "fullscreen" | "embedded";
+  onReloadData?: () => void;
+  reloadingData?: boolean;
 }
 
 function FitBounds({ route }: { route: RouteOut | null }) {
@@ -78,6 +80,8 @@ export function MapInner({
   isMobile = false,
   animating = false,
   variant = "fullscreen",
+  onReloadData,
+  reloadingData,
 }: MapInnerProps) {
   const base = BASE_MAP_LAYERS[baseMap];
 
@@ -150,6 +154,8 @@ export function MapInner({
             baseMap={baseMap}
             setBaseMap={setBaseMap}
             onPreviewData={onPreviewData}
+            onReloadData={onReloadData}
+            reloadingData={reloadingData}
           />
         </>
       ) : null}

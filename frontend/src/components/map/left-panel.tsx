@@ -16,6 +16,8 @@ interface LeftPanelProps {
   baseMap: BaseMapId;
   setBaseMap: (id: BaseMapId) => void;
   onPreviewData: (key: DatasetKey) => void;
+  onReloadData?: () => void;
+  reloadingData?: boolean;
 }
 
 export function LeftPanel({
@@ -28,6 +30,8 @@ export function LeftPanel({
   baseMap,
   setBaseMap,
   onPreviewData,
+  onReloadData,
+  reloadingData,
 }: LeftPanelProps) {
   return (
     <div className="pointer-events-none absolute bottom-16 left-16 z-[1000] flex w-[340px] flex-col gap-8">
@@ -47,6 +51,8 @@ export function LeftPanel({
         ifCount={ifCount}
         faskesCount={faskesCount}
         onPreviewData={onPreviewData}
+        onReloadData={onReloadData}
+        reloadingData={reloadingData}
         defaultOpen
       />
     </div>
