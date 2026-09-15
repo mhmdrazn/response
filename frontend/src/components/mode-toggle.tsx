@@ -9,8 +9,8 @@ interface ModeToggleProps {
 }
 
 const OPTIONS: { id: AppMode; label: string; short: string; desc: string }[] = [
-  { id: "simple", label: "Sederhana", short: "Simple", desc: "Rute + severity, cepat" },
-  { id: "advanced", label: "Analitik", short: "Analitik", desc: "Konvergensi & analisis" },
+  { id: "simple", label: "Simple", short: "Simple", desc: "Rute + severity, cepat" },
+  { id: "advanced", label: "Advanced", short: "Analitik", desc: "Konvergensi & analisis" },
 ];
 
 export function ModeToggle({ mode, onChange, compact = false }: ModeToggleProps) {
