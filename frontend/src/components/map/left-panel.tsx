@@ -38,7 +38,7 @@ export function LeftPanel({
         setOverlay={setOverlay}
         baseMap={baseMap}
         setBaseMap={setBaseMap}
-        defaultOpen={false}
+        defaultOpen
       />
 
       <DataDock
@@ -47,7 +47,7 @@ export function LeftPanel({
         ifCount={ifCount}
         faskesCount={faskesCount}
         onPreviewData={onPreviewData}
-        defaultOpen={false}
+        defaultOpen
       />
     </div>
   );
