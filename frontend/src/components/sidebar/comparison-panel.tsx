@@ -27,36 +27,42 @@ export function ComparisonPanel({ comparison }: ComparisonPanelProps) {
   const metrics: MetricRow[] = [
     {
       label: "Skor Respons (Z)",
+      hint: "Skor Respons Z = jumlah (keparahan × waktu tiba) tiap kunjungan genangan. Makin rendah makin baik: titik parah dilayani lebih awal.",
       acs: formatNumber(acs.objective_z, 2),
       vns: formatNumber(vns.objective_z, 2),
       winner: acs.objective_z <= vns.objective_z ? "acs" : "vns",
     },
     {
       label: "Total Jarak",
+      hint: "Total jarak tempuh semua kendaraan.",
       acs: formatMeters(acs.total_distance_m),
       vns: formatMeters(vns.total_distance_m),
       winner: acs.total_distance_m <= vns.total_distance_m ? "acs" : "vns",
     },
     {
       label: "Total Waktu",
+      hint: "Total waktu operasi semua kendaraan (perjalanan + pompa + buang air).",
       acs: formatDuration(acs.total_time_s),
       vns: formatDuration(vns.total_time_s),
       winner: acs.total_time_s <= vns.total_time_s ? "acs" : "vns",
     },
     {
       label: "Waktu Komputasi",
+      hint: "Lama algoritma berjalan menghitung solusi.",
       acs: `${acs.computation_time_s.toFixed(1)}s`,
       vns: `${vns.computation_time_s.toFixed(1)}s`,
       winner: acs.computation_time_s <= vns.computation_time_s ? "acs" : "vns",
     },
     {
       label: "Kendaraan Aktif",
+      hint: "Jumlah kendaraan yang benar-benar dipakai melayani genangan.",
       acs: String(acs.n_vehicles),
       vns: String(vns.n_vehicles),
       winner: acs.n_vehicles <= vns.n_vehicles ? "acs" : "vns",
     },
     {
-      label: "Kunjungan IF",
+      label: "Kunjungan IF (buang air)",
+      hint: "IF = Intermediate Facility (sungai). Berapa kali kendaraan mampir ke sungai untuk mengosongkan tangki. Makin sedikit = tangki dipakai lebih efisien.",
       acs: String(acs.total_if_visits),
       vns: String(vns.total_if_visits),
       winner: acs.total_if_visits <= vns.total_if_visits ? "acs" : "vns",
@@ -116,7 +122,9 @@ export function ComparisonPanel({ comparison }: ComparisonPanelProps) {
           <tbody>
             {metrics.map((m) => (
               <tr key={m.label}>
-                <td className={labelCellCls}>{m.label}</td>
+                <td className={`${labelCellCls} cursor-help`} title={m.hint}>
+                  <span className="border-b border-dotted border-smoke">{m.label}</span>
+                </td>
                 <td className={valueCellCls(m.winner === "acs")}>{m.acs}</td>
                 <td className={valueCellCls(m.winner === "vns")}>{m.vns}</td>
               </tr>
@@ -127,15 +135,22 @@ export function ComparisonPanel({ comparison }: ComparisonPanelProps) {
         <div className="text-[10px] font-bold uppercase tracking-[0.9px] text-slate">
           Konvergensi
         </div>
-        <div className="h-[160px] w-full">
+        <div className="h-[176px] w-full">
           <ResponsiveContainer>
-            <LineChart data={chartData} margin={{ top: 6, right: 8, left: -12, bottom: 0 }}>
+            <LineChart data={chartData} margin={{ top: 6, right: 8, left: 4, bottom: 14 }}>
               <CartesianGrid stroke="var(--color-frost)" strokeDasharray="2 4" />
               <XAxis
                 dataKey="iteration"
                 stroke="var(--color-slate)"
                 fontSize={10}
                 tickLine={false}
+                label={{
+                  value: "Iterasi",
+                  position: "insideBottom",
+                  offset: -6,
+                  fontSize: 10,
+                  fill: "var(--color-slate)",
+                }}
               />
               <YAxis
                 stroke="var(--color-slate)"
@@ -148,6 +163,15 @@ export function ComparisonPanel({ comparison }: ComparisonPanelProps) {
                 ]}
                 allowDecimals={false}
                 tickFormatter={(v: number) => formatNumber(v, 0)}
+                label={{
+                  value: "Skor Z",
+                  angle: -90,
+                  position: "insideLeft",
+                  offset: 14,
+                  fontSize: 10,
+                  fill: "var(--color-slate)",
+                  style: { textAnchor: "middle" },
+                }}
               />
               <Tooltip
                 contentStyle={{
@@ -193,6 +217,7 @@ export function ComparisonPanel({ comparison }: ComparisonPanelProps) {
 
 interface MetricRow {
   label: string;
+  hint: string;
   acs: string;
   vns: string;
   winner: "acs" | "vns";

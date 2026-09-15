@@ -96,6 +96,12 @@ export function SeverityPanel({ severity, embedded = false }: SeverityPanelProps
             </span>
           </div>
 
+          <div className="rounded-md border border-frost bg-mist px-[10px] py-[6px] text-[10px] leading-[1.5] text-steel">
+            Severity Index dihitung dari data statis genangan (AHP + Entropy Weight)
+            dan tidak dipengaruhi parameter algoritma. Mengubah Iterasi, Semut, atau
+            Alfa hanya mengubah rute optimasi — tabel ini tetap sama antar-run.
+          </div>
+
           <div className="h-px bg-frost" />
 
           <div className="overflow-x-auto">
@@ -149,6 +155,12 @@ export function SeverityPanel({ severity, embedded = false }: SeverityPanelProps
                 ))}
               </tbody>
             </table>
+          </div>
+
+          <div className="text-[10px] leading-[1.5] text-steel">
+            <span className="font-bold text-slate">Kelas Jalan</span> (makin tinggi = jalan
+            makin utama = prioritas lebih tinggi): 5 = Arteri · 4 = Kolektor · 3 = Lokal ·
+            2 = Permukiman · 1 = Jalan kecil/gang.
           </div>
         </div>
       ) : (

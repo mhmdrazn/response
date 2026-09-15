@@ -15,6 +15,7 @@ type DetailsTab = "routes" | "severity";
 interface ResultsDockProps {
   result: OptimizationResult;
   mode: AppMode;
+  completedAt?: number | null;
   severity: SeverityIndexResponse | null;
   highlightVehicleId: string | null;
   onHoverRoute: (id: string | null) => void;
@@ -26,6 +27,7 @@ interface ResultsDockProps {
 export function ResultsDock({
   result,
   mode,
+  completedAt,
   severity,
   highlightVehicleId,
   onHoverRoute,
@@ -71,7 +73,7 @@ export function ResultsDock({
               : "pointer-events-none max-h-0 overflow-hidden px-[14px] py-0 opacity-0"
           }`}
         >
-          <ResultsPanel result={result} mode={mode} />
+          <ResultsPanel result={result} mode={mode} completedAt={completedAt} />
 
           <div className="flex gap-[6px]">
             <ExportBtn label="PDF" onClick={() => exportReport(result)} />

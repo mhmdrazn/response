@@ -150,7 +150,10 @@ export function RouteList({
                 className="h-8 w-8 flex-shrink-0 rounded-full bg-[#f59e0b]"
                 aria-hidden
               />
-              <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-[12.5px] font-bold text-midnight-ink">
+              <span
+                title={group.depotName}
+                className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-[12.5px] font-bold text-midnight-ink"
+              >
                 {group.depotName}
               </span>
               <span className="flex-shrink-0 text-[11px] font-semibold text-slate">
@@ -204,7 +207,7 @@ function RouteCard({
   onToggleVisibility?: () => void;
 }) {
   const color = ROUTE_COLORS[r.route_color_index % ROUTE_COLORS.length];
-  const capLabel = r.capacity_l >= 1000 ? `${r.capacity_l / 1000}K` : `${r.capacity_l}`;
+  const capLabel = `${formatNumber(r.capacity_l, 0)} L`;
 
   return (
     <div
@@ -230,7 +233,7 @@ function RouteCard({
             style={{ background: color }}
           />
           <span className="flex-shrink-0 text-[13px] font-bold text-midnight-ink">
-            {capLabel} L
+            {capLabel}
           </span>
           <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-[12px] font-semibold text-steel">
             {r.visit_count_flood} genangan · {formatMeters(r.total_distance_m)}
@@ -283,7 +286,10 @@ function RouteCard({
                 }`}
               >
                 <VisitDot type={v.node_type} />
-                <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-bold text-midnight-ink">
+                <span
+                  title={v.node_name}
+                  className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-bold text-midnight-ink"
+                >
                   {v.node_name}
                 </span>
                 {v.node_type === "flood" ? (

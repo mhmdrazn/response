@@ -145,6 +145,15 @@ export interface ComparisonResult {
   vns: OptimizationResult;
 }
 
+// ---------- Data freshness (matches /api/data/meta) ----------
+
+export interface DataMetaEntry {
+  updated_at: string | null;
+  rows: number;
+}
+
+export type DataMetaResponse = Record<"floods" | "depo" | "if" | "faskes", DataMetaEntry>;
+
 // ---------- App modes ----------
 
 export type AppMode = "simple" | "advanced";

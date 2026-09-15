@@ -24,17 +24,38 @@ export function ConvergenceChart({ data }: ConvergenceChartProps) {
       <div className="text-[10px] font-bold uppercase tracking-[0.9px] text-slate">
         Konvergensi (best Z per iterasi)
       </div>
-      <div className="h-[140px] w-full">
+      <div className="h-[150px] w-full">
         <ResponsiveContainer>
-          <LineChart data={data} margin={{ top: 6, right: 8, left: -12, bottom: 0 }}>
+          <LineChart data={data} margin={{ top: 6, right: 8, left: 4, bottom: 14 }}>
             <CartesianGrid stroke="var(--color-frost)" strokeDasharray="2 4" />
-            <XAxis dataKey="iteration" stroke="var(--color-slate)" fontSize={10} tickLine={false} />
+            <XAxis
+              dataKey="iteration"
+              stroke="var(--color-slate)"
+              fontSize={10}
+              tickLine={false}
+              label={{
+                value: "Iterasi",
+                position: "insideBottom",
+                offset: -6,
+                fontSize: 10,
+                fill: "var(--color-slate)",
+              }}
+            />
             <YAxis
               stroke="var(--color-slate)"
               fontSize={10}
               tickLine={false}
-              width={44}
+              width={52}
               tickFormatter={(v: number) => formatNumber(v, 0)}
+              label={{
+                value: "Skor Z",
+                angle: -90,
+                position: "insideLeft",
+                offset: 12,
+                fontSize: 10,
+                fill: "var(--color-slate)",
+                style: { textAnchor: "middle" },
+              }}
             />
             <Tooltip
               contentStyle={{
@@ -44,7 +65,7 @@ export function ConvergenceChart({ data }: ConvergenceChartProps) {
                 fontFamily: "var(--font-manrope)",
                 fontSize: 12,
               }}
-              formatter={(value) => formatNumber(Number(value ?? 0), 0)}
+              formatter={(value) => formatNumber(Number(value ?? 0), 2)}
               labelFormatter={(l) => `Iterasi ${l}`}
             />
             <Line

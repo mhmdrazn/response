@@ -21,7 +21,9 @@ import { SiLegend } from "./map/si-legend";
 import { MobileRunBar } from "./mobile-run-bar";
 import { PanelOverlay } from "./panel-overlay";
 import { ResultsDock } from "./results-dock";
-import { ToastProvider } from "./toast";
+import { ToastProvider, useToast } from "./toast";
+import type { RunKind } from "../hooks/use-optimization";
+import { formatDateTimeId } from "../lib/format";
 
 const INITIAL_OVERLAYS: Record<OverlayLayerId, boolean> = OVERLAY_LAYERS.reduce(
   (acc, l) => ({ ...acc, [l.id]: l.defaultVisible }),
@@ -108,6 +110,9 @@ export function AppShell() {
     comparison,
     isLoading,
     error: optError,
+    completedAt,
+    lastRunKind,
+    runSignal,
     run,
     runComparison,
     reset,
@@ -209,6 +214,7 @@ export function AppShell() {
       <ResultsDock
         result={result}
         mode={mode}
+        completedAt={completedAt}
         severity={data?.severity ?? null}
         highlightVehicleId={highlightVehicleId}
         onHoverRoute={setHighlightVehicleId}
@@ -222,6 +228,7 @@ export function AppShell() {
   return (
     <ErrorBoundary>
       <ToastProvider>
+        <RunNotifier signal={runSignal} completedAt={completedAt} kind={lastRunKind} />
         <div className="relative h-screen w-screen overflow-hidden bg-mist">
           <div className="absolute inset-0">
             {data ? (
@@ -337,6 +344,35 @@ export function AppShell() {
       </ToastProvider>
     </ErrorBoundary>
   );
+}
+
+/** Fires a toast when a run finishes in this session. Driven by `signal`, which
+ *  only increments on an actual run (never on restore from storage), so a page
+ *  reload of cached results does not toast. */
+function RunNotifier({
+  signal,
+  completedAt,
+  kind,
+}: {
+  signal: number;
+  completedAt: number | null;
+  kind: RunKind | null;
+}) {
+  const toast = useToast();
+  const seen = useRef(0);
+
+  useEffect(() => {
+    if (signal === 0 || signal === seen.current) return;
+    seen.current = signal;
+    const at = completedAt ? formatDateTimeId(new Date(completedAt).toISOString()) : null;
+    toast.success(
+      kind === "compare"
+        ? `Perbandingan ACS vs VNS selesai${at ? ` · ${at}` : ""}`
+        : `Optimasi selesai${at ? ` · ${at}` : ""}`,
+    );
+  }, [signal, completedAt, kind, toast]);
+
+  return null;
 }
 
 function ResultPeekBar({ objectiveZ, onOpen }: { objectiveZ: number; onOpen: () => void }) {
