@@ -1,5 +1,6 @@
 import type {
   ACSParams,
+  DataMetaResponse,
   Depot,
   Faskes,
   FloodPoint,
@@ -59,6 +60,9 @@ export const api = {
 
   getSeverityIndex: (): Promise<SeverityIndexResponse> =>
     request<SeverityIndexResponse>("/api/severity-index"),
+
+  getDataMeta: (): Promise<DataMetaResponse> =>
+    request<DataMetaResponse>("/api/data/meta"),
 
   runACS: (params: ACSParams): Promise<OptimizationResult> =>
     request<OptimizationResult>("/api/optimize/acs", {

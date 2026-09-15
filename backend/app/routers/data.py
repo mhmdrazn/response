@@ -127,6 +127,31 @@ def _find_row(df: pd.DataFrame, row_id: str, dataset: str) -> int:
 
 
 
+@router.get("/meta")
+async def get_data_meta() -> dict[str, dict[str, object]]:
+    # Data freshness for a time-sensitive DSS: file mtime + row count per dataset.
+    from datetime import datetime, timezone
+
+    meta: dict[str, dict[str, object]] = {}
+    for name, filename in _CSV_MAP.items():
+        path = DATA_DIR / filename
+        if not path.exists():
+            meta[name] = {"updated_at": None, "rows": 0}
+            continue
+        _refresh_from_disk_if_stale(name)
+        df = {
+            "floods": data.flood_points,
+            "depo": data.depots,
+            "if": data.ifs,
+            "faskes": data.faskes,
+        }.get(name)
+        updated_at = datetime.fromtimestamp(
+            path.stat().st_mtime, tz=timezone.utc
+        ).isoformat()
+        meta[name] = {"updated_at": updated_at, "rows": 0 if df is None else len(df)}
+    return meta
+
+
 @router.get("/floods", response_model=list[FloodPoint])
 async def get_floods() -> list[FloodPoint]:
     return [FloodPoint(**row) for row in _rows(_get_df("floods"), "floods")]

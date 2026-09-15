@@ -10,9 +10,19 @@ import {
   Waves,
   type LucideIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
+import { api } from "../../lib/api";
+import { formatDateTimeId } from "../../lib/format";
+import type { DataMetaResponse } from "../../types";
 import type { DatasetKey } from "../data-table-modal";
+
+const META_KEY: Record<DatasetKey, keyof DataMetaResponse> = {
+  floods: "floods",
+  depots: "depo",
+  ifs: "if",
+  faskes: "faskes",
+};
 
 interface DataDockProps {
   floodCount: number;
@@ -46,6 +56,30 @@ export function DataDock({
   defaultOpen = false,
 }: DataDockProps) {
   const [open, setOpen] = useState(defaultOpen);
+  const [meta, setMeta] = useState<DataMetaResponse | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    api
+      .getDataMeta()
+      .then((m) => {
+        if (alive) setMeta(m);
+      })
+      .catch(() => {
+        /* freshness is best-effort; ignore fetch failure */
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const latestUpdated = meta
+    ? Object.values(meta)
+        .map((e) => e.updated_at)
+        .filter((v): v is string => v != null)
+        .sort()
+        .at(-1) ?? null
+    : null;
 
   const counts: Record<string, number> = {
     floods: floodCount,
@@ -81,23 +115,33 @@ export function DataDock({
         }`}
       >
         <div className="flex flex-wrap gap-[4px]">
-          {DATA_ITEMS.map(({ key, label, Icon, color }) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => onPreviewData(key)}
-              title={`Lihat data ${label}`}
-              className="flex cursor-pointer items-center gap-[4px] rounded-sm border border-transparent bg-transparent px-[7px] py-[3px] transition-colors hover:border-frost hover:bg-mist"
-            >
-              <Icon size={12} strokeWidth={2.2} color={color} />
-              <span className="text-[12px] font-bold leading-none text-midnight-ink tabular-nums">
-                {counts[key]}
-              </span>
-              <span className="text-[10px] font-semibold leading-none text-slate">{label}</span>
-              <Eye size={10} strokeWidth={2} color="var(--color-smoke)" className="ml-px" />
-            </button>
-          ))}
+          {DATA_ITEMS.map(({ key, label, Icon, color }) => {
+            const updated = meta ? formatDateTimeId(meta[META_KEY[key]]?.updated_at) : null;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => onPreviewData(key)}
+                title={
+                  updated ? `Lihat data ${label} · diperbarui ${updated}` : `Lihat data ${label}`
+                }
+                className="flex cursor-pointer items-center gap-[4px] rounded-sm border border-transparent bg-transparent px-[7px] py-[3px] transition-colors hover:border-frost hover:bg-mist"
+              >
+                <Icon size={12} strokeWidth={2.2} color={color} />
+                <span className="text-[12px] font-bold leading-none text-midnight-ink tabular-nums">
+                  {counts[key]}
+                </span>
+                <span className="text-[10px] font-semibold leading-none text-slate">{label}</span>
+                <Eye size={10} strokeWidth={2} color="var(--color-smoke)" className="ml-px" />
+              </button>
+            );
+          })}
         </div>
+        {latestUpdated ? (
+          <div className="mt-[6px] text-[10px] font-medium leading-none text-steel">
+            Data diperbarui: {formatDateTimeId(latestUpdated)}
+          </div>
+        ) : null}
       </div>
     </div>
   );
