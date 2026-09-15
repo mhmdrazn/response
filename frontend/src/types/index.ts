@@ -157,3 +157,7 @@ export type DataMetaResponse = Record<"floods" | "depo" | "if" | "faskes", DataM
 // ---------- App modes ----------
 
 export type AppMode = "simple" | "advanced";
+
+/** Overall page layout: "fullscreen" map with floating panels, or a "windowed"
+ *  dashboard (header + sidebar + map card + results column). */
+export type AppLayout = "fullscreen" | "windowed";

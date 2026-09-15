@@ -8,15 +8,18 @@ import { useMapData } from "../hooks/use-map-data";
 import { useOptimization } from "../hooks/use-optimization";
 import type { BaseMapId, OverlayLayerId } from "../lib/map-constants";
 import { OVERLAY_LAYERS } from "../lib/map-constants";
-import type { AppMode, RouteOut } from "../types";
+import type { AppLayout, AppMode, RouteOut } from "../types";
 import { ErrorBoundary } from "./error-boundary";
 import { AlgorithmPanel } from "./sidebar/algorithm-panel";
 import { ComparisonPanel } from "./sidebar/comparison-panel";
 import { DataTableModal, type DatasetKey } from "./data-table-modal";
-import { FloatingNavbar } from "./floating-navbar";
+import { FloatingNavbar, LayoutToggle } from "./floating-navbar";
 import { ChoroplethLegend } from "./map/choropleth-legend";
 import { MapCanvas } from "./map/map-container";
+import { MapLayerDock } from "./map/map-layer-dock";
+import { DataDock } from "./map/data-dock";
 import { MobileDataLayerDock } from "./map/mobile-data-layer-dock";
+import { ModeToggle } from "./mode-toggle";
 import { SiLegend } from "./map/si-legend";
 import { MobileRunBar } from "./mobile-run-bar";
 import { PanelOverlay } from "./panel-overlay";
@@ -72,6 +75,7 @@ function saveStoredSet(key: string, value: Set<string>): void {
 export function AppShell() {
   const bp = useBreakpoint();
   const [mode, setMode] = useState<AppMode>("simple");
+  const [layout, setLayout] = useState<AppLayout>("fullscreen");
   const [overlays, setOverlays] = useState<Record<OverlayLayerId, boolean>>(INITIAL_OVERLAYS);
   const [baseMap, setBaseMap] = useState<BaseMapId>("standard");
   const [highlightVehicleId, setHighlightVehicleId] = useState<string | null>(null);
@@ -230,6 +234,96 @@ export function AppShell() {
     </>
   ) : null;
 
+  // --- Windowed dashboard layout (desktop only) ---
+  if (!isMobile && layout === "windowed") {
+    return (
+      <ErrorBoundary>
+        <ToastProvider>
+          <RunNotifier signal={runSignal} completedAt={completedAt} kind={lastRunKind} />
+          <div className="flex h-screen w-screen flex-col overflow-hidden bg-mist">
+            <header className="flex flex-shrink-0 items-center gap-12 border-b border-frost bg-pure-white px-16 py-[10px]">
+              <span
+                aria-hidden
+                className="navbar-status-dot inline-block h-[10px] w-[10px] flex-shrink-0 rounded-full bg-indigo-ink"
+              />
+              <span className="text-[17px] font-bold leading-none tracking-[-0.2px] text-midnight-ink">
+                Response
+              </span>
+              <span className="ml-8 border-l border-frost pl-[10px] text-[12px] font-semibold leading-none text-slate">
+                SPK Damkar Surabaya
+              </span>
+              <div className="flex-1" />
+              <LayoutToggle layout={layout} onToggle={() => setLayout("fullscreen")} />
+              <div className="h-24 w-px flex-shrink-0 bg-frost" />
+              <ModeToggle mode={mode} onChange={setMode} />
+            </header>
+
+            <div className="flex min-h-0 flex-1 gap-12 p-12">
+              <aside className="scrollbar-hidden flex w-[340px] flex-shrink-0 flex-col gap-12 overflow-y-auto">
+                {algorithmPanelContent}
+                <MapLayerDock
+                  overlays={overlays}
+                  setOverlay={setOverlay}
+                  baseMap={baseMap}
+                  setBaseMap={setBaseMap}
+                  defaultOpen
+                />
+                <DataDock
+                  floodCount={data?.floods.length ?? 0}
+                  depotCount={data?.depots.length ?? 0}
+                  ifCount={data?.ifs.length ?? 0}
+                  faskesCount={data?.faskes.length ?? 0}
+                  onPreviewData={handlePreviewData}
+                  defaultOpen
+                />
+              </aside>
+
+              <main className="relative min-w-0 flex-1 overflow-hidden rounded-lg border border-frost">
+                {data ? (
+                  <MapCanvas
+                    floods={data.floods}
+                    depots={data.depots}
+                    ifs={data.ifs}
+                    faskes={data.faskes}
+                    overlays={overlays}
+                    setOverlay={setOverlay}
+                    baseMap={baseMap}
+                    setBaseMap={setBaseMap}
+                    routes={visibleRoutes}
+                    highlightVehicleId={highlightVehicleId}
+                    setHighlightVehicleId={setHighlightVehicleId}
+                    focusedRoute={focusedRoute}
+                    onPreviewData={handlePreviewData}
+                    isMobile={false}
+                    animating={animating}
+                    variant="embedded"
+                  />
+                ) : (
+                  <MapStatusPlaceholder loading={loading} error={dataError} />
+                )}
+              </main>
+
+              {result ? (
+                <aside className="scrollbar-hidden flex w-[420px] flex-shrink-0 flex-col gap-12 overflow-y-auto">
+                  {resultsPanelContent}
+                </aside>
+              ) : null}
+            </div>
+          </div>
+
+          {previewDataset && data ? (
+            <DataTableModal
+              datasetKey={previewDataset}
+              data={getPreviewData()}
+              onClose={() => setPreviewDataset(null)}
+              onReload={reload}
+            />
+          ) : null}
+        </ToastProvider>
+      </ErrorBoundary>
+    );
+  }
+
   return (
     <ErrorBoundary>
       <ToastProvider>
@@ -259,7 +353,13 @@ export function AppShell() {
             )}
           </div>
 
-          <FloatingNavbar mode={mode} onModeChange={setMode} compact={isMobile} />
+          <FloatingNavbar
+            mode={mode}
+            onModeChange={setMode}
+            compact={isMobile}
+            layout={layout}
+            onToggleLayout={() => setLayout("windowed")}
+          />
 
           {!isMobile ? (
             <>
