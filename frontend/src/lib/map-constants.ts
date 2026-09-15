@@ -78,17 +78,20 @@ export const BASE_MAP_LAYERS = {
   },
   positron: {
     id: "positron",
+    // Esri light-gray canvas: keyless, neutral backdrop ideal for the
+    // choropleth. Replaces CARTO Positron, which now serves an
+    // "API KEY REQUIRED" watermark tile for anonymous use.
     label: "Terang",
-    urlTemplate: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-    attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    urlTemplate:
+      "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+    attribution: "Tiles &copy; Esri &mdash; Esri, HERE, Garmin, &copy; OpenStreetMap contributors",
   },
   darkmatter: {
     id: "darkmatter",
     label: "Gelap",
-    urlTemplate: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-    attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    urlTemplate:
+      "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+    attribution: "Tiles &copy; Esri &mdash; Esri, HERE, Garmin, &copy; OpenStreetMap contributors",
   },
   satellite: {
     id: "satellite",

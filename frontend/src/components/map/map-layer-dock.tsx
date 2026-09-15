@@ -41,12 +41,12 @@ const BASE_MAP_OPTIONS: BaseMapOption[] = [
   {
     id: "positron",
     label: BASE_MAP_LAYERS.positron.label,
-    tilePreview: `https://a.basemaps.cartocdn.com/light_all/${TILE_Z}/${TILE_X}/${TILE_Y}.png`,
+    tilePreview: `https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/${TILE_Z}/${TILE_Y}/${TILE_X}`,
   },
   {
     id: "darkmatter",
     label: BASE_MAP_LAYERS.darkmatter.label,
-    tilePreview: `https://a.basemaps.cartocdn.com/dark_all/${TILE_Z}/${TILE_X}/${TILE_Y}.png`,
+    tilePreview: `https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/${TILE_Z}/${TILE_Y}/${TILE_X}`,
   },
   {
     id: "satellite",
