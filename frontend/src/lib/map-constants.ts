@@ -125,7 +125,7 @@ export const OVERLAY_LAYERS: OverlayLayerMeta[] = [
     id: "depots",
     label: "Depo Pemadam",
     swatchColor: "#f59e0b",
-    defaultVisible: false,
+    defaultVisible: true,
   },
   {
     id: "ifs",
