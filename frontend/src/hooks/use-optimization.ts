@@ -5,11 +5,19 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { api, DEFAULT_ACS_PARAMS, DEFAULT_VNS_PARAMS, type RunRequest } from "../lib/api";
 import type { ComparisonResult, OptimizationResult } from "../types";
 
+export type RunKind = "single" | "compare";
+
 export interface UseOptimization {
   result: OptimizationResult | null;
   comparison: ComparisonResult | null;
   isLoading: boolean;
   error: string | null;
+  /** Epoch ms of the last successful run; null before any run. */
+  completedAt: number | null;
+  lastRunKind: RunKind | null;
+  /** Increments only on a run finished in THIS session (not on restore from
+   *  storage) — drives the completion toast without firing on reload. */
+  runSignal: number;
   run: (req: RunRequest) => Promise<void>;
   runComparison: (seed?: number) => Promise<void>;
   reset: () => void;
@@ -24,6 +32,8 @@ interface StoredPayload {
   savedAt: number;
   result: OptimizationResult | null;
   comparison: ComparisonResult | null;
+  completedAt?: number | null;
+  lastRunKind?: RunKind | null;
 }
 
 function loadStored(): StoredPayload | null {
@@ -62,6 +72,9 @@ export function useOptimization(): UseOptimization {
   const [comparison, setComparison] = useState<ComparisonResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [completedAt, setCompletedAt] = useState<number | null>(null);
+  const [lastRunKind, setLastRunKind] = useState<RunKind | null>(null);
+  const [runSignal, setRunSignal] = useState(0);
   const [hydrated, setHydrated] = useState(false);
   const skipNextPersist = useRef(true);
 
@@ -70,6 +83,8 @@ export function useOptimization(): UseOptimization {
     if (stored) {
       setResult(stored.result);
       setComparison(stored.comparison);
+      setCompletedAt(stored.completedAt ?? null);
+      setLastRunKind(stored.lastRunKind ?? null);
     }
     setHydrated(true);
   }, []);
@@ -90,8 +105,10 @@ export function useOptimization(): UseOptimization {
       savedAt: Date.now(),
       result,
       comparison,
+      completedAt,
+      lastRunKind,
     });
-  }, [result, comparison, hydrated]);
+  }, [result, comparison, completedAt, lastRunKind, hydrated]);
 
   const run = useCallback(async (req: RunRequest) => {
     setIsLoading(true);
@@ -101,6 +118,9 @@ export function useOptimization(): UseOptimization {
       const r =
         req.algorithm === "acs" ? await api.runACS(req.params) : await api.runVNS(req.params);
       setResult(r);
+      setLastRunKind("single");
+      setCompletedAt(Date.now());
+      setRunSignal((s) => s + 1);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Optimasi gagal.");
     } finally {
@@ -120,6 +140,9 @@ export function useOptimization(): UseOptimization {
       const comp: ComparisonResult = { acs: acsResult, vns: vnsResult };
       setComparison(comp);
       setResult(acsResult);
+      setLastRunKind("compare");
+      setCompletedAt(Date.now());
+      setRunSignal((s) => s + 1);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Perbandingan gagal.");
     } finally {
@@ -131,6 +154,8 @@ export function useOptimization(): UseOptimization {
     setResult(null);
     setComparison(null);
     setError(null);
+    setCompletedAt(null);
+    setLastRunKind(null);
     clearStored();
   }, []);
 
@@ -139,6 +164,9 @@ export function useOptimization(): UseOptimization {
     comparison,
     isLoading,
     error,
+    completedAt,
+    lastRunKind,
+    runSignal,
     run,
     runComparison,
     reset,

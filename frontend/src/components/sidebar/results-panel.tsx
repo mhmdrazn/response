@@ -1,18 +1,27 @@
 "use client";
 
-import { Clock, MapPinned, Route, TrendingDown, Truck } from "lucide-react";
+import { CheckCircle2, Clock, MapPinned, Route, TrendingDown, Truck } from "lucide-react";
 
+import { formatDateTimeId } from "../../lib/format";
 import { formatDuration, formatMeters, formatNumber } from "../../lib/format-metrics";
 import type { AppMode, OptimizationResult } from "../../types";
 
 interface ResultsPanelProps {
   result: OptimizationResult;
   mode: AppMode;
+  completedAt?: number | null;
 }
 
-export function ResultsPanel({ result, mode }: ResultsPanelProps) {
+export function ResultsPanel({ result, mode, completedAt }: ResultsPanelProps) {
+  const runAt = completedAt ? formatDateTimeId(new Date(completedAt).toISOString()) : null;
   return (
     <div className="flex flex-col gap-[10px]">
+      {runAt ? (
+        <div className="flex items-center gap-[6px] text-[11px] font-semibold text-si-low">
+          <CheckCircle2 size={13} strokeWidth={2.2} />
+          <span className="text-steel">Dijalankan: {runAt}</span>
+        </div>
+      ) : null}
       <div className="grid grid-cols-2 gap-8">
         <Metric
           Icon={TrendingDown}
