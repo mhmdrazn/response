@@ -49,6 +49,8 @@ export interface MapInnerProps {
   variant?: "fullscreen" | "embedded";
   onReloadData?: () => void;
   reloadingData?: boolean;
+  /** Hide all floating chrome (controls, docks, legends) for a full-map view. */
+  hideChrome?: boolean;
 }
 
 function FitBounds({ route }: { route: RouteOut | null }) {
@@ -82,6 +84,7 @@ export function MapInner({
   variant = "fullscreen",
   onReloadData,
   reloadingData,
+  hideChrome = false,
 }: MapInnerProps) {
   const base = BASE_MAP_LAYERS[baseMap];
 
@@ -129,7 +132,7 @@ export function MapInner({
       ) : null}
 
       {/* --- Fullscreen chrome: floating controls + docks over the map --- */}
-      {!isMobile && variant === "fullscreen" ? (
+      {!isMobile && variant === "fullscreen" && !hideChrome ? (
         <>
           {/* Choropleth legend sits on the left, just right of the Data dock. */}
           {overlays.choropleth ? (

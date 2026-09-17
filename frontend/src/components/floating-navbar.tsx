@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutDashboard, Maximize2 } from "lucide-react";
+import { LayoutDashboard, Maximize2, PanelLeftClose } from "lucide-react";
 
 import { ModeToggle } from "./mode-toggle";
 import type { AppLayout, AppMode } from "../types";
@@ -11,6 +11,7 @@ interface FloatingNavbarProps {
   compact?: boolean;
   layout?: AppLayout;
   onToggleLayout?: () => void;
+  onHidePanels?: () => void;
 }
 
 export function FloatingNavbar({
@@ -19,6 +20,7 @@ export function FloatingNavbar({
   compact = false,
   layout,
   onToggleLayout,
+  onHidePanels,
 }: FloatingNavbarProps) {
   return (
     <div
@@ -49,6 +51,18 @@ export function FloatingNavbar({
         ) : null}
       </div>
       <div className="flex-1" />
+      {onHidePanels ? (
+        <button
+          type="button"
+          onClick={onHidePanels}
+          title="Sembunyikan semua panel"
+          aria-label="Sembunyikan semua panel"
+          className="inline-flex flex-shrink-0 cursor-pointer items-center gap-[6px] rounded-md border border-frost bg-pure-white px-[10px] py-[6px] text-[12px] font-bold tracking-[-0.1px] text-steel transition-colors hover:bg-mist"
+        >
+          <PanelLeftClose size={14} strokeWidth={2} />
+          Sembunyikan
+        </button>
+      ) : null}
       {!compact && onToggleLayout ? (
         <LayoutToggle layout={layout ?? "fullscreen"} onToggle={onToggleLayout} />
       ) : null}

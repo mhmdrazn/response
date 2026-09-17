@@ -1,5 +1,6 @@
 "use client";
 
+import { PanelsTopLeft } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useAlgorithmConfig } from "../hooks/use-algorithm-config";
@@ -81,6 +82,7 @@ export function AppShell() {
   const [highlightVehicleId, setHighlightVehicleId] = useState<string | null>(null);
   const [focusedRoute, setFocusedRoute] = useState<RouteOut | null>(null);
   const [animating, setAnimating] = useState(false);
+  const [panelsHidden, setPanelsHidden] = useState(false);
   const [previewDataset, setPreviewDataset] = useState<DatasetKey | null>(null);
 
   const [mobilePanel, setMobilePanel] = useState<"none" | "algorithm" | "results">("none");
@@ -351,21 +353,28 @@ export function AppShell() {
                 animating={animating}
                 onReloadData={reload}
                 reloadingData={loading}
+                hideChrome={panelsHidden}
               />
             ) : (
               <MapStatusPlaceholder loading={loading} error={dataError} />
             )}
           </div>
 
-          <FloatingNavbar
-            mode={mode}
-            onModeChange={setMode}
-            compact={isMobile}
-            layout={layout}
-            onToggleLayout={() => setLayout("windowed")}
-          />
+          {!panelsHidden ? (
+            <FloatingNavbar
+              mode={mode}
+              onModeChange={setMode}
+              compact={isMobile}
+              layout={layout}
+              onToggleLayout={() => setLayout("windowed")}
+              onHidePanels={!isMobile ? () => setPanelsHidden(true) : undefined}
+            />
+          ) : (
+            <ShowPanelsButton onClick={() => setPanelsHidden(false)} />
+          )}
 
           {!isMobile ? (
+            !panelsHidden ? (
             <>
               <div
                 className="pointer-events-none absolute left-16 top-[84px] z-[900] flex flex-col gap-[10px] overflow-y-auto"
@@ -381,12 +390,15 @@ export function AppShell() {
                   className="pointer-events-none absolute bottom-16 right-16 top-16 z-[900] flex flex-col gap-[10px] overflow-hidden"
                   style={{ width: resultPanelW }}
                 >
-                  <div className="pointer-events-auto flex min-h-0 flex-1 flex-col gap-[10px]">
+                  {/* Wrapper stays click-through; each card sets pointer-events
+                      auto, so the empty area below the cards pans the map. */}
+                  <div className="pointer-events-none flex min-h-0 flex-1 flex-col gap-[10px]">
                     {resultsPanelContent}
                   </div>
                 </div>
               ) : null}
             </>
+            ) : null
           ) : (
             <>
               <div className="pointer-events-none absolute bottom-16 left-16 right-16 z-[950] flex flex-col gap-[10px]">
@@ -483,6 +495,20 @@ function RunNotifier({
   }, [signal, completedAt, kind, toast]);
 
   return null;
+}
+
+function ShowPanelsButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title="Tampilkan panel"
+      className="pointer-events-auto absolute left-16 top-16 z-[1000] inline-flex cursor-pointer items-center gap-[6px] rounded-lg border border-frost bg-pure-white px-[12px] py-8 text-[12px] font-bold tracking-[-0.1px] text-midnight-ink transition-colors hover:bg-frost"
+    >
+      <PanelsTopLeft size={15} strokeWidth={2} />
+      Tampilkan Panel
+    </button>
+  );
 }
 
 function ResultPeekBar({ objectiveZ, onOpen }: { objectiveZ: number; onOpen: () => void }) {
