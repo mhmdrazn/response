@@ -50,8 +50,8 @@ const RESULT_PANEL_WIDTH: Record<string, number> = {
 // Clears the collapsed layer/data dock at bottom of map
 const SIDEBAR_BOTTOM_CLEARANCE = 220;
 
-// Shared transition for the hide-all-panels animation.
-const PANEL_ANIM = "transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]";
+// Shared transition for the hide-all-panels animation (smooth in-place fade).
+const PANEL_ANIM = "transition-opacity duration-300 ease-out";
 
 const HIDDEN_ROUTES_STORAGE_KEY = "floodroute:hidden-routes:v1";
 
@@ -343,7 +343,7 @@ export function AppShell() {
             onToggleLayout={() => setLayout("windowed")}
             onHidePanels={!isMobile ? () => setPanelsHidden(true) : undefined}
             className={`${PANEL_ANIM} ${
-              panelsHidden ? "pointer-events-none -translate-y-3 opacity-0" : "pointer-events-auto opacity-100"
+              panelsHidden ? "pointer-events-none opacity-0" : "pointer-events-auto opacity-100"
             }`}
           />
           {!isMobile ? (
@@ -359,7 +359,7 @@ export function AppShell() {
             <>
               <div
                 className={`absolute left-16 top-[84px] z-[900] flex flex-col gap-[10px] overflow-y-auto ${PANEL_ANIM} ${
-                  panelsHidden ? "pointer-events-none -translate-x-3 opacity-0" : "pointer-events-none opacity-100"
+                  panelsHidden ? "pointer-events-none opacity-0" : "pointer-events-none opacity-100"
                 }`}
                 style={{ bottom: SIDEBAR_BOTTOM_CLEARANCE, width: panelW }}
               >
@@ -375,7 +375,7 @@ export function AppShell() {
               {result ? (
                 <div
                   className={`absolute bottom-16 right-16 top-16 z-[900] flex flex-col gap-[10px] overflow-hidden ${PANEL_ANIM} ${
-                    panelsHidden ? "translate-x-4 opacity-0 [&_*]:pointer-events-none" : "opacity-100"
+                    panelsHidden ? "opacity-0 [&_*]:pointer-events-none" : "opacity-100"
                   }`}
                   style={{ width: resultPanelW }}
                 >

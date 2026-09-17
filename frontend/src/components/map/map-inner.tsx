@@ -138,8 +138,8 @@ export function MapInner({
           {/* Choropleth legend sits on the left, just right of the Data dock. */}
           {overlays.choropleth ? (
             <div
-              className={`absolute bottom-16 left-[364px] z-[1000] transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
-                hideChrome ? "pointer-events-none translate-y-3 opacity-0" : "pointer-events-none opacity-100"
+              className={`absolute bottom-16 left-[364px] z-[1000] transition-opacity duration-300 ease-out ${
+                hideChrome ? "pointer-events-none opacity-0" : "pointer-events-none opacity-100"
               }`}
             >
               <ChoroplethLegend />
@@ -148,8 +148,8 @@ export function MapInner({
 
           {routes.length === 0 ? (
             <div
-              className={`absolute bottom-24 right-16 z-[800] transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
-                hideChrome ? "translate-x-3 opacity-0 [&_*]:pointer-events-none" : "opacity-100"
+              className={`absolute bottom-24 right-16 z-[800] transition-opacity duration-300 ease-out ${
+                hideChrome ? "opacity-0 [&_*]:pointer-events-none" : "opacity-100"
               }`}
             >
               <SiLegend inline />

@@ -38,8 +38,8 @@ export function LeftPanel({
 }: LeftPanelProps) {
   return (
     <div
-      className={`pointer-events-none absolute bottom-16 left-16 z-[1000] flex w-[340px] flex-col gap-8 transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
-        hidden ? "-translate-x-3 opacity-0 [&_*]:pointer-events-none" : "opacity-100"
+      className={`pointer-events-none absolute bottom-16 left-16 z-[1000] flex w-[340px] flex-col gap-8 transition-opacity duration-300 ease-out ${
+        hidden ? "opacity-0 [&_*]:pointer-events-none" : "opacity-100"
       }`}
     >
       <MapControls />
