@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { api, DEFAULT_ACS_PARAMS, DEFAULT_VNS_PARAMS, type RunRequest } from "../lib/api";
+import { readJSON, removeKey, writeJSON } from "../lib/storage";
 import type { ComparisonResult, OptimizationResult } from "../types";
 
 export type RunKind = "single" | "compare";
@@ -37,34 +38,17 @@ interface StoredPayload {
 }
 
 function loadStored(): StoredPayload | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as StoredPayload;
-    if (parsed.version !== STORAGE_VERSION) return null;
-    return parsed;
-  } catch {
-    return null;
-  }
+  const parsed = readJSON<StoredPayload | null>(STORAGE_KEY, null);
+  if (!parsed || parsed.version !== STORAGE_VERSION) return null;
+  return parsed;
 }
 
 function saveStored(payload: StoredPayload): void {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-  } catch {
-    /* quota exceeded or storage unavailable — silently drop */
-  }
+  writeJSON(STORAGE_KEY, payload);
 }
 
 function clearStored(): void {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.removeItem(STORAGE_KEY);
-  } catch {
-    /* ignore */
-  }
+  removeKey(STORAGE_KEY);
 }
 
 export function useOptimization(): UseOptimization {
