@@ -119,7 +119,7 @@ class VNS:
         allow_all: bool = False,
     ) -> tuple[list[int], float]:
         route: list[int] = [depot]
-        tank = 0.0
+        tank = float(cap)  # standby full: force an IF stop before pumping
         current = depot
         flood_visits = 0
         max_flood_visits = max(

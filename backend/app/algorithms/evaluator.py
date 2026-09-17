@@ -75,17 +75,18 @@ def evaluate_solution(
             raise ValueError("route must start and end at the same depot")
         depot_idx = route[0]
         r = RouteEval(depot_index=depot_idx, capacity=cap, node_indices=list(route))
-        # depot start
+        # Standby state: vehicles idle with a FULL tank, so they must empty at an
+        # IF before they can pump at any flood point. Start the tank full.
+        tank = float(cap)
         r.visits.append(
             VisitLog(
                 node_index=depot_idx,
                 node_type="depot",
                 arrival_time=0.0,
-                tank_load_after=0.0,
+                tank_load_after=tank,
                 volume_pumped=0.0,
             )
         )
-        tank = 0.0
         clock = 0.0
         prev = depot_idx
         for cur in route[1:]:

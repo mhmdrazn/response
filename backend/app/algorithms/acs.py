@@ -113,7 +113,9 @@ class HybridACS:
         depots = [self.inst.vehicles[vi][0] for vi in range(n_vehicles)]
         capacities = [self.inst.vehicles[vi][1] for vi in range(n_vehicles)]
         routes: list[list[int]] = [[depots[vi]] for vi in range(n_vehicles)]
-        tanks = [0.0] * n_vehicles
+        # Standby full: a deployed vehicle must visit an IF (empty) before it can
+        # pump. Starting full makes the "tank full -> go to IF" branch fire first.
+        tanks = [float(capacities[vi]) for vi in range(n_vehicles)]
 
         order = list(range(n_vehicles))
         self._rng.shuffle(order)
