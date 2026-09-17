@@ -37,6 +37,11 @@ export const SI_PALETTE: SiBucket[] = [
   },
 ];
 
+// Fallback Severity Index when a flood point has no computed SI yet (e.g. the
+// severity endpoint failed). Markers and the choropleth share it so a genangan
+// is always rendered consistently instead of silently vanishing from one layer.
+export const DEFAULT_SI = 0.5;
+
 export function siColor(si: number | null | undefined): string {
   if (si == null || Number.isNaN(si)) return "#94a3b8";
   for (const bucket of SI_PALETTE) if (si <= bucket.max) return bucket.hex;

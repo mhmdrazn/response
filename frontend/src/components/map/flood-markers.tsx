@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import { Marker, Popup } from "react-leaflet";
 
 import { formatDateTimeId } from "../../lib/format";
-import { SI_PALETTE, siColor } from "../../lib/map-constants";
+import { DEFAULT_SI, SI_PALETTE, siColor } from "../../lib/map-constants";
 import type { FloodPoint } from "../../types";
 import { DescBlock, PopupRow, PopupShell, SiPill } from "./marker-popup";
 
@@ -61,7 +61,7 @@ export function FloodMarkers({ points }: FloodMarkersProps) {
 }
 
 function FloodMarker({ point: p, index }: { point: FloodPoint; index: number }) {
-  const si = p.si_value ?? 0.5;
+  const si = p.si_value ?? DEFAULT_SI;
   const color = siColor(si);
   const dotSize = Math.max(
     14,

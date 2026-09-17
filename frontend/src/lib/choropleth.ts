@@ -4,6 +4,7 @@
 
 import type { Feature, MultiPolygon, Polygon, Position } from "geojson";
 
+import { DEFAULT_SI } from "./map-constants";
 import type { FloodPoint } from "../types";
 
 export interface KecamatanProperties {
@@ -74,8 +75,10 @@ export function aggregateSiByKecamatan(
   const sums = new Map<string, { total: number; count: number; max: number }>();
 
   for (const f of floods) {
-    const si = f.si_value;
-    if (si == null || Number.isNaN(si)) continue;
+    // Fall back to DEFAULT_SI (same as the markers) when SI is missing, so a
+    // kecamatan that has flood points is never left uncolored.
+    const si = f.si_value ?? DEFAULT_SI;
+    if (Number.isNaN(si)) continue;
     // First containing polygon wins (kecamatan do not overlap).
     const hit = features.find((feat) => pointInFeature(f.lon, f.lat, feat));
     if (!hit) continue;
