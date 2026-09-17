@@ -28,6 +28,7 @@ import { ResultsDock } from "./results-dock";
 import { ToastProvider, useToast } from "./toast";
 import type { RunKind } from "../hooks/use-optimization";
 import { formatDateTimeId } from "../lib/format";
+import { readStringSet, writeStringSet } from "../lib/storage";
 
 const INITIAL_OVERLAYS: Record<OverlayLayerId, boolean> = OVERLAY_LAYERS.reduce(
   (acc, l) => ({ ...acc, [l.id]: l.defaultVisible }),
@@ -49,29 +50,10 @@ const RESULT_PANEL_WIDTH: Record<string, number> = {
 // Clears the collapsed layer/data dock at bottom of map
 const SIDEBAR_BOTTOM_CLEARANCE = 220;
 
+// Shared transition for the hide-all-panels animation.
+const PANEL_ANIM = "transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]";
+
 const HIDDEN_ROUTES_STORAGE_KEY = "floodroute:hidden-routes:v1";
-
-function loadStoredSet(key: string): Set<string> {
-  if (typeof window === "undefined") return new Set();
-  try {
-    const raw = window.localStorage.getItem(key);
-    if (!raw) return new Set();
-    const arr = JSON.parse(raw) as unknown;
-    if (Array.isArray(arr)) return new Set(arr.filter((v): v is string => typeof v === "string"));
-  } catch {
-    /* ignore */
-  }
-  return new Set();
-}
-
-function saveStoredSet(key: string, value: Set<string>): void {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(key, JSON.stringify(Array.from(value)));
-  } catch {
-    /* ignore */
-  }
-}
 
 export function AppShell() {
   const bp = useBreakpoint();
@@ -93,13 +75,13 @@ export function AppShell() {
   const preChoroplethBaseMap = useRef<BaseMapId>("standard");
 
   useEffect(() => {
-    setHiddenRoutes(loadStoredSet(HIDDEN_ROUTES_STORAGE_KEY));
+    setHiddenRoutes(readStringSet(HIDDEN_ROUTES_STORAGE_KEY));
     hydratedHidden.current = true;
   }, []);
 
   useEffect(() => {
     if (!hydratedHidden.current) return;
-    saveStoredSet(HIDDEN_ROUTES_STORAGE_KEY, hiddenRoutes);
+    writeStringSet(HIDDEN_ROUTES_STORAGE_KEY, hiddenRoutes);
   }, [hiddenRoutes]);
 
   const toggleRouteVisibility = useCallback((vehicleId: string) => {
@@ -236,6 +218,36 @@ export function AppShell() {
     </>
   ) : null;
 
+  // Single source for the map element; both layouts pass only what differs.
+  const renderMap = (extra: {
+    isMobile: boolean;
+    variant?: "fullscreen" | "embedded";
+    onReloadData?: () => void;
+    reloadingData?: boolean;
+    hideChrome?: boolean;
+  }) =>
+    data ? (
+      <MapCanvas
+        floods={data.floods}
+        depots={data.depots}
+        ifs={data.ifs}
+        faskes={data.faskes}
+        overlays={overlays}
+        setOverlay={setOverlay}
+        baseMap={baseMap}
+        setBaseMap={setBaseMap}
+        routes={visibleRoutes}
+        highlightVehicleId={highlightVehicleId}
+        setHighlightVehicleId={setHighlightVehicleId}
+        focusedRoute={focusedRoute}
+        onPreviewData={handlePreviewData}
+        animating={animating}
+        {...extra}
+      />
+    ) : (
+      <MapStatusPlaceholder loading={loading} error={dataError} />
+    );
+
   // --- Windowed dashboard layout (desktop only) ---
   if (!isMobile && layout === "windowed") {
     return (
@@ -283,28 +295,7 @@ export function AppShell() {
               </aside>
 
               <main className="relative min-w-0 flex-1 overflow-hidden rounded-lg border border-frost">
-                {data ? (
-                  <MapCanvas
-                    floods={data.floods}
-                    depots={data.depots}
-                    ifs={data.ifs}
-                    faskes={data.faskes}
-                    overlays={overlays}
-                    setOverlay={setOverlay}
-                    baseMap={baseMap}
-                    setBaseMap={setBaseMap}
-                    routes={visibleRoutes}
-                    highlightVehicleId={highlightVehicleId}
-                    setHighlightVehicleId={setHighlightVehicleId}
-                    focusedRoute={focusedRoute}
-                    onPreviewData={handlePreviewData}
-                    isMobile={false}
-                    animating={animating}
-                    variant="embedded"
-                  />
-                ) : (
-                  <MapStatusPlaceholder loading={loading} error={dataError} />
-                )}
+                {renderMap({ isMobile: false, variant: "embedded" })}
               </main>
 
               {result ? (
@@ -334,60 +325,58 @@ export function AppShell() {
         <RunNotifier signal={runSignal} completedAt={completedAt} kind={lastRunKind} />
         <div className="relative h-screen w-screen overflow-hidden bg-mist">
           <div className="absolute inset-0">
-            {data ? (
-              <MapCanvas
-                floods={data.floods}
-                depots={data.depots}
-                ifs={data.ifs}
-                faskes={data.faskes}
-                overlays={overlays}
-                setOverlay={setOverlay}
-                baseMap={baseMap}
-                setBaseMap={setBaseMap}
-                routes={visibleRoutes}
-                highlightVehicleId={highlightVehicleId}
-                setHighlightVehicleId={setHighlightVehicleId}
-                focusedRoute={focusedRoute}
-                onPreviewData={handlePreviewData}
-                isMobile={isMobile}
-                animating={animating}
-                onReloadData={reload}
-                reloadingData={loading}
-                hideChrome={panelsHidden}
-              />
-            ) : (
-              <MapStatusPlaceholder loading={loading} error={dataError} />
-            )}
+            {renderMap({
+              isMobile,
+              onReloadData: reload,
+              reloadingData: loading,
+              hideChrome: panelsHidden,
+            })}
           </div>
 
-          {!panelsHidden ? (
-            <FloatingNavbar
-              mode={mode}
-              onModeChange={setMode}
-              compact={isMobile}
-              layout={layout}
-              onToggleLayout={() => setLayout("windowed")}
-              onHidePanels={!isMobile ? () => setPanelsHidden(true) : undefined}
+          {/* Navbar + show-button stay mounted and cross-fade for a smooth
+              hide/show animation. */}
+          <FloatingNavbar
+            mode={mode}
+            onModeChange={setMode}
+            compact={isMobile}
+            layout={layout}
+            onToggleLayout={() => setLayout("windowed")}
+            onHidePanels={!isMobile ? () => setPanelsHidden(true) : undefined}
+            className={`${PANEL_ANIM} ${
+              panelsHidden ? "pointer-events-none -translate-y-3 opacity-0" : "pointer-events-auto opacity-100"
+            }`}
+          />
+          {!isMobile ? (
+            <ShowPanelsButton
+              onClick={() => setPanelsHidden(false)}
+              className={`${PANEL_ANIM} ${
+                panelsHidden ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
+              }`}
             />
-          ) : (
-            <ShowPanelsButton onClick={() => setPanelsHidden(false)} />
-          )}
+          ) : null}
 
           {!isMobile ? (
-            !panelsHidden ? (
             <>
               <div
-                className="pointer-events-none absolute left-16 top-[84px] z-[900] flex flex-col gap-[10px] overflow-y-auto"
+                className={`absolute left-16 top-[84px] z-[900] flex flex-col gap-[10px] overflow-y-auto ${PANEL_ANIM} ${
+                  panelsHidden ? "pointer-events-none -translate-x-3 opacity-0" : "pointer-events-none opacity-100"
+                }`}
                 style={{ bottom: SIDEBAR_BOTTOM_CLEARANCE, width: panelW }}
               >
-                <div className="pointer-events-auto flex flex-col gap-[10px]">
+                <div
+                  className={`flex flex-col gap-[10px] ${
+                    panelsHidden ? "pointer-events-none" : "pointer-events-auto"
+                  }`}
+                >
                   {algorithmPanelContent}
                 </div>
               </div>
 
               {result ? (
                 <div
-                  className="pointer-events-none absolute bottom-16 right-16 top-16 z-[900] flex flex-col gap-[10px] overflow-hidden"
+                  className={`absolute bottom-16 right-16 top-16 z-[900] flex flex-col gap-[10px] overflow-hidden ${PANEL_ANIM} ${
+                    panelsHidden ? "translate-x-4 opacity-0 [&_*]:pointer-events-none" : "opacity-100"
+                  }`}
                   style={{ width: resultPanelW }}
                 >
                   {/* Wrapper stays click-through; each card sets pointer-events
@@ -398,7 +387,6 @@ export function AppShell() {
                 </div>
               ) : null}
             </>
-            ) : null
           ) : (
             <>
               <div className="pointer-events-none absolute bottom-16 left-16 right-16 z-[950] flex flex-col gap-[10px]">
@@ -497,13 +485,19 @@ function RunNotifier({
   return null;
 }
 
-function ShowPanelsButton({ onClick }: { onClick: () => void }) {
+function ShowPanelsButton({
+  onClick,
+  className = "",
+}: {
+  onClick: () => void;
+  className?: string;
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
       title="Tampilkan panel"
-      className="pointer-events-auto absolute left-16 top-16 z-[1000] inline-flex cursor-pointer items-center gap-[6px] rounded-lg border border-frost bg-pure-white px-[12px] py-8 text-[12px] font-bold tracking-[-0.1px] text-midnight-ink transition-colors hover:bg-frost"
+      className={`absolute left-16 top-16 z-[1000] inline-flex cursor-pointer items-center gap-[6px] rounded-lg border border-frost bg-pure-white px-[12px] py-8 text-[12px] font-bold tracking-[-0.1px] text-midnight-ink hover:bg-frost ${className}`.trim()}
     >
       <PanelsTopLeft size={15} strokeWidth={2} />
       Tampilkan Panel

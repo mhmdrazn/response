@@ -12,6 +12,8 @@ interface FloatingNavbarProps {
   layout?: AppLayout;
   onToggleLayout?: () => void;
   onHidePanels?: () => void;
+  /** Extra classes (e.g. hide/show transition state) appended to the root. */
+  className?: string;
 }
 
 export function FloatingNavbar({
@@ -21,14 +23,15 @@ export function FloatingNavbar({
   layout,
   onToggleLayout,
   onHidePanels,
+  className = "",
 }: FloatingNavbarProps) {
   return (
     <div
-      className={`pointer-events-auto absolute z-[1000] flex items-center rounded-lg border border-frost bg-pure-white ${
+      className={`absolute z-[1000] flex items-center rounded-lg border border-frost bg-pure-white ${
         compact
           ? "left-12 right-12 top-12 gap-8 px-[10px] py-[6px]"
           : "left-16 top-16 gap-12 px-[14px] py-8"
-      }`}
+      } ${className || "pointer-events-auto"}`.trim()}
     >
       <div className="flex min-w-0 items-center gap-16">
         <span

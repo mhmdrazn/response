@@ -131,18 +131,27 @@ export function MapInner({
         </div>
       ) : null}
 
-      {/* --- Fullscreen chrome: floating controls + docks over the map --- */}
-      {!isMobile && variant === "fullscreen" && !hideChrome ? (
+      {/* --- Fullscreen chrome: floating controls + docks over the map.
+             Kept mounted and faded via hideChrome so it animates in/out. --- */}
+      {!isMobile && variant === "fullscreen" ? (
         <>
           {/* Choropleth legend sits on the left, just right of the Data dock. */}
           {overlays.choropleth ? (
-            <div className="pointer-events-none absolute bottom-16 left-[364px] z-[1000]">
+            <div
+              className={`absolute bottom-16 left-[364px] z-[1000] transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                hideChrome ? "pointer-events-none translate-y-3 opacity-0" : "pointer-events-none opacity-100"
+              }`}
+            >
               <ChoroplethLegend />
             </div>
           ) : null}
 
           {routes.length === 0 ? (
-            <div className="pointer-events-none absolute bottom-24 right-16 z-[800]">
+            <div
+              className={`absolute bottom-24 right-16 z-[800] transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                hideChrome ? "translate-x-3 opacity-0 [&_*]:pointer-events-none" : "opacity-100"
+              }`}
+            >
               <SiLegend inline />
             </div>
           ) : null}
@@ -159,6 +168,7 @@ export function MapInner({
             onPreviewData={onPreviewData}
             onReloadData={onReloadData}
             reloadingData={reloadingData}
+            hidden={hideChrome}
           />
         </>
       ) : null}

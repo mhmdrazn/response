@@ -18,6 +18,8 @@ interface LeftPanelProps {
   onPreviewData: (key: DatasetKey) => void;
   onReloadData?: () => void;
   reloadingData?: boolean;
+  /** Hidden state for the hide-all-panels animation. */
+  hidden?: boolean;
 }
 
 export function LeftPanel({
@@ -32,9 +34,14 @@ export function LeftPanel({
   onPreviewData,
   onReloadData,
   reloadingData,
+  hidden = false,
 }: LeftPanelProps) {
   return (
-    <div className="pointer-events-none absolute bottom-16 left-16 z-[1000] flex w-[340px] flex-col gap-8">
+    <div
+      className={`pointer-events-none absolute bottom-16 left-16 z-[1000] flex w-[340px] flex-col gap-8 transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+        hidden ? "-translate-x-3 opacity-0 [&_*]:pointer-events-none" : "opacity-100"
+      }`}
+    >
       <MapControls />
 
       <MapLayerDock
