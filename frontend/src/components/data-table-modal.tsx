@@ -80,9 +80,16 @@ interface DataTableModalProps {
   data: DataItem[];
   onClose: () => void;
   onReload: () => void;
+  scenario?: string;
 }
 
-export function DataTableModal({ datasetKey, data, onClose, onReload }: DataTableModalProps) {
+export function DataTableModal({
+  datasetKey,
+  data,
+  onClose,
+  onReload,
+  scenario,
+}: DataTableModalProps) {
   const config = DATASET_CONFIG[datasetKey];
   const toast = useToast();
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -135,10 +142,10 @@ export function DataTableModal({ datasetKey, data, onClose, onReload }: DataTabl
     setBusy(true);
     try {
       const payload = buildPayload(editForm);
-      if (datasetKey === "floods") await api.updateFlood(editingId, payload);
-      else if (datasetKey === "depots") await api.updateDepot(editingId, payload);
-      else if (datasetKey === "ifs") await api.updateIF(editingId, payload);
-      else await api.updateFaskes(editingId, payload);
+      if (datasetKey === "floods") await api.updateFlood(editingId, payload, scenario);
+      else if (datasetKey === "depots") await api.updateDepot(editingId, payload, scenario);
+      else if (datasetKey === "ifs") await api.updateIF(editingId, payload, scenario);
+      else await api.updateFaskes(editingId, payload, scenario);
       setEditingId(null);
       onReload();
       toast.success("Perubahan tersimpan");
@@ -154,12 +161,12 @@ export function DataTableModal({ datasetKey, data, onClose, onReload }: DataTabl
     try {
       const payload = buildPayload(addForm);
       if (datasetKey === "floods")
-        await api.createFlood(payload as Parameters<typeof api.createFlood>[0]);
+        await api.createFlood(payload as Parameters<typeof api.createFlood>[0], scenario);
       else if (datasetKey === "depots")
-        await api.createDepot(payload as Parameters<typeof api.createDepot>[0]);
+        await api.createDepot(payload as Parameters<typeof api.createDepot>[0], scenario);
       else if (datasetKey === "ifs")
-        await api.createIF(payload as Parameters<typeof api.createIF>[0]);
-      else await api.createFaskes(payload as Parameters<typeof api.createFaskes>[0]);
+        await api.createIF(payload as Parameters<typeof api.createIF>[0], scenario);
+      else await api.createFaskes(payload as Parameters<typeof api.createFaskes>[0], scenario);
       setIsAdding(false);
       onReload();
       toast.success("Data ditambahkan");
@@ -180,10 +187,10 @@ export function DataTableModal({ datasetKey, data, onClose, onReload }: DataTabl
     setPendingDeleteId(null);
     setBusy(true);
     try {
-      if (datasetKey === "floods") await api.deleteFlood(id);
-      else if (datasetKey === "depots") await api.deleteDepot(id);
-      else if (datasetKey === "ifs") await api.deleteIF(id);
-      else await api.deleteFaskes(id);
+      if (datasetKey === "floods") await api.deleteFlood(id, scenario);
+      else if (datasetKey === "depots") await api.deleteDepot(id, scenario);
+      else if (datasetKey === "ifs") await api.deleteIF(id, scenario);
+      else await api.deleteFaskes(id, scenario);
       onReload();
       toast.success("Data dihapus");
     } catch (e) {

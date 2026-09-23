@@ -154,6 +154,22 @@ export interface DataMetaEntry {
 
 export type DataMetaResponse = Record<"floods" | "depo" | "if" | "faskes", DataMetaEntry>;
 
+// ---------- Scenarios (matches /api/scenarios) ----------
+
+export interface ScenarioMeta {
+  id: string;
+  name: string;
+  date_from?: string | null;
+  date_to?: string | null;
+  n_points?: number | null;
+  description?: string | null;
+}
+
+export interface ScenarioList {
+  default: string;
+  scenarios: ScenarioMeta[];
+}
+
 // ---------- App modes ----------
 
 export type AppMode = "simple" | "advanced";

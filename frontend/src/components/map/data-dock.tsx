@@ -35,6 +35,7 @@ interface DataDockProps {
   /** Refetch all map data from the backend (floods/depo/if/faskes/severity). */
   onReloadData?: () => void;
   reloadingData?: boolean;
+  scenario?: string;
 }
 
 interface DataCountItem {
@@ -60,18 +61,19 @@ export function DataDock({
   defaultOpen = false,
   onReloadData,
   reloadingData = false,
+  scenario,
 }: DataDockProps) {
   const [open, setOpen] = useState(defaultOpen);
   const [meta, setMeta] = useState<DataMetaResponse | null>(null);
 
   const loadMeta = useCallback(() => {
     api
-      .getDataMeta()
+      .getDataMeta(scenario)
       .then(setMeta)
       .catch(() => {
         /* freshness is best-effort; ignore fetch failure */
       });
-  }, []);
+  }, [scenario]);
 
   useEffect(() => {
     loadMeta();

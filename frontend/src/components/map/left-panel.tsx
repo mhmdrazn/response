@@ -18,6 +18,7 @@ interface LeftPanelProps {
   onPreviewData: (key: DatasetKey) => void;
   onReloadData?: () => void;
   reloadingData?: boolean;
+  scenario?: string;
   /** Hidden state for the hide-all-panels animation. */
   hidden?: boolean;
 }
@@ -34,6 +35,7 @@ export function LeftPanel({
   onPreviewData,
   onReloadData,
   reloadingData,
+  scenario,
   hidden = false,
 }: LeftPanelProps) {
   return (
@@ -60,6 +62,7 @@ export function LeftPanel({
         onPreviewData={onPreviewData}
         onReloadData={onReloadData}
         reloadingData={reloadingData}
+        scenario={scenario}
         defaultOpen
       />
     </div>

@@ -6,6 +6,7 @@ import type {
   FloodPoint,
   IntermediateFacility,
   OptimizationResult,
+  ScenarioList,
   SeverityIndexResponse,
   VNSParams,
 } from "../types";
@@ -49,83 +50,96 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export { ApiError };
 
+/** Append `?scenario=<id>` when a scenario is given. */
+function s(path: string, scenario?: string): string {
+  return scenario ? `${path}?scenario=${encodeURIComponent(scenario)}` : path;
+}
+
 export const api = {
   health: (): Promise<{ status: string; service: string }> => request("/health"),
 
-  getFloodPoints: (): Promise<FloodPoint[]> => request<FloodPoint[]>("/api/data/floods"),
-  getDepots: (): Promise<Depot[]> => request<Depot[]>("/api/data/depo"),
-  getIntermediateFacilities: (): Promise<IntermediateFacility[]> =>
-    request<IntermediateFacility[]>("/api/data/if"),
-  getFaskes: (): Promise<Faskes[]> => request<Faskes[]>("/api/data/faskes"),
+  getScenarios: (): Promise<ScenarioList> => request<ScenarioList>("/api/scenarios"),
 
-  getSeverityIndex: (): Promise<SeverityIndexResponse> =>
-    request<SeverityIndexResponse>("/api/severity-index"),
+  getFloodPoints: (scenario?: string): Promise<FloodPoint[]> =>
+    request<FloodPoint[]>(s("/api/data/floods", scenario)),
+  getDepots: (scenario?: string): Promise<Depot[]> => request<Depot[]>(s("/api/data/depo", scenario)),
+  getIntermediateFacilities: (scenario?: string): Promise<IntermediateFacility[]> =>
+    request<IntermediateFacility[]>(s("/api/data/if", scenario)),
+  getFaskes: (scenario?: string): Promise<Faskes[]> =>
+    request<Faskes[]>(s("/api/data/faskes", scenario)),
 
-  getDataMeta: (): Promise<DataMetaResponse> =>
-    request<DataMetaResponse>("/api/data/meta"),
+  getSeverityIndex: (scenario?: string): Promise<SeverityIndexResponse> =>
+    request<SeverityIndexResponse>(s("/api/severity-index", scenario)),
 
-  runACS: (params: ACSParams): Promise<OptimizationResult> =>
-    request<OptimizationResult>("/api/optimize/acs", {
+  getDataMeta: (scenario?: string): Promise<DataMetaResponse> =>
+    request<DataMetaResponse>(s("/api/data/meta", scenario)),
+
+  runACS: (params: ACSParams, scenario?: string): Promise<OptimizationResult> =>
+    request<OptimizationResult>(s("/api/optimize/acs", scenario), {
       method: "POST",
       body: JSON.stringify(params),
     }),
-  runVNS: (params: VNSParams): Promise<OptimizationResult> =>
-    request<OptimizationResult>("/api/optimize/vns", {
+  runVNS: (params: VNSParams, scenario?: string): Promise<OptimizationResult> =>
+    request<OptimizationResult>(s("/api/optimize/vns", scenario), {
       method: "POST",
       body: JSON.stringify(params),
     }),
 
-  createFlood: (body: Omit<FloodPoint, "id" | "si_value">): Promise<FloodPoint> =>
-    request<FloodPoint>("/api/data/floods", {
+  createFlood: (body: Omit<FloodPoint, "id" | "si_value">, scenario?: string): Promise<FloodPoint> =>
+    request<FloodPoint>(s("/api/data/floods", scenario), {
       method: "POST",
       body: JSON.stringify(body),
     }),
-  updateFlood: (id: string, body: Record<string, unknown>): Promise<FloodPoint> =>
-    request<FloodPoint>(`/api/data/floods/${encodeURIComponent(id)}`, {
+  updateFlood: (id: string, body: Record<string, unknown>, scenario?: string): Promise<FloodPoint> =>
+    request<FloodPoint>(s(`/api/data/floods/${encodeURIComponent(id)}`, scenario), {
       method: "PUT",
       body: JSON.stringify(body),
     }),
-  deleteFlood: (id: string): Promise<void> =>
-    request<void>(`/api/data/floods/${encodeURIComponent(id)}`, { method: "DELETE" }),
+  deleteFlood: (id: string, scenario?: string): Promise<void> =>
+    request<void>(s(`/api/data/floods/${encodeURIComponent(id)}`, scenario), { method: "DELETE" }),
 
-  createDepot: (body: Omit<Depot, "id">): Promise<Depot> =>
-    request<Depot>("/api/data/depo", {
+  createDepot: (body: Omit<Depot, "id">, scenario?: string): Promise<Depot> =>
+    request<Depot>(s("/api/data/depo", scenario), {
       method: "POST",
       body: JSON.stringify(body),
     }),
-  updateDepot: (id: string, body: Record<string, unknown>): Promise<Depot> =>
-    request<Depot>(`/api/data/depo/${encodeURIComponent(id)}`, {
+  updateDepot: (id: string, body: Record<string, unknown>, scenario?: string): Promise<Depot> =>
+    request<Depot>(s(`/api/data/depo/${encodeURIComponent(id)}`, scenario), {
       method: "PUT",
       body: JSON.stringify(body),
     }),
-  deleteDepot: (id: string): Promise<void> =>
-    request<void>(`/api/data/depo/${encodeURIComponent(id)}`, { method: "DELETE" }),
+  deleteDepot: (id: string, scenario?: string): Promise<void> =>
+    request<void>(s(`/api/data/depo/${encodeURIComponent(id)}`, scenario), { method: "DELETE" }),
 
-  createIF: (body: Omit<IntermediateFacility, "id">): Promise<IntermediateFacility> =>
-    request<IntermediateFacility>("/api/data/if", {
+  createIF: (body: Omit<IntermediateFacility, "id">, scenario?: string): Promise<IntermediateFacility> =>
+    request<IntermediateFacility>(s("/api/data/if", scenario), {
       method: "POST",
       body: JSON.stringify(body),
     }),
-  updateIF: (id: string, body: Record<string, unknown>): Promise<IntermediateFacility> =>
-    request<IntermediateFacility>(`/api/data/if/${encodeURIComponent(id)}`, {
+  updateIF: (
+    id: string,
+    body: Record<string, unknown>,
+    scenario?: string,
+  ): Promise<IntermediateFacility> =>
+    request<IntermediateFacility>(s(`/api/data/if/${encodeURIComponent(id)}`, scenario), {
       method: "PUT",
       body: JSON.stringify(body),
     }),
-  deleteIF: (id: string): Promise<void> =>
-    request<void>(`/api/data/if/${encodeURIComponent(id)}`, { method: "DELETE" }),
+  deleteIF: (id: string, scenario?: string): Promise<void> =>
+    request<void>(s(`/api/data/if/${encodeURIComponent(id)}`, scenario), { method: "DELETE" }),
 
-  createFaskes: (body: Omit<Faskes, "id">): Promise<Faskes> =>
-    request<Faskes>("/api/data/faskes", {
+  createFaskes: (body: Omit<Faskes, "id">, scenario?: string): Promise<Faskes> =>
+    request<Faskes>(s("/api/data/faskes", scenario), {
       method: "POST",
       body: JSON.stringify(body),
     }),
-  updateFaskes: (id: string, body: Record<string, unknown>): Promise<Faskes> =>
-    request<Faskes>(`/api/data/faskes/${encodeURIComponent(id)}`, {
+  updateFaskes: (id: string, body: Record<string, unknown>, scenario?: string): Promise<Faskes> =>
+    request<Faskes>(s(`/api/data/faskes/${encodeURIComponent(id)}`, scenario), {
       method: "PUT",
       body: JSON.stringify(body),
     }),
-  deleteFaskes: (id: string): Promise<void> =>
-    request<void>(`/api/data/faskes/${encodeURIComponent(id)}`, { method: "DELETE" }),
+  deleteFaskes: (id: string, scenario?: string): Promise<void> =>
+    request<void>(s(`/api/data/faskes/${encodeURIComponent(id)}`, scenario), { method: "DELETE" }),
 };
 
 export const DEFAULT_ACS_PARAMS: ACSParams = {

@@ -19,8 +19,8 @@ export interface UseOptimization {
   /** Increments only on a run finished in THIS session (not on restore from
    *  storage) — drives the completion toast without firing on reload. */
   runSignal: number;
-  run: (req: RunRequest) => Promise<void>;
-  runComparison: (seed?: number) => Promise<void>;
+  run: (req: RunRequest, scenario?: string) => Promise<void>;
+  runComparison: (seed?: number, scenario?: string) => Promise<void>;
   reset: () => void;
   hydrated: boolean;
 }
@@ -94,13 +94,15 @@ export function useOptimization(): UseOptimization {
     });
   }, [result, comparison, completedAt, lastRunKind, hydrated]);
 
-  const run = useCallback(async (req: RunRequest) => {
+  const run = useCallback(async (req: RunRequest, scenario?: string) => {
     setIsLoading(true);
     setError(null);
     setComparison(null);
     try {
       const r =
-        req.algorithm === "acs" ? await api.runACS(req.params) : await api.runVNS(req.params);
+        req.algorithm === "acs"
+          ? await api.runACS(req.params, scenario)
+          : await api.runVNS(req.params, scenario);
       setResult(r);
       setLastRunKind("single");
       setCompletedAt(Date.now());
@@ -112,15 +114,15 @@ export function useOptimization(): UseOptimization {
     }
   }, []);
 
-  const runComparison = useCallback(async (seed?: number) => {
+  const runComparison = useCallback(async (seed?: number, scenario?: string) => {
     setIsLoading(true);
     setError(null);
     setResult(null);
     setComparison(null);
     try {
       const s = seed ?? 42;
-      const acsResult = await api.runACS({ ...DEFAULT_ACS_PARAMS, seed: s });
-      const vnsResult = await api.runVNS({ ...DEFAULT_VNS_PARAMS, seed: s });
+      const acsResult = await api.runACS({ ...DEFAULT_ACS_PARAMS, seed: s }, scenario);
+      const vnsResult = await api.runVNS({ ...DEFAULT_VNS_PARAMS, seed: s }, scenario);
       const comp: ComparisonResult = { acs: acsResult, vns: vnsResult };
       setComparison(comp);
       setResult(acsResult);

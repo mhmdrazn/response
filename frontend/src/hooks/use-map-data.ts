@@ -26,7 +26,7 @@ export interface UseMapDataResult {
   reload: () => void;
 }
 
-export function useMapData(): UseMapDataResult {
+export function useMapData(scenario?: string): UseMapDataResult {
   const [data, setData] = useState<MapData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,11 +38,11 @@ export function useMapData(): UseMapDataResult {
     setError(null);
 
     Promise.all([
-      api.getFloodPoints(),
-      api.getDepots(),
-      api.getIntermediateFacilities(),
-      api.getFaskes(),
-      api.getSeverityIndex().catch(() => null),
+      api.getFloodPoints(scenario),
+      api.getDepots(scenario),
+      api.getIntermediateFacilities(scenario),
+      api.getFaskes(scenario),
+      api.getSeverityIndex(scenario).catch(() => null),
     ])
       .then(([floods, depots, ifs, faskes, severity]) => {
         if (cancelled) return;
@@ -68,7 +68,7 @@ export function useMapData(): UseMapDataResult {
     return () => {
       cancelled = true;
     };
-  }, [reloadKey]);
+  }, [reloadKey, scenario]);
 
   return {
     data,

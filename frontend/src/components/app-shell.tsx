@@ -9,8 +9,10 @@ import { useMapData } from "../hooks/use-map-data";
 import { useOptimization } from "../hooks/use-optimization";
 import type { BaseMapId, OverlayLayerId } from "../lib/map-constants";
 import { OVERLAY_LAYERS } from "../lib/map-constants";
-import type { AppLayout, AppMode, RouteOut } from "../types";
+import { api } from "../lib/api";
+import type { AppLayout, AppMode, RouteOut, ScenarioMeta } from "../types";
 import { ErrorBoundary } from "./error-boundary";
+import { ScenarioSelect } from "./scenario-select";
 import { AlgorithmPanel } from "./sidebar/algorithm-panel";
 import { ComparisonPanel } from "./sidebar/comparison-panel";
 import { DataTableModal, type DatasetKey } from "./data-table-modal";
@@ -66,6 +68,8 @@ export function AppShell() {
   const [animating, setAnimating] = useState(false);
   const [panelsHidden, setPanelsHidden] = useState(false);
   const [previewDataset, setPreviewDataset] = useState<DatasetKey | null>(null);
+  const [scenarios, setScenarios] = useState<ScenarioMeta[]>([]);
+  const [scenario, setScenario] = useState<string | undefined>(undefined);
 
   const [mobilePanel, setMobilePanel] = useState<"none" | "algorithm" | "results">("none");
 
@@ -93,7 +97,25 @@ export function AppShell() {
     });
   }, []);
 
-  const { data, loading, error: dataError, reload } = useMapData();
+  // Load the scenario list once; default the selection to the manifest default.
+  useEffect(() => {
+    let alive = true;
+    api
+      .getScenarios()
+      .then((sl) => {
+        if (!alive) return;
+        setScenarios(sl.scenarios);
+        setScenario((prev) => prev ?? (sl.default || undefined));
+      })
+      .catch(() => {
+        /* scenarios optional; fall back to backend default */
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const { data, loading, error: dataError, reload } = useMapData(scenario);
   const {
     result,
     comparison,
@@ -162,7 +184,7 @@ export function AppShell() {
     setFocusedRoute(null);
     setHiddenRoutes(new Set());
     setAnimating(false);
-    run(algoCfg.buildRunRequest());
+    run(algoCfg.buildRunRequest(), scenario);
     if (isMobile) setMobilePanel("none");
   }
 
@@ -170,8 +192,18 @@ export function AppShell() {
     setFocusedRoute(null);
     setHiddenRoutes(new Set());
     setAnimating(false);
-    runComparison();
+    runComparison(undefined, scenario);
     if (isMobile) setMobilePanel("none");
+  }
+
+  function handleScenarioChange(id: string) {
+    if (id === scenario) return;
+    setScenario(id); // useMapData refetches on change
+    reset(); // optimization results are per-scenario
+    setFocusedRoute(null);
+    setHighlightVehicleId(null);
+    setHiddenRoutes(new Set());
+    setAnimating(false);
   }
 
   const visibleRoutes = (result?.routes ?? []).filter((r) => !hiddenRoutes.has(r.vehicle_id));
@@ -242,6 +274,7 @@ export function AppShell() {
         focusedRoute={focusedRoute}
         onPreviewData={handlePreviewData}
         animating={animating}
+        scenario={scenario}
         {...extra}
       />
     ) : (
@@ -266,6 +299,16 @@ export function AppShell() {
               <span className="ml-8 border-l border-frost pl-[10px] text-[12px] font-semibold leading-none text-slate">
                 SPK Damkar Surabaya
               </span>
+              {scenarios.length > 1 ? (
+                <>
+                  <div className="h-24 w-px flex-shrink-0 bg-frost" />
+                  <ScenarioSelect
+                    scenarios={scenarios}
+                    value={scenario}
+                    onChange={handleScenarioChange}
+                  />
+                </>
+              ) : null}
               <div className="flex-1" />
               <LayoutToggle layout={layout} onToggle={() => setLayout("fullscreen")} />
               <div className="h-24 w-px flex-shrink-0 bg-frost" />
@@ -290,6 +333,7 @@ export function AppShell() {
                   onPreviewData={handlePreviewData}
                   onReloadData={reload}
                   reloadingData={loading}
+                  scenario={scenario}
                   defaultOpen
                 />
               </aside>
@@ -342,6 +386,9 @@ export function AppShell() {
             layout={layout}
             onToggleLayout={() => setLayout("windowed")}
             onHidePanels={!isMobile ? () => setPanelsHidden(true) : undefined}
+            scenarios={scenarios}
+            scenario={scenario}
+            onScenarioChange={handleScenarioChange}
             className={`${PANEL_ANIM} ${
               panelsHidden ? "pointer-events-none opacity-0" : "pointer-events-auto opacity-100"
             }`}
@@ -449,6 +496,7 @@ export function AppShell() {
             data={getPreviewData()}
             onClose={() => setPreviewDataset(null)}
             onReload={reload}
+            scenario={scenario}
           />
         ) : null}
       </ToastProvider>

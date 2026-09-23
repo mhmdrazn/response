@@ -49,6 +49,7 @@ export interface MapInnerProps {
   variant?: "fullscreen" | "embedded";
   onReloadData?: () => void;
   reloadingData?: boolean;
+  scenario?: string;
   /** Hide all floating chrome (controls, docks, legends) for a full-map view. */
   hideChrome?: boolean;
 }
@@ -84,6 +85,7 @@ export function MapInner({
   variant = "fullscreen",
   onReloadData,
   reloadingData,
+  scenario,
   hideChrome = false,
 }: MapInnerProps) {
   const base = BASE_MAP_LAYERS[baseMap];
@@ -168,6 +170,7 @@ export function MapInner({
             onPreviewData={onPreviewData}
             onReloadData={onReloadData}
             reloadingData={reloadingData}
+            scenario={scenario}
             hidden={hideChrome}
           />
         </>
