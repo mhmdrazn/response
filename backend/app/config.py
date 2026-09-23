@@ -20,6 +20,12 @@ DATA_ROOT = Path(os.getenv("DATA_ROOT", str(_APP_DIR / "data" / "files")))
 SHARED_DIR = DATA_ROOT / "shared"
 SCENARIOS_DIR = DATA_ROOT / "scenarios"
 MANIFEST_PATH = SCENARIOS_DIR / "manifest.json"
+SOURCES_DIR = DATA_ROOT / "sources"
+CACHE_DIR = DATA_ROOT / "cache"
+
+# Offline pipeline inputs/caches
+GEOCODED_MASTER = SOURCES_DIR / "damkar_geocoded.csv"  # all geocoded damkar points
+ROAD_CACHE = CACHE_DIR / "roads_utm.pkl"               # cached Surabaya road network (UTM + ordinal)
 
 SHARED_FILES = {
     "depo": SHARED_DIR / "depo.csv",
@@ -43,6 +49,27 @@ def scenario_matrix_paths(scenario_id: str) -> tuple[Path, Path]:
 
 # --- External services ---------------------------------------------------
 OSRM_URL = os.getenv("OSRM_URL", "https://router.project-osrm.org")
+
+OVERPASS_ENDPOINTS = [
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.kumi.systems/api/interpreter",
+    "https://overpass.private.coffee/api/interpreter",
+]
+USER_AGENT = "MDCVRP-IF-SI-TA/1.0 (student research; Surabaya flood pumping)"
+
+# Coordinate reference systems for the preprocessing pipeline.
+CRS_WGS84 = "EPSG:4326"
+CRS_UTM49S = "EPSG:32749"
+
+# Road highway tag -> ordinal 1..5 (indicator C2), highest = most critical.
+HIGHWAY_ORDINAL = {
+    "trunk": 5, "primary": 5, "secondary": 4, "tertiary": 3,
+    "residential": 2, "service": 1, "living_street": 1,
+}
+ROAD_SEARCH_RADIUS_M = 100  # radius to attach a flood point to a road
+FASKES_K_CANDIDATES = 5     # nearest faskes (Haversine) checked via OSRM
+OSRM_BLOCK_SIZE = 40        # OSRM Table block size
+EARTH_RADIUS_M = 6_371_000.0
 
 # --- Surabaya bounding box (data cleaning) -------------------------------
 SBY_LAT_MIN, SBY_LAT_MAX = -7.38, -7.13

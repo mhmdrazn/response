@@ -54,3 +54,6 @@ pnpm-debug.log*
 
 # ---- Local settings ----
 .claude/settings.local.json
+
+# Regenerable preprocessing cache (rebuild with build_scenario.py --warm-cache)
+backend/app/data/files/cache/
