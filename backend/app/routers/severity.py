@@ -1,9 +1,9 @@
-
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 
-import app.data as data
+from app.data import registry
+from app.data.store import store
 from app.models.severity import (
     SeverityFloodPoint,
     SeverityIndexResponse,
@@ -15,18 +15,17 @@ router = APIRouter(tags=["severity"])
 
 
 @router.get("/api/severity-index", response_model=SeverityIndexResponse)
-async def get_severity_index() -> SeverityIndexResponse:
-    if data.flood_points is None:
-        raise HTTPException(
-            status_code=503,
-            detail="Dataset 'floods' belum dimuat.",
-        )
-    if data.faskes is None:
-        raise HTTPException(
-            status_code=503,
-            detail="Dataset 'faskes' belum dimuat.",
-        )
-    result = compute_severity_index(data.flood_points, data.faskes)
+async def get_severity_index(
+    scenario: str | None = Query(default=None),
+) -> SeverityIndexResponse:
+    try:
+        bundle = store.get(scenario)
+    except KeyError:
+        raise HTTPException(status_code=404, detail=f"Skenario '{scenario}' tidak ditemukan.")
+    if registry.default_id() == "" and len(bundle.floods) == 0:
+        raise HTTPException(status_code=503, detail="Dataset 'floods' belum dimuat.")
+
+    result = compute_severity_index(bundle.floods, bundle.faskes)
     return SeverityIndexResponse(
         weights=SeverityWeights(
             criteria=CRITERIA,

@@ -1,0 +1,13 @@
+{
+  "default": "s2-jun",
+  "scenarios": [
+    {
+      "id": "s2-jun",
+      "name": "22-23 Juni 2026",
+      "date_from": "2026-06-22",
+      "date_to": "2026-06-23",
+      "n_points": 34,
+      "description": "Cluster event banjir Surabaya 22-23 Juni 2026 (34 titik genangan)."
+    }
+  ]
+}

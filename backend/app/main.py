@@ -1,127 +1,38 @@
-from contextlib import asynccontextmanager
-from pathlib import Path
+from __future__ import annotations
 
-import numpy as np
-import pandas as pd
+import logging
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.config import CORS_ORIGIN_REGEX, CORS_ORIGINS
+from app.data.store import store
 from app.routers import data as data_router
 from app.routers import optimize as optimize_router
+from app.routers import scenarios as scenarios_router
 from app.routers import severity as severity_router
 
-DATA_DIR = Path(__file__).parent / "data"
-
-SBY_LAT_MIN, SBY_LAT_MAX = -7.38, -7.13
-SBY_LON_MIN, SBY_LON_MAX = 112.58, 112.87
-
-
-def _fix_longitude(val: float) -> float:
-    # Repair missing decimal point in longitude data-entry errors
-    if val > 1000:
-        s = str(int(round(val)))
-        if s.startswith("112"):
-            return float(s[:3] + "." + s[3:])
-    return val
-
-
-def _bbox_filter(df: pd.DataFrame, label: str) -> pd.DataFrame:
-    mask = (
-        (df["lat"] >= SBY_LAT_MIN)
-        & (df["lat"] <= SBY_LAT_MAX)
-        & (df["lon"] >= SBY_LON_MIN)
-        & (df["lon"] <= SBY_LON_MAX)
-    )
-    n_dropped = int((~mask).sum())
-    if n_dropped > 0:
-        import logging
-        logging.getLogger("response.data").warning(
-            "%s: dropped %d row(s) outside Surabaya bbox", label, n_dropped,
-        )
-    return df[mask].reset_index(drop=True)
-
-
-def _load_floods(path: Path) -> pd.DataFrame:
-    df = pd.read_csv(path)
-    df = df.rename(
-        columns={
-            "Datetime": "datetime",
-            "Latitude": "lat",
-            "Longitude": "lon",
-            "Deskripsi": "deskripsi",
-            "Images": "images",
-            "Ketinggian (cm)": "ketinggian_cm",
-        }
-    )
-    df["ketinggian_cm"] = pd.to_numeric(df["ketinggian_cm"], errors="coerce")
-    df["road_class"] = pd.to_numeric(df["road_class"], errors="coerce")
-    df["dist_faskes_m"] = pd.to_numeric(df["dist_faskes_m"], errors="coerce")
-    df["lat"] = pd.to_numeric(df["lat"], errors="coerce")
-    df["lon"] = pd.to_numeric(df["lon"], errors="coerce")
-    df = df.dropna(subset=["lat", "lon"]).reset_index(drop=True)
-    df["lon"] = df["lon"].apply(_fix_longitude)
-    df = _bbox_filter(df, "floods")
-    df.insert(0, "id", [f"F_{i:04d}" for i in range(len(df))])
-    return df
-
-
-def _load_depots(path: Path) -> pd.DataFrame:
-    df = pd.read_csv(path)
-    df = df.rename(columns={"addr:city": "city"})
-    df["lat"] = pd.to_numeric(df["lat"], errors="coerce")
-    df["lon"] = pd.to_numeric(df["lon"], errors="coerce")
-    df = df.dropna(subset=["lat", "lon"]).reset_index(drop=True)
-    df = _bbox_filter(df, "depots")
-    df["id"] = ["D_" + str(x) for x in df["osm_id"].astype(str)]
-    return df
-
-
-def _load_ifs(path: Path) -> pd.DataFrame:
-    df = pd.read_csv(path)
-    df = df.rename(columns={"latitude": "lat", "longitude": "lon"})
-    df["lat"] = pd.to_numeric(df["lat"], errors="coerce")
-    df["lon"] = pd.to_numeric(df["lon"], errors="coerce")
-    df = df.dropna(subset=["lat", "lon"]).reset_index(drop=True)
-    df = _bbox_filter(df, "ifs")
-    return df
-
-
-def _load_faskes(path: Path) -> pd.DataFrame:
-    df = pd.read_csv(path)
-    df = df.rename(columns={"addr:street": "street"})
-    df["id"] = ["H_" + str(x) for x in df["osm_id"].astype(str)]
-    return df
+_log = logging.getLogger("response")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    import app.data as data
-
-    if (DATA_DIR / "floods.csv").exists():
-        data.flood_points = _load_floods(DATA_DIR / "floods.csv")
-    if (DATA_DIR / "depo.csv").exists():
-        data.depots = _load_depots(DATA_DIR / "depo.csv")
-    if (DATA_DIR / "if.csv").exists():
-        data.ifs = _load_ifs(DATA_DIR / "if.csv")
-    if (DATA_DIR / "faskes.csv").exists():
-        data.faskes = _load_faskes(DATA_DIR / "faskes.csv")
-    if (DATA_DIR / "distance_matrix.npy").exists():
-        data.distance_matrix = np.load(DATA_DIR / "distance_matrix.npy")
-    if (DATA_DIR / "time_matrix.npy").exists():
-        data.time_matrix = np.load(DATA_DIR / "time_matrix.npy")
-
+    # Warm the default scenario so the first request is fast and any config/data
+    # error surfaces at startup. Best-effort — a missing dataset must not block boot.
+    try:
+        store.get(None)
+    except Exception as exc:  # noqa: BLE001
+        _log.warning("Could not warm default scenario at startup: %s", exc)
     yield
 
 
-app = FastAPI(title="Response API", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="Response API", version="0.2.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ],
-    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?",
+    allow_origins=CORS_ORIGINS,
+    allow_origin_regex=CORS_ORIGIN_REGEX,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -131,6 +42,7 @@ app.add_middleware(
 app.include_router(data_router.router)
 app.include_router(severity_router.router)
 app.include_router(optimize_router.router)
+app.include_router(scenarios_router.router)
 
 
 @app.get("/health", tags=["meta"])

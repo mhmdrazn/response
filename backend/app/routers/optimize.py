@@ -4,10 +4,9 @@ from __future__ import annotations
 import logging
 from collections import Counter
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 
-import app.data as data
-from app.routers.data import _refresh_from_disk_if_stale
+from app.data.store import store
 from app.algorithms.acs import ACSParams, HybridACS
 from app.algorithms.vns import VNS, VNSParams
 from app.algorithms.evaluator import SolutionEval, validate_hard_constraints
@@ -35,34 +34,22 @@ _log = logging.getLogger("response.optimize")
 router = APIRouter(prefix="/api/optimize", tags=["optimize"])
 
 
-def _build_ready_instance() -> Instance:
-    for _name in ("floods", "depo", "if", "faskes"):
-        _refresh_from_disk_if_stale(_name)
-    if data.flood_points is None or data.depots is None or data.ifs is None:
-        raise HTTPException(
-            status_code=503,
-            detail="Dataset floods/depo/if belum lengkap.",
-        )
-    faskes_df = data.faskes if data.faskes is not None else data.flood_points.iloc[0:0]
-    sev = compute_severity_index(data.flood_points, faskes_df)
+def _build_ready_instance(scenario: str | None) -> Instance:
+    try:
+        bundle = store.get(scenario)
+    except KeyError:
+        raise HTTPException(status_code=404, detail=f"Skenario '{scenario}' tidak ditemukan.")
+    if len(bundle.floods) == 0 or len(bundle.depots) == 0 or len(bundle.ifs) == 0:
+        raise HTTPException(status_code=503, detail="Dataset floods/depo/if belum lengkap.")
 
-    n_expected = len(data.depots) + len(data.flood_points) + len(data.ifs)
-    if data.distance_matrix is not None and data.distance_matrix.shape[0] != n_expected:
-        _log.warning(
-            "distance_matrix shape %s != expected (%d,%d). Falling back to Manhattan.",
-            data.distance_matrix.shape,
-            n_expected,
-            n_expected,
-        )
-        data.distance_matrix = None
-        data.time_matrix = None
-
+    sev = compute_severity_index(bundle.floods, bundle.faskes)
+    # Matrix/size consistency is validated in ScenarioStore (None -> Manhattan).
     return build_instance(
-        depots_df=data.depots,
-        floods_df=data.flood_points,
-        ifs_df=data.ifs,
-        dist_matrix=data.distance_matrix,
-        time_matrix=data.time_matrix,
+        depots_df=bundle.depots,
+        floods_df=bundle.floods,
+        ifs_df=bundle.ifs,
+        dist_matrix=bundle.distance_matrix,
+        time_matrix=bundle.time_matrix,
         si_values=sev.si_values,
     )
 
@@ -195,9 +182,11 @@ def _to_response(
 
 
 @router.post("/acs", response_model=OptimizationResponse)
-async def run_acs(request: ACSRequest) -> OptimizationResponse:
+async def run_acs(
+    request: ACSRequest, scenario: str | None = Query(default=None)
+) -> OptimizationResponse:
     try:
-        inst = _build_ready_instance()
+        inst = _build_ready_instance(scenario)
         params = ACSParams(
             iterations=request.iterations,
             n_ants=request.n_ants,
@@ -233,9 +222,11 @@ async def run_acs(request: ACSRequest) -> OptimizationResponse:
 
 
 @router.post("/vns", response_model=OptimizationResponse)
-async def run_vns(request: VNSRequest) -> OptimizationResponse:
+async def run_vns(
+    request: VNSRequest, scenario: str | None = Query(default=None)
+) -> OptimizationResponse:
     try:
-        inst = _build_ready_instance()
+        inst = _build_ready_instance(scenario)
         params = VNSParams(
             max_iterations=request.max_iterations,
             k_max=request.k_max,
