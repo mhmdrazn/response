@@ -10,7 +10,6 @@ import time
 
 import numpy as np
 import pandas as pd
-import requests
 
 from app.config import (
     EARTH_RADIUS_M,
@@ -31,10 +30,12 @@ def _haversine(lat1: float, lon1: float, lats: np.ndarray, lons: np.ndarray) -> 
 
 
 def osrm_route_m(lat1: float, lon1: float, lat2: float, lon2: float, retries: int = 3) -> float | None:
+    import httpx
+
     url = f"{OSRM_URL}/route/v1/driving/{lon1:.6f},{lat1:.6f};{lon2:.6f},{lat2:.6f}?overview=false"
     for _ in range(retries):
         try:
-            data = requests.get(url, timeout=30).json()
+            data = httpx.get(url, timeout=30).json()
             if data.get("code") == "Ok" and data.get("routes"):
                 return float(data["routes"][0]["distance"])
         except Exception:

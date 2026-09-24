@@ -6,11 +6,12 @@ OpenStreetMap once, cache it, then map each flood point to a road-class ordinal
 from __future__ import annotations
 
 import time
+from typing import TYPE_CHECKING, Any
 
-import geopandas as gpd
 import pandas as pd
-import requests
-from shapely.geometry import LineString
+
+if TYPE_CHECKING:  # heavy geo deps are imported lazily inside functions
+    import geopandas as gpd
 
 from app.config import (
     CACHE_DIR,
@@ -29,16 +30,18 @@ from app.config import (
 
 
 def _fetch_overpass(query: str, max_retries: int = 3, wait_s: int = 30) -> dict:
+    import httpx
+
     headers = {"User-Agent": USER_AGENT, "Accept": "application/json"}
-    last = None
+    last: Any = None
     for endpoint in OVERPASS_ENDPOINTS:
         for _ in range(max_retries):
             try:
-                r = requests.post(endpoint, data={"data": query}, headers=headers, timeout=180)
+                r = httpx.post(endpoint, data={"data": query}, headers=headers, timeout=180)
                 last = r
                 if r.status_code == 200:
                     return r.json()
-            except requests.RequestException:
+            except httpx.HTTPError:
                 pass
             time.sleep(wait_s)
     if last is not None:
@@ -46,9 +49,12 @@ def _fetch_overpass(query: str, max_retries: int = 3, wait_s: int = 30) -> dict:
     raise RuntimeError("All Overpass endpoints failed")
 
 
-def build_road_network() -> gpd.GeoDataFrame:
+def build_road_network() -> "gpd.GeoDataFrame":
     """Fetch every mapped highway in the Surabaya bbox, project to UTM, attach
     the road-class ordinal, and cache to disk. Slow (~80k ways); run once."""
+    import geopandas as gpd
+    from shapely.geometry import LineString
+
     types = "|".join(HIGHWAY_ORDINAL)
     query = (
         f"[out:json][timeout:180];"
@@ -74,14 +80,18 @@ def build_road_network() -> gpd.GeoDataFrame:
     return gdf
 
 
-def load_road_network(refresh: bool = False) -> gpd.GeoDataFrame:
+def load_road_network(refresh: bool = False) -> "gpd.GeoDataFrame":
     if not refresh and ROAD_CACHE.exists():
-        return pd.read_pickle(ROAD_CACHE)
+        return pd.read_pickle(ROAD_CACHE)  # unpickling a GeoDataFrame needs geopandas
     return build_road_network()
 
 
-def classify_points(points: pd.DataFrame, roads_utm: gpd.GeoDataFrame | None = None) -> list[int]:
+def classify_points(
+    points: pd.DataFrame, roads_utm: "gpd.GeoDataFrame | None" = None
+) -> list[int]:
     """Return a road_class ordinal for each row of `points` (needs lat/lon)."""
+    import geopandas as gpd
+
     roads = roads_utm if roads_utm is not None else load_road_network()
     pts = gpd.GeoDataFrame(
         points, geometry=gpd.points_from_xy(points["lon"], points["lat"]), crs=CRS_WGS84

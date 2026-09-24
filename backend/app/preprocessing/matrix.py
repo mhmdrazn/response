@@ -11,7 +11,6 @@ import time
 
 import numpy as np
 import pandas as pd
-import requests
 
 from app.config import EARTH_RADIUS_M, OSRM_BLOCK_SIZE, OSRM_URL
 
@@ -23,6 +22,8 @@ def _node_coords(depots: pd.DataFrame, floods: pd.DataFrame, ifs: pd.DataFrame) 
 
 
 def _osrm_table(coord_str: str, src: list[int], dst: list[int], retries: int = 3):
+    import httpx
+
     url = (
         f"{OSRM_URL}/table/v1/driving/{coord_str}"
         f"?sources={';'.join(map(str, src))}&destinations={';'.join(map(str, dst))}"
@@ -30,7 +31,7 @@ def _osrm_table(coord_str: str, src: list[int], dst: list[int], retries: int = 3
     )
     for _ in range(retries):
         try:
-            data = requests.get(url, timeout=60).json()
+            data = httpx.get(url, timeout=60).json()
             if data.get("code") == "Ok":
                 return data["distances"], data["durations"]
         except Exception:
@@ -73,3 +74,37 @@ def build_matrices(
     np.fill_diagonal(dist, 0.0)
     np.fill_diagonal(time_m, 0.0)
     return dist, time_m
+
+
+# --- Incremental node maintenance (intake enrichment, Phase 1.5) ----------
+# Keep a scenario's n x n matrix consistent when a single flood node is added,
+# moved or removed, without rebuilding the whole thing.
+
+
+def insert_node(mat: np.ndarray, pos: int, row: np.ndarray, col: np.ndarray, diag: float = 0.0) -> np.ndarray:
+    """Insert a node at index `pos`. `row` = new->existing, `col` = existing->new
+    (both length n, in existing order). Returns an (n+1) x (n+1) matrix."""
+    r = np.insert(np.asarray(row, dtype=float), pos, diag)  # length n+1
+    c = np.insert(np.asarray(col, dtype=float), pos, diag)
+    out = np.insert(mat, pos, 0.0, axis=0)  # new empty row
+    out = np.insert(out, pos, 0.0, axis=1)  # new empty col
+    out[pos, :] = r
+    out[:, pos] = c
+    return out
+
+
+def replace_node(mat: np.ndarray, pos: int, row: np.ndarray, col: np.ndarray, diag: float = 0.0) -> np.ndarray:
+    """Overwrite the row/col of node `pos`. `row`/`col` length n (existing order,
+    the value at `pos` is ignored and set to `diag`)."""
+    out = mat.copy()
+    r = np.asarray(row, dtype=float).copy()
+    c = np.asarray(col, dtype=float).copy()
+    r[pos] = diag
+    c[pos] = diag
+    out[pos, :] = r
+    out[:, pos] = c
+    return out
+
+
+def remove_node(mat: np.ndarray, pos: int) -> np.ndarray:
+    return np.delete(np.delete(mat, pos, axis=0), pos, axis=1)

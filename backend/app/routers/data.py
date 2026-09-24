@@ -8,7 +8,7 @@ import pandas as pd
 from fastapi import APIRouter, HTTPException, Query
 
 from app.config import SHARED_FILES, scenario_floods_path
-from app.data import registry
+from app.data import registry, scenario_edit
 from app.data.store import store
 from app.models.data import (
     Depot,
@@ -162,25 +162,29 @@ def _delete(sid: str, name: str, row_id: str, label: str) -> None:
 # --- Floods (per scenario) ----------------------------------------------
 
 
+# Floods use the enrichment path (scenario_edit): a new/edited point gets its
+# road_class + dist_faskes filled and its OSRM matrix row/col maintained.
+
+
 @router.post("/floods", response_model=FloodPoint, status_code=201)
 async def create_flood(
     body: FloodPointCreate, scenario: str | None = ScenarioQuery
 ) -> FloodPoint:
-    sid = _sid(scenario)
-    new_id = f"F_{len(_df(sid, 'floods')):04d}"
-    return FloodPoint(**_create(sid, "floods", new_id, body.model_dump()))
+    row = scenario_edit.add_flood(_sid(scenario), body.model_dump())
+    return FloodPoint(**{k: _clean(v) for k, v in row.items()})
 
 
 @router.put("/floods/{flood_id}", response_model=FloodPoint)
 async def update_flood(
     flood_id: str, body: FloodPointUpdate, scenario: str | None = ScenarioQuery
 ) -> FloodPoint:
-    return FloodPoint(**_update(_sid(scenario), "floods", flood_id, "flood", body.model_dump()))
+    row = scenario_edit.update_flood(_sid(scenario), flood_id, body.model_dump())
+    return FloodPoint(**{k: _clean(v) for k, v in row.items()})
 
 
 @router.delete("/floods/{flood_id}", status_code=204)
 async def delete_flood(flood_id: str, scenario: str | None = ScenarioQuery) -> None:
-    _delete(_sid(scenario), "floods", flood_id, "flood")
+    scenario_edit.delete_flood(_sid(scenario), flood_id)
 
 
 # --- Depots (shared) -----------------------------------------------------
