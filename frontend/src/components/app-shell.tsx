@@ -105,7 +105,10 @@ export function AppShell() {
       .then((sl) => {
         if (!alive) return;
         setScenarios(sl.scenarios);
-        setScenario((prev) => prev ?? (sl.default || undefined));
+        setScenario((prev) => {
+          if (prev) return prev;
+          return sl.default || undefined;
+        });
       })
       .catch(() => {
         /* scenarios optional; fall back to backend default */
