@@ -54,13 +54,18 @@ class VNS:
             fi: k for k, fi in enumerate(instance.flood_indices)
         }
 
-    def _greedy_initial(self) -> tuple[list[list[int]], list[int]]:
+    def _greedy_initial(
+        self, deadline: float | None = None
+    ) -> tuple[list[list[int]], list[int]]:
         # Nearest-neighbor + SI bias; tries multiple orderings with repair phase.
         # Full coverage ends the search early, otherwise keep the best partial.
         max_attempts = 20
         best_effort: tuple[list[list[int]], list[int]] | None = None
         best_effort_score = float("inf")
         for _attempt in range(max_attempts):
+            if best_effort is not None and deadline is not None:
+                if time.perf_counter() >= deadline:
+                    break
             volumes_left = self.inst.volumes.copy()
             n_vehicles = len(self.inst.vehicles)
 
@@ -318,8 +323,11 @@ class VNS:
 
     def solve(self) -> VNSSolution:
         start = time.perf_counter()
+        deadline = (
+            start + self.p.time_limit_s if self.p.time_limit_s is not None else None
+        )
 
-        routes, capacities = self._greedy_initial()
+        routes, capacities = self._greedy_initial(deadline)
         ev = evaluate_solution(self.inst, routes, capacities)
 
         best_routes = [list(r) for r in routes]
@@ -342,7 +350,7 @@ class VNS:
                     shaken_ev = evaluate_solution(self.inst, shaken, best_caps)
                     polished, pol_score, pol_ev = polish(
                         self.inst, shaken, best_caps, shaken_ev.score,
-                        max_rounds=2, quick=True,
+                        max_rounds=2, quick=True, deadline=deadline,
                     )
                 except Exception:
                     k += 1

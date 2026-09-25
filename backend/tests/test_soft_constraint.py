@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 
 from app.algorithms.acs import ACSParams, HybridACS
@@ -7,7 +9,7 @@ from app.algorithms.vns import VNS, VNSParams
 from app.severity.index import compute_severity_index
 
 
-def _instance(b, volume_per_cm=100.0, unserved_penalty=100.0):
+def _instance(b, volume_per_cm=100.0, unserved_penalty=500.0):
     sev = compute_severity_index(b.floods, b.faskes)
     return build_instance(
         depots_df=b.depots,
@@ -55,6 +57,34 @@ def test_solvers_survive_undeliverable_demand(s2):
         assert np.isfinite(ev.score)
         assert ev.unserved_volume > 0, "this instance cannot be fully served"
         assert 0.0 <= coverage_ratio(inst, ev) < 1.0
+
+
+def test_time_limit_is_respected_under_heavy_demand(s2):
+    # Local search scans grow with route length, so the budget has to be checked
+    # inside the operators, not only between solver iterations.
+    inst = _instance(s2, volume_per_cm=3000.0)
+    limit = 20.0
+
+    t0 = time.perf_counter()
+    HybridACS(inst, ACSParams(iterations=60, n_ants=20, seed=3, time_limit_s=limit)).solve()
+    acs_elapsed = time.perf_counter() - t0
+
+    t0 = time.perf_counter()
+    VNS(inst, VNSParams(max_iterations=100, seed=3, time_limit_s=limit)).solve()
+    vns_elapsed = time.perf_counter() - t0
+
+    assert acs_elapsed < limit * 1.3, f"ACS overran the cap: {acs_elapsed:.1f}s"
+    assert vns_elapsed < limit * 1.3, f"VNS overran the cap: {vns_elapsed:.1f}s"
+
+
+def test_drain_time_varies_with_outlet(s2):
+    inst = _instance(s2)
+    types = [str(f.get("waterway_type") or "") for f in inst.ifs]
+    river = [d for d, t in zip(inst.if_drain_s, types) if t == "river"]
+    stream = [d for d, t in zip(inst.if_drain_s, types) if t == "stream"]
+
+    assert river and stream
+    assert max(river) < min(stream), "a large river must drain faster than a stream"
 
 
 def test_higher_penalty_never_lowers_coverage(s2):

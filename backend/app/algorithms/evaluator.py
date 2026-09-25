@@ -7,7 +7,6 @@ from dataclasses import dataclass, field
 import numpy as np
 
 from app.algorithms.instance import (
-    IF_DRAIN_S,
     PUMP_RATE_LPS,
     SERVICE_SETUP_S,
     VEHICLE_CAPACITIES_L,
@@ -128,8 +127,9 @@ def evaluate_solution(
                 r.z_contribution += float(inst.si_values[flood_idx]) * arrival
                 total_flood += 1
             elif ntype == "if":
-                clock += IF_DRAIN_S
-                r.total_time += IF_DRAIN_S
+                drain = float(inst.if_drain_s[cur - inst.n_depots - inst.n_floods])
+                clock += drain
+                r.total_time += drain
                 tank = 0.0
                 total_if += 1
             elif ntype == "depot":

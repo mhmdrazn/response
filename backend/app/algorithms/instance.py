@@ -17,15 +17,21 @@ from app.algorithms.geo import (
 
 VEHICLE_CAPACITIES_L = [3000, 5000]
 DEFAULT_VOLUME_PER_CM = 100.0  # liters pumped per cm of depth (calibration knob)
-PUMP_RATE_LPS = 1000 / 60.0    # 1000 L/min ≈ 16.67 L/s
+PUMP_RATE_LPS = 2000 / 60.0    # 2000 L/min ≈ 33.33 L/s, per Damkar pump spec
 SERVICE_SETUP_S = 60.0
 IF_DRAIN_S = 120.0
 
+# Discharging is faster where the outlet is a large river with room to work than
+# at a narrow stream, so the base drain time is scaled per IF. Keys are
+# `waterway_type` in if.csv; anything unlisted falls back to 1.0.
+IF_DRAIN_FACTOR = {"river": 0.75, "stream": 1.25}
+
 # Weight on severity-weighted pumping work left undone. Both terms of the
-# objective are in severity-seconds, so this stays dimensionless. High enough
-# that dropping work is a last resort under the time cap rather than a way to
-# score well; lower it to study the coverage/priority trade-off.
-UNSERVED_PENALTY = 100.0
+# objective are in severity-seconds, so this stays dimensionless. Calibrated on
+# s2-jun: at 100 the solvers settled for 99.3% coverage that was achievable, at
+# 500 they close it. Lower it deliberately to study the coverage/priority
+# trade-off, not as a default.
+UNSERVED_PENALTY = 500.0
 
 SBY_LAT_MIN, SBY_LAT_MAX = -7.38, -7.13
 SBY_LON_MIN, SBY_LON_MAX = 112.58, 112.87
@@ -47,6 +53,9 @@ class Instance:
     # Flood-point derived arrays (aligned to flood index in the node space)
     volumes: np.ndarray            # (n_floods,) liters remaining to pump per flood
     si_values: np.ndarray          # (n_floods,) severity index in [0, 1]
+
+    # (n_ifs,) seconds to empty a tank, per IF outlet
+    if_drain_s: np.ndarray
 
     # Matrices addressed on the full node space
     dist_matrix: np.ndarray        # (n_total, n_total) meters
@@ -143,6 +152,14 @@ def build_instance(
         norm = np.clip(depths / 100.0, 0.0, 1.0)
         si_values = norm
 
+    if_drain_s = np.array(
+        [
+            IF_DRAIN_S * IF_DRAIN_FACTOR.get(str(f.get("waterway_type") or ""), 1.0)
+            for f in ifs
+        ],
+        dtype=float,
+    )
+
     # Each depot gets one vehicle per capacity type.
     vehicles: list[tuple[int, int]] = []
     for di in depot_indices:
@@ -172,6 +189,7 @@ def build_instance(
         n_total=n_total,
         volumes=volumes.astype(float),
         si_values=si_values.astype(float),
+        if_drain_s=if_drain_s,
         dist_matrix=dist_matrix.astype(float),
         time_matrix=time_matrix.astype(float),
         depot_indices=depot_indices,

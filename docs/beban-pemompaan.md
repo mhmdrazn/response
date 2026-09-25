@@ -65,30 +65,50 @@ durasi per titik    : median 57 menit   (dibagi jumlah titik sebatch)
 korelasi depth-durasi: 0,179
 ```
 
-Rumus:
+Konfirmasi dari Damkar: `Q` = 2.000 L/menit, catatan waktu dibuat **per kejadian
+di satu lokasi**, dan satu lokasi ditangani **sekurangnya satu unit**.
+
+Karena catatannya per lokasi, `T_j` adalah durasi baris itu sendiri — median
+268 menit, bukan 57 menit hasil bagi batch. Jam yang identik antar-baris
+mencerminkan banyak lokasi tergenang serentak dalam satu hujan, bukan satu
+laporan yang dipecah.
+
+### Buffer: waktu di lokasi bukan waktu memompa
+
+Selama 268 menit itu unit tidak memompa terus. Ia memompa, berkendara ke IF,
+membuang, lalu kembali — berulang kali. Model sudah menghitung perjalanan IF
+secara eksplisit, jadi `V_j` harus diturunkan dari **waktu pompa saja**, kalau
+tidak siklus buang terhitung dua kali.
+
+Satu siklus buang, diukur dari matriks waktu `s2-jun`:
 
 ```
-V_j = Q × η × k × T_j
-
-Q   debit pompa                       belum terverifikasi
-η   rasio waktu pompa benar menyala   tidak diketahui
-k   jumlah unit di lokasi             tidak tercatat
-T_j selesai − mulai_penanganan        terukur, n=408
+genangan -> IF terdekat : median 123 s  (p25 62, p75 158)
+d = 2 × 123 + IF_DRAIN  = 366 s = 6,1 menit
 ```
 
-`η` dan `k` hanya muncul sebagai perkalian, jadi keduanya runtuh menjadi satu
-besaran: durasi pemompaan efektif setara-satu-pompa. Cukup satu taksiran, bukan
-tiga.
-
-`Q` tidak saling menghapus walaupun evaluator membagi volume dengan `Q` untuk
-mendapat waktu layanan. `Q` menentukan berapa kali tangki penuh, jadi ia
-mengendalikan jumlah kunjungan IF:
+Uraian waktu di lokasi:
 
 ```
-Q =   500 L/mnt  ->  28.500 L  ->  ±6 kunjungan IF
-Q = 1.000 L/mnt  ->  57.000 L  -> ±11 kunjungan IF
-Q = 2.000 L/mnt  -> 114.000 L  -> ±23 kunjungan IF
+T = SERVICE_SETUP + T_pompa + (V / C) × d       dengan V = Q × T_pompa
+
+T_pompa = (T − SERVICE_SETUP) / (1 + Q × d / C)
 ```
+
+Untuk `T` = 268 menit, `Q` = 33,33 L/s, `d` = 366 s:
+
+| Tangki | T_pompa | Porsi memompa | V_j |
+|---|---|---|---|
+| 5.000 L | ±78 menit | 29% | ±155.000 L |
+| 3.000 L | ±53 menit | 20% | ±105.000 L |
+
+Jadi buffer bukan koreksi kecil — **70-80% waktu di lokasi habis untuk
+mondar-mandir ke IF**, bukan menyedot. Angka ini sekaligus menjawab `η` tanpa
+menebak: porsi memompa jatuh dari geometri jaringan itu sendiri.
+
+`k` diambil 1 sebagai batas bawah. Kunjungan berulang oleh beberapa unit sudah
+didukung model (satu titik boleh muncul di beberapa rute), jadi jumlah unit
+per lokasi memang hasil keputusan optimasi, bukan masukan tetap.
 
 Implementasi: kolom `volume_l` pada `floods.csv`, dihitung saat preprocessing.
 `instance.py` memakainya bila ada, konstanta lama tinggal jadi cadangan.
@@ -114,15 +134,22 @@ terkalibrasi, lalu diperbarui ketika unit melaporkan progres — perencanaan
 bergulir, bukan ramalan sekali jalan. Constraint lunak di atas yang membuat sisa
 beban mengalir ke periode berikutnya tanpa dianggap gagal.
 
-## Tahap B — waktu buang per-IF
+## Tahap B — waktu buang per-IF (selesai)
 
-`IF_DRAIN_S = 120.0` berlaku sama untuk 140 IF, sehingga pemilihan IF hanya
-ditentukan jarak. Sungai besar dengan akses baik semestinya lebih cepat daripada
-saluran kecil.
+Damkar mengonfirmasi pembuangan lebih leluasa di sungai besar. `IF_DRAIN_S`
+kini diskalakan per outlet:
 
-`if.csv` sudah punya `waterway_type` dan `distance_to_water_m` — cukup untuk
-menurunkan waktu buang per-IF tanpa data tambahan, asal ada pembenaran kasar
-dari lapangan.
+```
+IF_DRAIN_FACTOR = {"river": 0.75, "stream": 1.25}
+```
+
+Populasi IF: 93 `river`, 47 `stream`. Jadi 90 detik di sungai, 150 detik di
+saluran, dari basis 120 detik. Instance membawa `if_drain_s` sepanjang `n_ifs`
+dan evaluator memakainya per node, bukan konstanta tunggal. Pemilihan IF kini
+menimbang jarak dan kecepatan buang sekaligus.
+
+Faktornya masih perkiraan kasar berdasar pernyataan kualitatif. Bila nanti ada
+angka lapangan, cukup ganti isi tabel itu.
 
 Kapasitas volume per-IF **tidak** dipakai: IF di sini sungai dan saluran, bukan
 kolam tertutup. Batas volume baru relevan bila terbukti ada IF berupa tandon
@@ -159,20 +186,22 @@ beban.
 | Jarak faskes | `floods.csv` — `dist_faskes_m` |
 | Jenis dan jarak perairan IF | `shared/if.csv` |
 
-### Perlu ditanyakan ke Damkar
+### Terjawab dari Damkar
 
-1. **Spesifikasi debit pompa (liter/menit)** — mengunci `Q`, penentu jumlah
-   kunjungan IF
-2. **Dari total waktu di lokasi, berapa lama pompa benar-benar menyala** —
-   mengunci `η`
-3. **Satu lokasi biasanya ditangani berapa unit sekaligus** — mengunci `k`
-4. **Apakah `mulai_penanganan`/`selesai` dicatat per kejadian atau per lokasi** —
-   menentukan apakah pembagian per batch sah
-5. **Apakah waktu buang di sungai besar dan saluran kecil terasa berbeda** —
-   dasar Tahap B
+| Pertanyaan | Jawaban | Dipakai di |
+|---|---|---|
+| Debit pompa | 2.000 L/menit | `PUMP_RATE_LPS` |
+| Waktu pompa benar menyala | diturunkan dari buffer siklus IF, bukan ditebak | Tahap A |
+| Unit per lokasi | sekurangnya 1, bisa lebih | `k` = 1 (batas bawah) |
+| Granularitas catatan waktu | per kejadian di satu lokasi | `T_j` = durasi baris |
+| Beda outlet | ya, lebih leluasa di sungai besar | `IF_DRAIN_FACTOR` |
 
-Pertanyaan 2, 3, dan 5 boleh dijawab kasar. Yang dibutuhkan rentang, dan rentang
-itu langsung menjadi batas analisis sensitivitas.
+### Masih terbuka
+
+- Angka lapangan untuk selisih waktu buang sungai vs saluran; sementara dipakai
+  faktor 0,75 dan 1,25 terhadap basis 120 detik
+- Sebaran jumlah unit per lokasi, bila nanti tercatat — akan menaikkan `V_j`
+  secara proporsional
 
 ## Catatan risiko
 
@@ -182,12 +211,13 @@ itu langsung menjadi batas analisis sensitivitas.
 - **Kedalaman lemah menjelaskan durasi** (r = 0,18). Jangan bangun regresi dan
   mengklaim daya prediksi. Yang ada tren peringkat monoton; ragamnya ditangani
   lewat Tahap C.
-- **Batas waktu komputasi.** Pada uji dengan beban 30× lebih besar, satu proses
-  ACS menembus 1 menit 14 detik walaupun `time_limit_s` 45 detik, karena
-  pemeriksaan waktu hanya terjadi antar-iterasi sementara satu putaran polish
-  menjadi jauh lebih lama. Dengan beban empiris hal ini akan terjadi, jadi
-  pemeriksaan batas waktu perlu masuk ke dalam operator local search sebelum
-  Tahap A dipakai di produksi.
+- **Batas waktu komputasi — sudah ditegakkan.** Sebelumnya satu proses ACS
+  menembus 1 menit 14 detik walaupun `time_limit_s` 45 detik, karena pemeriksaan
+  waktu hanya terjadi antar-iterasi sementara satu putaran polish jauh lebih
+  lama pada rute panjang. Deadline kini diteruskan ke dalam `two_opt`,
+  `relocate_between_routes`, `or_opt`, `exchange`, dan konstruksi awal VNS.
+  Terukur pada beban 30×: ACS 45,2 detik, VNS 45,0 detik. Ambang 45 detik ini
+  dipakai sebagai batasan tetap di skripsi.
 - **Penamaan.** Sebut "beban pemompaan", bukan "volume genangan". Yang
   dimodelkan memang beban kerja, bukan volume air fisik; penamaan yang tepat
   menghindari pertanyaan hidrologi yang tidak bisa dijawab data ini.

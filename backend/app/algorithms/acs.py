@@ -228,6 +228,9 @@ class HybridACS:
 
     def solve(self) -> ACSSolution:
         start = time.perf_counter()
+        deadline = (
+            start + self.p.time_limit_s if self.p.time_limit_s is not None else None
+        )
         best_routes: list[list[int]] | None = None
         best_caps: list[int] | None = None
         best_score = float("inf")
@@ -240,6 +243,8 @@ class HybridACS:
             iter_best_caps: list[int] | None = None
 
             for _ in range(self.p.n_ants):
+                if deadline is not None and time.perf_counter() >= deadline:
+                    break
                 routes, caps = self._construct_one_ant()
                 ev = evaluate_solution(self.inst, routes, caps)
                 if ev.score < iter_best_score:
@@ -258,12 +263,12 @@ class HybridACS:
             if it % 5 == 0 and it > 0:
                 iter_best_routes, iter_best_score, ev = polish(
                     self.inst, iter_best_routes, iter_best_caps, iter_best_score,
-                    max_rounds=3, quick=False,
+                    max_rounds=3, quick=False, deadline=deadline,
                 )
             else:
                 iter_best_routes, iter_best_score, ev = polish(
                     self.inst, iter_best_routes, iter_best_caps, iter_best_score,
-                    max_rounds=1, quick=True,
+                    max_rounds=1, quick=True, deadline=deadline,
                 )
 
             if iter_best_score < best_score:
@@ -293,7 +298,7 @@ class HybridACS:
         if budget_left > 2.0:
             polished_routes, polished_score, polished_eval = polish(
                 self.inst, best_routes, best_caps, best_score,
-                max_rounds=10, quick=False,
+                max_rounds=10, quick=False, deadline=deadline,
             )
             if polished_score + 1e-9 < best_score:
                 best_routes = polished_routes
