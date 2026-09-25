@@ -12,17 +12,14 @@ import { OVERLAY_LAYERS } from "../lib/map-constants";
 import { api } from "../lib/api";
 import type { AppLayout, AppMode, RouteOut, ScenarioMeta } from "../types";
 import { ErrorBoundary } from "./error-boundary";
-import { ScenarioSelect } from "./scenario-select";
 import { AlgorithmPanel } from "./sidebar/algorithm-panel";
 import { ComparisonPanel } from "./sidebar/comparison-panel";
 import { DataTableModal, type DatasetKey } from "./data-table-modal";
-import { FloatingNavbar, LayoutToggle } from "./floating-navbar";
+import { FloatingNavbar } from "./floating-navbar";
+import { WindowedLayout } from "./layouts/windowed-layout";
 import { ChoroplethLegend } from "./map/choropleth-legend";
 import { MapCanvas } from "./map/map-container";
-import { MapLayerDock } from "./map/map-layer-dock";
-import { DataDock } from "./map/data-dock";
 import { MobileDataLayerDock } from "./map/mobile-data-layer-dock";
-import { ModeToggle } from "./mode-toggle";
 import { SiLegend } from "./map/si-legend";
 import { MobileRunBar } from "./mobile-run-bar";
 import { PanelOverlay } from "./panel-overlay";
@@ -284,83 +281,49 @@ export function AppShell() {
       <MapStatusPlaceholder loading={loading} error={dataError} />
     );
 
+  const dataModal =
+    previewDataset && data ? (
+      <DataTableModal
+        datasetKey={previewDataset}
+        data={getPreviewData()}
+        onClose={() => setPreviewDataset(null)}
+        onReload={reload}
+        scenario={scenario}
+      />
+    ) : null;
+
   // --- Windowed dashboard layout (desktop only) ---
   if (!isMobile && layout === "windowed") {
     return (
       <ErrorBoundary>
         <ToastProvider>
           <RunNotifier signal={runSignal} completedAt={completedAt} kind={lastRunKind} />
-          <div className="flex h-screen w-screen flex-col overflow-hidden bg-mist">
-            <header className="flex flex-shrink-0 items-center gap-12 border-b border-frost bg-pure-white px-16 py-[10px]">
-              <span
-                aria-hidden
-                className="navbar-status-dot inline-block h-[10px] w-[10px] flex-shrink-0 rounded-full bg-indigo-ink"
-              />
-              <span className="text-[17px] font-bold leading-none tracking-[-0.2px] text-midnight-ink">
-                Response
-              </span>
-              <span className="ml-8 border-l border-frost pl-[10px] text-[12px] font-semibold leading-none text-slate">
-                SPK Damkar Surabaya
-              </span>
-              {scenarios.length > 1 ? (
-                <>
-                  <div className="h-24 w-px flex-shrink-0 bg-frost" />
-                  <ScenarioSelect
-                    scenarios={scenarios}
-                    value={scenario}
-                    onChange={handleScenarioChange}
-                  />
-                </>
-              ) : null}
-              <div className="flex-1" />
-              <LayoutToggle layout={layout} onToggle={() => setLayout("fullscreen")} />
-              <div className="h-24 w-px flex-shrink-0 bg-frost" />
-              <ModeToggle mode={mode} onChange={setMode} />
-            </header>
-
-            <div className="flex min-h-0 flex-1 gap-12 p-12">
-              <aside className="scrollbar-hidden flex w-[340px] flex-shrink-0 flex-col gap-12 overflow-y-auto">
-                {algorithmPanelContent}
-                <MapLayerDock
-                  overlays={overlays}
-                  setOverlay={setOverlay}
-                  baseMap={baseMap}
-                  setBaseMap={setBaseMap}
-                  defaultOpen
-                />
-                <DataDock
-                  floodCount={data?.floods.length ?? 0}
-                  depotCount={data?.depots.length ?? 0}
-                  ifCount={data?.ifs.length ?? 0}
-                  faskesCount={data?.faskes.length ?? 0}
-                  onPreviewData={handlePreviewData}
-                  onReloadData={reload}
-                  reloadingData={loading}
-                  scenario={scenario}
-                  defaultOpen
-                />
-              </aside>
-
-              <main className="relative min-w-0 flex-1 overflow-hidden rounded-lg border border-frost">
-                {renderMap({ isMobile: false, variant: "embedded" })}
-              </main>
-
-              {result ? (
-                <aside className="scrollbar-hidden flex w-[420px] flex-shrink-0 flex-col gap-12 overflow-y-auto">
-                  {resultsPanelContent}
-                </aside>
-              ) : null}
-            </div>
-          </div>
-
-          {previewDataset && data ? (
-            <DataTableModal
-              datasetKey={previewDataset}
-              data={getPreviewData()}
-              onClose={() => setPreviewDataset(null)}
-              onReload={reload}
-            />
-          ) : null}
+          <WindowedLayout
+            mode={mode}
+            onModeChange={setMode}
+            onExitWindowed={() => setLayout("fullscreen")}
+            scenarios={scenarios}
+            scenario={scenario}
+            onScenarioChange={handleScenarioChange}
+            overlays={overlays}
+            setOverlay={setOverlay}
+            baseMap={baseMap}
+            setBaseMap={setBaseMap}
+            counts={{
+              floods: data?.floods.length ?? 0,
+              depots: data?.depots.length ?? 0,
+              ifs: data?.ifs.length ?? 0,
+              faskes: data?.faskes.length ?? 0,
+            }}
+            onPreviewData={handlePreviewData}
+            onReloadData={reload}
+            reloadingData={loading}
+            algorithmPanel={algorithmPanelContent}
+            mapCard={renderMap({ isMobile: false, variant: "embedded" })}
+            results={resultsPanelContent}
+            hasResult={result !== null}
+          />
+          {dataModal}
         </ToastProvider>
       </ErrorBoundary>
     );
@@ -493,15 +456,7 @@ export function AppShell() {
           )}
         </div>
 
-        {previewDataset && data ? (
-          <DataTableModal
-            datasetKey={previewDataset}
-            data={getPreviewData()}
-            onClose={() => setPreviewDataset(null)}
-            onReload={reload}
-            scenario={scenario}
-          />
-        ) : null}
+        {dataModal}
       </ToastProvider>
     </ErrorBoundary>
   );
