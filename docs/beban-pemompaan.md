@@ -203,6 +203,48 @@ beban.
 - Sebaran jumlah unit per lokasi, bila nanti tercatat — akan menaikkan `V_j`
   secara proporsional
 
+## Simulasi dampak Tahap A
+
+`backend/scripts/simulate_workload.py` menghitung ulang instance di memori pada
+beberapa skala beban tanpa menyentuh data. Hasil pada `s2-jun`, cap 45 detik:
+
+```
+beban                     V per titik      total          ACS            VNS
+sekarang (100 L/cm)           2,3 m3    0,08 jt L   100,0% / 17s   100,0% / 45s
+p25   67 mnt di lokasi       32,6 m3    1,11 jt L    99,6% / 45s    56,3% / 45s
+p50  268 mnt di lokasi      131,7 m3    4,48 jt L    99,5% / 45s    14,8% / 45s
+p75  382 mnt di lokasi      188,0 m3    6,39 jt L    99,6% / 45s     9,2% / 45s
+```
+
+Dugaan awal bahwa cakupan akan runtuh ternyata salah, dan penyebabnya
+memunculkan dua cacat model yang lebih penting daripada angka bebannya sendiri.
+
+### Tidak ada batas horizon shift
+
+ACS bertahan di 99,6% pada beban 4,48 juta liter dengan cara memanjangkan rute:
+median 4,8 jam, **maksimum 23,3 jam**, 1.138 kunjungan IF. Model tidak punya
+batas durasi per kendaraan, jadi cakupan dibeli dengan rute yang tidak mungkin
+dijalankan.
+
+Selama volume masih 2,3 m³ hal ini tidak terlihat. Dengan beban empiris, batas
+horizon (misal 8 jam per unit) menjadi syarat agar angka cakupan berarti — dan
+justru di situlah constraint lunak mulai bekerja sungguhan.
+
+### VNS terbatas secara struktural
+
+`_build_greedy_route` membatasi kunjungan genangan per rute:
+
+```
+max_flood_visits = max(3, (n_floods * 2) // n_vehicles + 1)   -> 3
+```
+
+Dengan 34 titik dan 24 kendaraan, batasnya 3. VNS tidak akan pernah bisa
+menyusun rute panjang, sehingga runtuh ke 14,8% sementara ACS hampir tuntas.
+Kekalahan VNS di sini **artefak konstruktor, bukan mutu algoritma**.
+
+Kalau ini dibiarkan, bab perbandingan ACS vs VNS akan menyimpulkan hal yang
+salah. Batas itu harus diikat ke beban nyata, bukan ke jumlah titik.
+
 ## Catatan risiko
 
 - **Batch entry.** 290 dari 409 baris berbagi jam identik, jadi durasi per titik

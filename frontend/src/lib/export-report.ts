@@ -41,6 +41,8 @@ export function exportReport(result: OptimizationResult): void {
 
   const metrics = [
     ["Skor Respons (Z)", formatNumber(result.objective_z, 0)],
+    ["Cakupan Pemompaan", `${formatNumber(result.coverage_pct, 1)}%`],
+    ["Skor Total", formatNumber(result.score, 0)],
     ["Total Jarak", formatMeters(result.total_distance_m)],
     ["Total Waktu Operasi", formatDuration(result.total_time_s)],
     ["Waktu Komputasi", formatDuration(result.computation_time_s)],

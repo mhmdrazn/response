@@ -24,13 +24,37 @@ export function ComparisonPanel({ comparison }: ComparisonPanelProps) {
   const [open, setOpen] = useState(true);
   const { acs, vns } = comparison;
 
+  // Coverage decides first. Z only compares like with like: a plan that pumps
+  // less water reaches its remaining points sooner, so a lower Z at lower
+  // coverage means less work done, not a better route.
+  const coverageGap = acs.coverage_pct - vns.coverage_pct;
+  const coverageTied = Math.abs(coverageGap) < 0.5;
+  const zWinner: Winner = acs.objective_z <= vns.objective_z ? "acs" : "vns";
+  const overallWinner: Winner = coverageTied ? zWinner : coverageGap > 0 ? "acs" : "vns";
+
   const metrics: MetricRow[] = [
     {
+      label: "Cakupan Pemompaan",
+      hint: "Porsi beban pemompaan yang terselesaikan. Kriteria pertama: rencana yang menuntaskan lebih banyak beban menang, berapa pun skor Z-nya.",
+      acs: `${formatNumber(acs.coverage_pct, 1)}%`,
+      vns: `${formatNumber(vns.coverage_pct, 1)}%`,
+      winner: coverageTied ? null : coverageGap > 0 ? "acs" : "vns",
+    },
+    {
       label: "Skor Respons (Z)",
-      hint: "Skor Respons Z = jumlah (keparahan × waktu tiba) tiap kunjungan genangan. Makin rendah makin baik: titik parah dilayani lebih awal.",
+      hint: coverageTied
+        ? "Skor Respons Z = jumlah (keparahan × waktu tiba) tiap kunjungan genangan. Makin rendah makin baik: titik parah dilayani lebih awal."
+        : "Cakupan kedua algoritma berbeda, jadi Z tidak sebanding — rencana yang mengerjakan lebih sedikit otomatis punya Z lebih rendah. Pemenang tidak ditandai.",
       acs: formatNumber(acs.objective_z, 2),
       vns: formatNumber(vns.objective_z, 2),
-      winner: acs.objective_z <= vns.objective_z ? "acs" : "vns",
+      winner: coverageTied ? zWinner : null,
+    },
+    {
+      label: "Skor Total",
+      hint: "Z ditambah penalti beban yang belum tuntas. Inilah nilai yang dipakai algoritma untuk memeringkat solusi, sehingga sebanding walau cakupannya berbeda.",
+      acs: formatNumber(acs.score, 2),
+      vns: formatNumber(vns.score, 2),
+      winner: acs.score <= vns.score ? "acs" : "vns",
     },
     {
       label: "Total Jarak",
@@ -203,18 +227,26 @@ export function ComparisonPanel({ comparison }: ComparisonPanelProps) {
           </div>
         </div>
 
-        <DeltaSummary acs={acs.objective_z} vns={vns.objective_z} />
+        <DeltaSummary
+          winner={overallWinner}
+          coverageTied={coverageTied}
+          coverageGap={Math.abs(coverageGap)}
+          zAcs={acs.objective_z}
+          zVns={vns.objective_z}
+        />
       </div>
     </div>
   );
 }
+
+type Winner = "acs" | "vns";
 
 interface MetricRow {
   label: string;
   hint: string;
   acs: string;
   vns: string;
-  winner: "acs" | "vns";
+  winner: Winner | null;
 }
 
 /** Metric label with a styled hover tooltip (matches the app card styling:
@@ -233,24 +265,34 @@ function InfoTip({ label, hint }: { label: string; hint: string }) {
   );
 }
 
-function DeltaSummary({ acs, vns }: { acs: number; vns: number }) {
-  const diff = vns - acs;
-  const pct = vns > 0 ? (diff / vns) * 100 : 0;
-  const acsWins = acs <= vns;
+interface DeltaSummaryProps {
+  winner: Winner;
+  coverageTied: boolean;
+  coverageGap: number;
+  zAcs: number;
+  zVns: number;
+}
+
+function DeltaSummary({ winner, coverageTied, coverageGap, zAcs, zVns }: DeltaSummaryProps) {
+  const name = winner === "acs" ? "ACS" : "VNS";
+  const diff = Math.abs(zVns - zAcs);
+  const higher = Math.max(zAcs, zVns);
+  const pct = higher > 0 ? (diff / higher) * 100 : 0;
 
   return (
     <div className="rounded-md border border-frost bg-mist px-[10px] py-8 text-[11px] font-medium leading-[1.5] text-steel">
-      {acsWins ? (
+      {coverageTied ? (
         <>
-          <strong className="text-midnight-ink">ACS</strong> menghasilkan Z lebih baik sebesar{" "}
-          <strong className="text-midnight-ink">{formatNumber(Math.abs(diff), 2)}</strong> (
-          {Math.abs(pct).toFixed(1)}% lebih rendah)
+          Cakupan kedua algoritma setara, sehingga Z menentukan.{" "}
+          <strong className="text-midnight-ink">{name}</strong> unggul{" "}
+          <strong className="text-midnight-ink">{formatNumber(diff, 2)}</strong> (
+          {pct.toFixed(1)}% lebih rendah).
         </>
       ) : (
         <>
-          <strong className="text-midnight-ink">VNS</strong> menghasilkan Z lebih baik sebesar{" "}
-          <strong className="text-midnight-ink">{formatNumber(Math.abs(diff), 2)}</strong> (
-          {Math.abs(pct).toFixed(1)}% lebih rendah)
+          <strong className="text-midnight-ink">{name}</strong> menuntaskan{" "}
+          <strong className="text-midnight-ink">{formatNumber(coverageGap, 1)} poin persen</strong>{" "}
+          beban lebih banyak, jadi unggul terlepas dari Z. Z baru sebanding bila cakupannya setara.
         </>
       )}
     </div>
