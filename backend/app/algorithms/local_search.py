@@ -6,7 +6,6 @@ import copy
 
 from app.algorithms.evaluator import (
     SolutionEval,
-    all_floods_served,
     evaluate_solution,
 )
 from app.algorithms.instance import Instance
@@ -20,11 +19,11 @@ def two_opt(
     inst: Instance,
     routes: list[list[int]],
     capacities: list[int],
-    current_z: float,
+    current_score: float,
     max_passes: int = 5,
 ) -> tuple[list[list[int]], float]:
     best_routes = [list(r) for r in routes]
-    best_z = current_z
+    best_score = current_score
     for ri, route in enumerate(best_routes):
         if len(route) <= 3:
             continue
@@ -37,30 +36,27 @@ def two_opt(
                     trial = [list(x) for x in best_routes]
                     trial[ri] = candidate
                     ev = evaluate_solution(inst, trial, capacities)
-                    if (
-                        all_floods_served(ev.remaining_volume)
-                        and ev.objective_z + 1e-9 < best_z
-                    ):
+                    if ev.score + 1e-9 < best_score:
                         best_routes = trial
                         route = candidate
-                        best_z = ev.objective_z
+                        best_score = ev.score
                         improved = True
                         break
                 if improved:
                     break
             if not improved:
                 break
-    return best_routes, best_z
+    return best_routes, best_score
 
 
 def relocate_between_routes(
     inst: Instance,
     routes: list[list[int]],
     capacities: list[int],
-    current_z: float,
+    current_score: float,
 ) -> tuple[list[list[int]], float]:
     best_routes = [list(r) for r in routes]
-    best_z = current_z
+    best_score = current_score
     n_routes = len(best_routes)
     for a in range(n_routes):
         for i in range(1, len(best_routes[a]) - 1):
@@ -80,26 +76,23 @@ def relocate_between_routes(
                     trial[a] = best_routes[a][:i] + best_routes[a][i + 1 :]
                     trial[b] = best_routes[b][:j] + [node] + best_routes[b][j:]
                     ev = evaluate_solution(inst, trial, capacities)
-                    if (
-                        all_floods_served(ev.remaining_volume)
-                        and ev.objective_z + 1e-9 < best_z
-                    ):
+                    if ev.score + 1e-9 < best_score:
                         best_routes = trial
-                        best_z = ev.objective_z
-                        return best_routes, best_z
-    return best_routes, best_z
+                        best_score = ev.score
+                        return best_routes, best_score
+    return best_routes, best_score
 
 
 def or_opt(
     inst: Instance,
     routes: list[list[int]],
     capacities: list[int],
-    current_z: float,
+    current_score: float,
     max_seg_len: int = 2,
     max_passes: int = 3,
 ) -> tuple[list[list[int]], float]:
     best_routes = [list(r) for r in routes]
-    best_z = current_z
+    best_score = current_score
     for seg_len in range(1, max_seg_len + 1):
         for _pass in range(max_passes):
             improved = False
@@ -124,12 +117,9 @@ def or_opt(
                             trial[a] = trial[a][:i] + trial[a][i + seg_len :]
                             trial[b] = trial[b][:j] + seg + trial[b][j:]
                             ev = evaluate_solution(inst, trial, capacities)
-                            if (
-                                all_floods_served(ev.remaining_volume)
-                                and ev.objective_z + 1e-9 < best_z
-                            ):
+                            if ev.score + 1e-9 < best_score:
                                 best_routes = trial
-                                best_z = ev.objective_z
+                                best_score = ev.score
                                 improved = True
                                 break
                         if improved:
@@ -140,17 +130,17 @@ def or_opt(
                     break
             if not improved:
                 break
-    return best_routes, best_z
+    return best_routes, best_score
 
 
 def exchange(
     inst: Instance,
     routes: list[list[int]],
     capacities: list[int],
-    current_z: float,
+    current_score: float,
 ) -> tuple[list[list[int]], float]:
     best_routes = [list(r) for r in routes]
-    best_z = current_z
+    best_score = current_score
     n_routes = len(best_routes)
     for a in range(n_routes):
         depot_a = best_routes[a][0]
@@ -172,35 +162,32 @@ def exchange(
                     trial = [list(r) for r in best_routes]
                     trial[a][i], trial[b][j] = trial[b][j], trial[a][i]
                     ev = evaluate_solution(inst, trial, capacities)
-                    if (
-                        all_floods_served(ev.remaining_volume)
-                        and ev.objective_z + 1e-9 < best_z
-                    ):
+                    if ev.score + 1e-9 < best_score:
                         best_routes = trial
-                        best_z = ev.objective_z
-                        return best_routes, best_z
-    return best_routes, best_z
+                        best_score = ev.score
+                        return best_routes, best_score
+    return best_routes, best_score
 
 
 def polish(
     inst: Instance,
     routes: list[list[int]],
     capacities: list[int],
-    current_z: float,
+    current_score: float,
     max_rounds: int = 5,
     quick: bool = False,
 ) -> tuple[list[list[int]], float, SolutionEval]:
     # quick=True: only 2-opt + relocate; quick=False: all four operators
     cur_routes = [list(r) for r in routes]
-    cur_z = current_z
+    cur_score = current_score
     for _ in range(max_rounds):
-        prev_z = cur_z
-        cur_routes, cur_z = two_opt(inst, cur_routes, capacities, cur_z)
-        cur_routes, cur_z = relocate_between_routes(inst, cur_routes, capacities, cur_z)
+        prev_score = cur_score
+        cur_routes, cur_score = two_opt(inst, cur_routes, capacities, cur_score)
+        cur_routes, cur_score = relocate_between_routes(inst, cur_routes, capacities, cur_score)
         if not quick:
-            cur_routes, cur_z = or_opt(inst, cur_routes, capacities, cur_z)
-            cur_routes, cur_z = exchange(inst, cur_routes, capacities, cur_z)
-        if cur_z >= prev_z - 1e-9:
+            cur_routes, cur_score = or_opt(inst, cur_routes, capacities, cur_score)
+            cur_routes, cur_score = exchange(inst, cur_routes, capacities, cur_score)
+        if cur_score >= prev_score - 1e-9:
             break
     ev = evaluate_solution(inst, cur_routes, capacities)
-    return cur_routes, cur_z, ev
+    return cur_routes, cur_score, ev

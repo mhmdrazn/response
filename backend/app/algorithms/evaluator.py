@@ -44,6 +44,9 @@ class SolutionEval:
     total_if_visits: int
     total_flood_visits: int
     remaining_volume: np.ndarray      # per flood, aligned to flood_indices
+    unserved_volume: float = 0.0      # liters of pumping work left undone
+    penalty: float = 0.0              # severity-weighted cost of that work
+    score: float = 0.0                # objective_z + penalty; what solvers rank on
 
 
 def _node_type(inst: Instance, idx: int) -> str:
@@ -148,6 +151,14 @@ def evaluate_solution(
         total_dist += r.total_distance
         total_time += r.total_time
 
+    # Soft constraint: work left undone is penalised, not rejected. Converting
+    # litres to pumping seconds puts the penalty in the same severity-seconds
+    # unit as Z, so the two terms are directly comparable.
+    left = np.maximum(volumes_left, 0.0)
+    penalty = float(
+        inst.unserved_penalty * np.sum(inst.si_values * (left / PUMP_RATE_LPS))
+    )
+
     return SolutionEval(
         routes=route_evals,
         objective_z=z_total,
@@ -156,6 +167,9 @@ def evaluate_solution(
         total_if_visits=total_if,
         total_flood_visits=total_flood,
         remaining_volume=volumes_left,
+        unserved_volume=float(left.sum()),
+        penalty=penalty,
+        score=z_total + penalty,
     )
 
 
@@ -163,21 +177,22 @@ def all_floods_served(remaining: np.ndarray, tol: float = 1.0) -> bool:
     return bool(np.all(remaining <= tol))
 
 
+def coverage_ratio(inst: Instance, ev: SolutionEval) -> float:
+    """Fraction of total pumping work completed, in [0, 1]."""
+    total = float(inst.volumes.sum())
+    if total <= 0:
+        return 1.0
+    return float(max(0.0, min(1.0, 1.0 - ev.unserved_volume / total)))
+
+
 def validate_hard_constraints(
     inst: Instance,
     ev: SolutionEval,
     tol: float = 1.0,
 ) -> list[str]:
+    # Full coverage is a soft constraint — unserved work is priced into the
+    # objective via the penalty term, so it is reported, never a violation.
     violations: list[str] = []
-
-    # HC1: All flood volume served.
-    unserved = np.where(ev.remaining_volume > tol)[0]
-    if len(unserved) > 0:
-        ids = [str(inst.flood_indices[int(i)]) for i in unserved[:5]]
-        violations.append(
-            f"HC1 volume: {len(unserved)} flood(s) not fully served "
-            f"(nodes {', '.join(ids)})"
-        )
 
     for k, r in enumerate(ev.routes):
         nodes = r.node_indices

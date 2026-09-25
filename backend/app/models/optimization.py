@@ -18,6 +18,7 @@ class ACSRequest(_Base):
     q0: float = Field(0.70, ge=0.0, le=1.0)
     seed: int | None = None
     time_limit_s: float | None = Field(45.0, ge=1.0, le=180.0)
+    unserved_penalty: float | None = Field(None, ge=0.0, le=10000.0)
 
 
 class VNSRequest(_Base):
@@ -25,6 +26,7 @@ class VNSRequest(_Base):
     k_max: int = Field(3, ge=1, le=6)
     seed: int | None = None
     time_limit_s: float | None = Field(45.0, ge=1.0, le=180.0)
+    unserved_penalty: float | None = Field(None, ge=0.0, le=10000.0)
 
 
 class VisitOut(_Base):
@@ -63,6 +65,12 @@ class OptimizationResponse(_Base):
     algorithm: Literal["acs", "vns"]
     routes: list[RouteOut]
     objective_z: float
+    penalty: float
+    score: float
+    demand_total_l: float
+    unserved_volume_l: float
+    coverage_pct: float
+    unserved_points: int
     total_distance_m: float
     total_time_s: float
     total_if_visits: int

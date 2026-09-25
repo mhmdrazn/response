@@ -53,14 +53,53 @@ export function ResultsPanel({ result, mode, completedAt }: ResultsPanelProps) {
         />
       </div>
 
+      <CoverageBar result={result} />
+
       {mode === "advanced" ? (
         <div className="flex gap-8 rounded-md border border-frost bg-mist px-[10px] py-8 text-[11px] font-semibold tracking-[-0.11px] text-steel">
           <Truck size={14} strokeWidth={2} />
           <span>
-            Revisit: {result.total_revisits} · Algoritma: {result.algorithm.toUpperCase()}
+            Revisit: {result.total_revisits} · Algoritma: {result.algorithm.toUpperCase()} · Penalti:{" "}
+            {formatNumber(result.penalty, 0)}
           </span>
         </div>
       ) : null}
+    </div>
+  );
+}
+
+function CoverageBar({ result }: { result: OptimizationResult }) {
+  const pct = Math.max(0, Math.min(100, result.coverage_pct));
+  const full = result.unserved_points === 0;
+  const accent = full ? "var(--color-si-low)" : pct >= 60 ? "#d97706" : "#ef4444";
+
+  return (
+    <div className="flex flex-col gap-[6px] rounded-md border border-frost bg-pure-white p-[10px]">
+      <div className="flex items-baseline gap-8">
+        <span className="text-[10.5px] font-bold uppercase tracking-[0.7px] text-slate">
+          Cakupan Pemompaan
+        </span>
+        <span
+          className="ml-auto text-[15px] font-bold tabular-nums tracking-[-0.3px]"
+          style={{ color: accent }}
+        >
+          {formatNumber(pct, 1)}%
+        </span>
+      </div>
+      <div className="h-[6px] w-full overflow-hidden rounded-full bg-frost">
+        <div
+          className="h-full rounded-full transition-[width] duration-500 ease-out"
+          style={{ width: `${pct}%`, backgroundColor: accent }}
+        />
+      </div>
+      <div className="text-[11.5px] font-medium leading-[1.4] text-steel">
+        {full
+          ? "Seluruh beban pemompaan terselesaikan dalam rencana ini."
+          : `${result.unserved_points} titik belum tuntas · sisa ${formatNumber(
+              result.unserved_volume_l / 1000,
+              1,
+            )} m³ dilanjutkan ke periode berikutnya.`}
+      </div>
     </div>
   );
 }

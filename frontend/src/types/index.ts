@@ -87,6 +87,12 @@ export interface OptimizationResult {
   algorithm: "acs" | "vns";
   routes: RouteOut[];
   objective_z: number;
+  penalty: number;
+  score: number;
+  demand_total_l: number;
+  unserved_volume_l: number;
+  coverage_pct: number;
+  unserved_points: number;
   total_distance_m: number;
   total_time_s: number;
   total_if_visits: number;

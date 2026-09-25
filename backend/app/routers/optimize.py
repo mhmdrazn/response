@@ -9,7 +9,11 @@ from fastapi import APIRouter, HTTPException, Query
 from app.data.store import store
 from app.algorithms.acs import ACSParams, HybridACS
 from app.algorithms.vns import VNS, VNSParams
-from app.algorithms.evaluator import SolutionEval, validate_hard_constraints
+from app.algorithms.evaluator import (
+    SolutionEval,
+    coverage_ratio,
+    validate_hard_constraints,
+)
 from app.algorithms.osrm import fetch_road_geometries_batch
 from app.algorithms.instance import (
     SBY_LAT_MAX,
@@ -34,7 +38,9 @@ _log = logging.getLogger("response.optimize")
 router = APIRouter(prefix="/api/optimize", tags=["optimize"])
 
 
-def _build_ready_instance(scenario: str | None) -> Instance:
+def _build_ready_instance(
+    scenario: str | None, unserved_penalty: float | None = None
+) -> Instance:
     try:
         bundle = store.get(scenario)
     except KeyError:
@@ -44,6 +50,7 @@ def _build_ready_instance(scenario: str | None) -> Instance:
 
     sev = compute_severity_index(bundle.floods, bundle.faskes)
     # Matrix/size consistency is validated in ScenarioStore (None -> Manhattan).
+    kwargs = {} if unserved_penalty is None else {"unserved_penalty": unserved_penalty}
     return build_instance(
         depots_df=bundle.depots,
         floods_df=bundle.floods,
@@ -51,6 +58,7 @@ def _build_ready_instance(scenario: str | None) -> Instance:
         dist_matrix=bundle.distance_matrix,
         time_matrix=bundle.time_matrix,
         si_values=sev.si_values,
+        **kwargs,
     )
 
 
@@ -166,10 +174,17 @@ def _to_response(
         for i, (b, ib) in enumerate(zip(convergence_best, convergence_iter))
     ]
 
+    demand_total = float(inst.volumes.sum())
     return OptimizationResponse(
         algorithm=algorithm,  # type: ignore[arg-type]
         routes=routes_out,
         objective_z=ev.objective_z,
+        penalty=ev.penalty,
+        score=ev.score,
+        demand_total_l=demand_total,
+        unserved_volume_l=ev.unserved_volume,
+        coverage_pct=coverage_ratio(inst, ev) * 100.0,
+        unserved_points=int((ev.remaining_volume > 1.0).sum()),
         total_distance_m=ev.total_distance,
         total_time_s=ev.total_time,
         total_if_visits=ev.total_if_visits,
@@ -186,7 +201,7 @@ async def run_acs(
     request: ACSRequest, scenario: str | None = Query(default=None)
 ) -> OptimizationResponse:
     try:
-        inst = _build_ready_instance(scenario)
+        inst = _build_ready_instance(scenario, request.unserved_penalty)
         params = ACSParams(
             iterations=request.iterations,
             n_ants=request.n_ants,
@@ -226,7 +241,7 @@ async def run_vns(
     request: VNSRequest, scenario: str | None = Query(default=None)
 ) -> OptimizationResponse:
     try:
-        inst = _build_ready_instance(scenario)
+        inst = _build_ready_instance(scenario, request.unserved_penalty)
         params = VNSParams(
             max_iterations=request.max_iterations,
             k_max=request.k_max,

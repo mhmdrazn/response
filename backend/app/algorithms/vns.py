@@ -55,8 +55,11 @@ class VNS:
         }
 
     def _greedy_initial(self) -> tuple[list[list[int]], list[int]]:
-        # Nearest-neighbor + SI bias; tries multiple orderings with repair phase
+        # Nearest-neighbor + SI bias; tries multiple orderings with repair phase.
+        # Full coverage ends the search early, otherwise keep the best partial.
         max_attempts = 20
+        best_effort: tuple[list[list[int]], list[int]] | None = None
+        best_effort_score = float("inf")
         for _attempt in range(max_attempts):
             volumes_left = self.inst.volumes.copy()
             n_vehicles = len(self.inst.vehicles)
@@ -105,11 +108,13 @@ class VNS:
             ev = evaluate_solution(self.inst, routes, capacities)
             if all_floods_served(ev.remaining_volume):
                 return routes, capacities
+            if best_effort is None or ev.score < best_effort_score:
+                best_effort = ([list(r) for r in routes], list(capacities))
+                best_effort_score = ev.score
 
-        raise RuntimeError(
-            "VNS failed to construct a feasible initial solution "
-            f"after {max_attempts} attempts."
-        )
+        if best_effort is None:
+            raise RuntimeError("VNS did not construct any initial solution.")
+        return best_effort
 
     def _build_greedy_route(
         self,
@@ -317,22 +322,15 @@ class VNS:
         routes, capacities = self._greedy_initial()
         ev = evaluate_solution(self.inst, routes, capacities)
 
-        if not all_floods_served(ev.remaining_volume):
-            unserved_count = int(np.sum(ev.remaining_volume > 1.0))
-            raise RuntimeError(
-                f"VNS initial solution infeasible: "
-                f"{unserved_count} flood(s) not fully served."
-            )
-
         best_routes = [list(r) for r in routes]
         best_caps = list(capacities)
-        best_z = ev.objective_z
+        best_score = ev.score
         best_eval = ev
         trace = VNSTrace()
 
         for it in range(self.p.max_iterations):
             k = 1
-            iter_z = best_z
+            iter_score = best_score
 
             while k <= self.p.k_max:
                 shaken = self._shake(best_routes, best_caps, k)
@@ -342,26 +340,19 @@ class VNS:
                     # float("inf") baseline accepts every feasible candidate
                     # and thrashes with scan restarts.
                     shaken_ev = evaluate_solution(self.inst, shaken, best_caps)
-                    if not all_floods_served(shaken_ev.remaining_volume):
-                        k += 1
-                        continue
-                    polished, pol_z, pol_ev = polish(
-                        self.inst, shaken, best_caps, shaken_ev.objective_z,
+                    polished, pol_score, pol_ev = polish(
+                        self.inst, shaken, best_caps, shaken_ev.score,
                         max_rounds=2, quick=True,
                     )
                 except Exception:
                     k += 1
                     continue
 
-                if not all_floods_served(pol_ev.remaining_volume):
-                    k += 1
-                    continue
-
-                if pol_z + 1e-9 < best_z:
-                    best_z = pol_z
+                if pol_score + 1e-9 < best_score:
+                    best_score = pol_score
                     best_routes = [list(r) for r in polished]
                     best_eval = pol_ev
-                    iter_z = pol_z
+                    iter_score = pol_score
                     k = 1
                 else:
                     k += 1
@@ -372,8 +363,8 @@ class VNS:
                 ):
                     break
 
-            trace.iter_best_z.append(float(iter_z))
-            trace.best_z.append(float(best_z))
+            trace.iter_best_z.append(float(iter_score))
+            trace.best_z.append(float(best_score))
 
             if (
                 self.p.time_limit_s is not None

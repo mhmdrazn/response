@@ -21,6 +21,12 @@ PUMP_RATE_LPS = 1000 / 60.0    # 1000 L/min ≈ 16.67 L/s
 SERVICE_SETUP_S = 60.0
 IF_DRAIN_S = 120.0
 
+# Weight on severity-weighted pumping work left undone. Both terms of the
+# objective are in severity-seconds, so this stays dimensionless. High enough
+# that dropping work is a last resort under the time cap rather than a way to
+# score well; lower it to study the coverage/priority trade-off.
+UNSERVED_PENALTY = 100.0
+
 SBY_LAT_MIN, SBY_LAT_MAX = -7.38, -7.13
 SBY_LON_MIN, SBY_LON_MAX = 112.58, 112.87
 
@@ -54,6 +60,9 @@ class Instance:
     # Vehicles: each entry is (depot_node_index, capacity_liters)
     vehicles: list[tuple[int, int]] = field(default_factory=list)
 
+    # Soft-constraint weight for unserved pumping work.
+    unserved_penalty: float = UNSERVED_PENALTY
+
     # Geometry constraint: each flood assigned to its nearest depot
     nearest_depot: np.ndarray = field(default_factory=lambda: np.array([], dtype=int))
     # Quick lookup: depot_node_index -> set of flood node indices assigned to it
@@ -72,6 +81,7 @@ def build_instance(
     time_matrix: np.ndarray | None = None,
     si_values: np.ndarray | None = None,
     volume_per_cm: float = DEFAULT_VOLUME_PER_CM,
+    unserved_penalty: float = UNSERVED_PENALTY,
 ) -> Instance:
     depots = [_row_to_dict(r) for _, r in depots_df.iterrows()]
     floods = [_row_to_dict(r) for _, r in floods_df.iterrows()]
@@ -168,6 +178,7 @@ def build_instance(
         flood_indices=flood_indices,
         if_indices=if_indices,
         vehicles=vehicles,
+        unserved_penalty=float(unserved_penalty),
         nearest_depot=nearest_depot,
         depot_flood_sets=depot_flood_sets,
     )

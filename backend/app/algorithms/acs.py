@@ -13,7 +13,6 @@ import numpy as np
 
 from app.algorithms.evaluator import (
     SolutionEval,
-    all_floods_served,
     evaluate_solution,
 )
 from app.algorithms.instance import Instance
@@ -215,8 +214,8 @@ class HybridACS:
         self.pheromone[i, j] = (1 - self.p.rho) * self.pheromone[i, j] + self.p.rho * self.tau0
         self.pheromone[j, i] = self.pheromone[i, j]
 
-    def _global_update(self, best_routes: list[list[int]], best_z: float) -> None:
-        deposit = 1.0 / max(best_z, 1e-6)
+    def _global_update(self, best_routes: list[list[int]], best_score: float) -> None:
+        deposit = 1.0 / max(best_score, 1e-6)
         # Evaporate.
         self.pheromone *= 1 - self.p.rho
         # Reinforce edges of best solution.
@@ -231,52 +230,51 @@ class HybridACS:
         start = time.perf_counter()
         best_routes: list[list[int]] | None = None
         best_caps: list[int] | None = None
-        best_z = float("inf")
+        best_score = float("inf")
         best_eval: SolutionEval | None = None
         trace = ACSTrace()
 
         for it in range(self.p.iterations):
-            iter_best_z = float("inf")
+            iter_best_score = float("inf")
             iter_best_routes: list[list[int]] | None = None
             iter_best_caps: list[int] | None = None
 
             for _ in range(self.p.n_ants):
                 routes, caps = self._construct_one_ant()
                 ev = evaluate_solution(self.inst, routes, caps)
-                if not all_floods_served(ev.remaining_volume):
-                    continue
-                if ev.objective_z < iter_best_z:
-                    iter_best_z = ev.objective_z
+                if ev.score < iter_best_score:
+                    iter_best_score = ev.score
                     iter_best_routes = copy.deepcopy(routes)
                     iter_best_caps = list(caps)
 
             if iter_best_routes is None:
-                trace.iter_best_z.append(best_z if best_z != float("inf") else 0.0)
-                trace.best_z.append(best_z if best_z != float("inf") else 0.0)
+                fallback = best_score if best_score != float("inf") else 0.0
+                trace.iter_best_z.append(fallback)
+                trace.best_z.append(fallback)
                 continue
 
             # Stratified polish: quick per iter, full every 5 iter.
             # Quick = only 2-opt + relocate (fast). Full adds or-opt + exchange.
             if it % 5 == 0 and it > 0:
-                iter_best_routes, iter_best_z, ev = polish(
-                    self.inst, iter_best_routes, iter_best_caps, iter_best_z,
+                iter_best_routes, iter_best_score, ev = polish(
+                    self.inst, iter_best_routes, iter_best_caps, iter_best_score,
                     max_rounds=3, quick=False,
                 )
             else:
-                iter_best_routes, iter_best_z, ev = polish(
-                    self.inst, iter_best_routes, iter_best_caps, iter_best_z,
+                iter_best_routes, iter_best_score, ev = polish(
+                    self.inst, iter_best_routes, iter_best_caps, iter_best_score,
                     max_rounds=1, quick=True,
                 )
 
-            if iter_best_z < best_z:
-                best_z = iter_best_z
+            if iter_best_score < best_score:
+                best_score = iter_best_score
                 best_routes = copy.deepcopy(iter_best_routes)
                 best_caps = list(iter_best_caps or [])
                 best_eval = ev
 
-            self._global_update(best_routes or iter_best_routes, best_z)
-            trace.iter_best_z.append(float(iter_best_z))
-            trace.best_z.append(float(best_z))
+            self._global_update(best_routes or iter_best_routes, best_score)
+            trace.iter_best_z.append(float(iter_best_score))
+            trace.best_z.append(float(best_score))
 
             if (
                 self.p.time_limit_s is not None
@@ -285,7 +283,7 @@ class HybridACS:
                 break
 
         if best_routes is None or best_eval is None or best_caps is None:
-            raise RuntimeError("ACS did not find any feasible solution.")
+            raise RuntimeError("ACS did not construct any solution.")
 
         # Intensive final polish — use whatever time budget remains to
         # deep-polish the best-so-far solution. Runs all four operators
@@ -293,16 +291,16 @@ class HybridACS:
         elapsed = time.perf_counter() - start
         budget_left = (self.p.time_limit_s or 0.0) - elapsed
         if budget_left > 2.0:
-            polished_routes, polished_z, polished_eval = polish(
-                self.inst, best_routes, best_caps, best_z,
+            polished_routes, polished_score, polished_eval = polish(
+                self.inst, best_routes, best_caps, best_score,
                 max_rounds=10, quick=False,
             )
-            if polished_z + 1e-9 < best_z:
+            if polished_score + 1e-9 < best_score:
                 best_routes = polished_routes
-                best_z = polished_z
+                best_score = polished_score
                 best_eval = polished_eval
-                trace.best_z.append(float(best_z))
-                trace.iter_best_z.append(float(best_z))
+                trace.best_z.append(float(best_score))
+                trace.iter_best_z.append(float(best_score))
 
         elapsed = time.perf_counter() - start
         return ACSSolution(
