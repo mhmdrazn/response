@@ -14,19 +14,18 @@ interface ScenarioSelectProps {
 export function ScenarioSelect({ scenarios, value, onChange }: ScenarioSelectProps) {
   if (scenarios.length <= 1) return null;
   return (
-    <label className="relative inline-flex flex-shrink-0 items-center">
+    <label className="group relative inline-flex flex-shrink-0 items-center">
       <Layers
         size={13}
         strokeWidth={2}
-        color="var(--color-slate)"
-        className="pointer-events-none absolute left-8"
+        className="pointer-events-none absolute left-8 text-slate transition-colors group-focus-within:text-indigo-ink"
       />
       <select
         value={value ?? ""}
         onChange={(e) => onChange(e.target.value)}
         aria-label="Pilih skenario"
         title="Pilih skenario banjir"
-        className="font-manrope cursor-pointer appearance-none rounded-md border border-frost bg-pure-white py-[6px] pl-[26px] pr-[26px] text-[12px] font-bold tracking-[-0.1px] text-midnight-ink transition-colors hover:bg-mist"
+        className="font-manrope cursor-pointer appearance-none rounded-md border border-frost bg-pure-white py-[6px] pl-[26px] pr-[26px] text-[12px] font-bold tracking-[-0.1px] text-midnight-ink outline-none transition-colors hover:bg-mist focus:border-indigo-ink focus:bg-periwinkle-wash focus:ring-2 focus:ring-[var(--color-indigo-ink)]/15"
       >
         {scenarios.map((sc) => (
           <option key={sc.id} value={sc.id}>

@@ -161,6 +161,10 @@ export function AlgorithmPanel({
           )
         ) : null}
 
+        <p className="text-[11px] font-medium leading-[1.4] tracking-[-0.11px] text-slate">
+          Optimasi berjalan maksimal 45 detik per algoritma — pastikan proses selesai di bawah 1 menit.
+        </p>
+
         <div className="flex gap-8">
           <button
             type="button"
