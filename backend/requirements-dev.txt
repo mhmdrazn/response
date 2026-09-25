@@ -1,0 +1,10 @@
+-r requirements.txt
+
+# Tests
+pytest>=8.0
+
+# Offline preprocessing pipeline (scripts/build_scenario.py) and runtime
+# road_class enrichment. Not needed just to serve the API (reads + optimize);
+# without them road_class falls back to a default at intake.
+geopandas>=1.0
+shapely>=2.0
