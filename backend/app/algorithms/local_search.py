@@ -7,6 +7,7 @@ import time
 
 from app.algorithms.evaluator import (
     SolutionEval,
+    evaluate_incremental,
     evaluate_solution,
 )
 from app.algorithms.instance import Instance
@@ -33,6 +34,7 @@ def two_opt(
 ) -> tuple[list[list[int]], float]:
     best_routes = [list(r) for r in routes]
     best_score = current_score
+    best_ev = evaluate_solution(inst, best_routes, capacities)
     for ri, route in enumerate(best_routes):
         if len(route) <= 3:
             continue
@@ -49,11 +51,12 @@ def two_opt(
                     candidate[i : j + 1] = reversed(candidate[i : j + 1])
                     trial = [list(x) for x in best_routes]
                     trial[ri] = candidate
-                    ev = evaluate_solution(inst, trial, capacities)
+                    ev = evaluate_incremental(inst, trial, capacities, best_ev, ri)
                     if ev.score + 1e-9 < best_score:
                         best_routes = trial
                         route = candidate
                         best_score = ev.score
+                        best_ev = ev
                         improved = True
                         break
                 if improved:
@@ -72,6 +75,7 @@ def relocate_between_routes(
 ) -> tuple[list[list[int]], float]:
     best_routes = [list(r) for r in routes]
     best_score = current_score
+    best_ev = evaluate_solution(inst, best_routes, capacities)
     n_routes = len(best_routes)
     for a in range(n_routes):
         if _expired(deadline):
@@ -100,7 +104,9 @@ def relocate_between_routes(
                     trial = list(best_routes)
                     trial[a] = best_routes[a][:i] + best_routes[a][i + 1 :]
                     trial[b] = best_routes[b][:j] + [node] + best_routes[b][j:]
-                    ev = evaluate_solution(inst, trial, capacities)
+                    ev = evaluate_incremental(
+                        inst, trial, capacities, best_ev, min(a, b)
+                    )
                     if ev.score + 1e-9 < best_score:
                         best_routes = trial
                         best_score = ev.score
@@ -119,6 +125,7 @@ def or_opt(
 ) -> tuple[list[list[int]], float]:
     best_routes = [list(r) for r in routes]
     best_score = current_score
+    best_ev = evaluate_solution(inst, best_routes, capacities)
     for seg_len in range(1, max_seg_len + 1):
         for _pass in range(max_passes):
             improved = False
@@ -150,10 +157,13 @@ def or_opt(
                             trial = [list(r) for r in best_routes]
                             trial[a] = trial[a][:i] + trial[a][i + seg_len :]
                             trial[b] = trial[b][:j] + seg + trial[b][j:]
-                            ev = evaluate_solution(inst, trial, capacities)
+                            ev = evaluate_incremental(
+                                inst, trial, capacities, best_ev, min(a, b)
+                            )
                             if ev.score + 1e-9 < best_score:
                                 best_routes = trial
                                 best_score = ev.score
+                                best_ev = ev
                                 improved = True
                                 break
                         if improved:
@@ -176,6 +186,7 @@ def exchange(
 ) -> tuple[list[list[int]], float]:
     best_routes = [list(r) for r in routes]
     best_score = current_score
+    best_ev = evaluate_solution(inst, best_routes, capacities)
     n_routes = len(best_routes)
     for a in range(n_routes):
         if _expired(deadline):
@@ -202,7 +213,9 @@ def exchange(
                         continue
                     trial = [list(r) for r in best_routes]
                     trial[a][i], trial[b][j] = trial[b][j], trial[a][i]
-                    ev = evaluate_solution(inst, trial, capacities)
+                    ev = evaluate_incremental(
+                        inst, trial, capacities, best_ev, min(a, b)
+                    )
                     if ev.score + 1e-9 < best_score:
                         best_routes = trial
                         best_score = ev.score
