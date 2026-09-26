@@ -20,6 +20,10 @@ from app.algorithms.local_search import polish
 
 # Seconds held back from the time budget for the closing repair pass.
 REPAIR_RESERVE_S = 3.0
+# Repair estimates a route's new length before committing to it, and volumes
+# shared with other routes make that estimate a few seconds optimistic. Keep a
+# margin so an insertion can never tip a route past the horizon.
+REPAIR_MARGIN_S = 60.0
 
 
 @dataclass
@@ -259,7 +263,8 @@ class VNS:
                 if d >= best_dist:
                     continue
                 candidate = route[:-1] + [nearest_if, flood_node, route[-1]]
-                if self._route_time(candidate, capacities[vi]) > self.inst.route_horizon_s:
+                limit = self.inst.route_horizon_s - REPAIR_MARGIN_S
+                if self._route_time(candidate, capacities[vi]) > limit:
                     continue
                 best_vi, best_dist, best_route = vi, d, candidate
             if best_vi >= 0:

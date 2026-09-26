@@ -27,17 +27,24 @@ IF_DRAIN_S = 120.0
 IF_DRAIN_FACTOR = {"river": 0.75, "stream": 1.25}
 
 # A route may not outlast one real deployment, or the solvers buy coverage with
-# 23-hour tours. Set to the 90th percentile of berangkat -> tiba_pangkalan in
-# the Damkar log (517 min over 408 records), which covers all but the 10%
-# longest days. The observed maximum, 930 min, is too slack to bind.
-ROUTE_HORIZON_S = 517 * 60.0
+# 23-hour tours. Set to the median berangkat -> tiba_pangkalan in the Damkar
+# log (281 min over 408 records). The model's clock never idles — every second
+# is driving, pumping or draining — so it maps to a typical deployment rather
+# than a long one: at the p90 of 517 min the fleet finished almost everything
+# and the limit never bound.
+ROUTE_HORIZON_S = 281 * 60.0
 
-# Cost per second a route runs past the horizon. Work past it already earns
-# nothing, but that only makes overtime worthless, not costly — local search
-# would still lengthen a route when some other part of the move improved.
-# One extra second buys at most one second of pumping, worth at most
-# UNSERVED_PENALTY * max(SI) = 500; ten times that leaves no room to trade.
-HORIZON_PENALTY = 5000.0
+# Local search scans every pair of stops, and on a heavy scenario a route runs
+# to a hundred stops, so a single pass eats the whole budget. Restricting each
+# move to a node's k nearest neighbours is the standard VRP remedy: swaps
+# between stops on opposite sides of the city are never the ones that help.
+CANDIDATE_K = 12
+
+# Cost per second a route runs past the horizon. A crew cannot simply work
+# longer, so this is a big-M: it keeps the objective a single scalar while
+# making overtime something the search never trades for. At 5000 a move that
+# bought coverage still paid for a two-minute overrun.
+HORIZON_PENALTY = 1e6
 
 # Weight on severity-weighted pumping work left undone. Both terms of the
 # objective are in severity-seconds, so this stays dimensionless. Calibrated on
@@ -69,6 +76,9 @@ class Instance:
 
     # (n_ifs,) seconds to empty a tank, per IF outlet
     if_drain_s: np.ndarray
+
+    # For each node, the nodes close enough to be worth a local-search move
+    neighbor_sets: list[set[int]]
 
     # Matrices addressed on the full node space
     dist_matrix: np.ndarray        # (n_total, n_total) meters
@@ -187,6 +197,12 @@ def build_instance(
         dtype=float,
     )
 
+    k = min(CANDIDATE_K, max(n_total - 1, 1))
+    neighbor_sets = [
+        set(int(j) for j in np.argsort(dist_matrix[i])[: k + 1] if int(j) != i)
+        for i in range(n_total)
+    ]
+
     # Each depot gets one vehicle per capacity type.
     vehicles: list[tuple[int, int]] = []
     for di in depot_indices:
@@ -217,6 +233,7 @@ def build_instance(
         volumes=volumes.astype(float),
         si_values=si_values.astype(float),
         if_drain_s=if_drain_s,
+        neighbor_sets=neighbor_sets,
         dist_matrix=dist_matrix.astype(float),
         time_matrix=time_matrix.astype(float),
         depot_indices=depot_indices,

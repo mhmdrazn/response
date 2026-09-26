@@ -41,7 +41,10 @@ def two_opt(
             for i in range(1, len(route) - 2):
                 if _expired(deadline):
                     return best_routes, best_score
+                near = inst.neighbor_sets[route[i]]
                 for j in range(i + 1, len(route) - 1):
+                    if route[j] not in near:
+                        continue
                     candidate = list(route)
                     candidate[i : j + 1] = reversed(candidate[i : j + 1])
                     trial = [list(x) for x in best_routes]
@@ -87,7 +90,13 @@ def relocate_between_routes(
                     continue
                 if _expired(deadline):
                     return best_routes, best_score
+                near = inst.neighbor_sets[node]
                 for j in range(1, len(best_routes[b])):
+                    if (
+                        best_routes[b][j - 1] not in near
+                        and best_routes[b][j] not in near
+                    ):
+                        continue
                     trial = list(best_routes)
                     trial[a] = best_routes[a][:i] + best_routes[a][i + 1 :]
                     trial[b] = best_routes[b][:j] + [node] + best_routes[b][j:]
@@ -131,7 +140,13 @@ def or_opt(
                             for n in seg
                         ):
                             continue
+                        near = inst.neighbor_sets[seg[0]]
                         for j in range(1, len(best_routes[b])):
+                            if (
+                                best_routes[b][j - 1] not in near
+                                and best_routes[b][j] not in near
+                            ):
+                                continue
                             trial = [list(r) for r in best_routes]
                             trial[a] = trial[a][:i] + trial[a][i + seg_len :]
                             trial[b] = trial[b][:j] + seg + trial[b][j:]
@@ -177,6 +192,8 @@ def exchange(
                 for j in range(1, len(best_routes[b]) - 1):
                     node_b = best_routes[b][j]
                     if not _is_flood(inst, node_b):
+                        continue
+                    if node_b not in inst.neighbor_sets[node_a]:
                         continue
                     # Only swap if both floods are compatible with destination depot
                     if int(inst.nearest_depot[node_a - inst.n_depots]) != depot_b:

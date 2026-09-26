@@ -21,6 +21,10 @@ from app.algorithms.local_search import polish
 
 # Seconds held back from the time budget for the closing repair pass.
 REPAIR_RESERVE_S = 3.0
+# Repair estimates a route's new length before committing to it, and volumes
+# shared with other routes make that estimate a few seconds optimistic. Keep a
+# margin so an insertion can never tip a route past the horizon.
+REPAIR_MARGIN_S = 60.0
 
 
 @dataclass
@@ -272,7 +276,7 @@ class HybridACS:
         assigned = int(self.inst.nearest_depot[slot])
         t = self.inst.time_matrix
         if_base = self.inst.n_depots + self.inst.n_floods
-        horizon = self.inst.route_horizon_s
+        horizon = self.inst.route_horizon_s - REPAIR_MARGIN_S
 
         best_vi, best_added, best_if = -1, float("inf"), -1
         # Prefer the flood's own depot (HC6), then fall back to any vehicle.
