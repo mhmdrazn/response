@@ -46,6 +46,12 @@ def git_head() -> str | None:
         return None
 
 
+# Read once at import. Reading per request would report whatever the checkout
+# holds now, which always matches HEAD and so can never reveal a stale process
+# — the one thing this field exists to do.
+COMMIT = git_head()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Warm the default scenario so the first request is fast and any config/data
@@ -87,7 +93,7 @@ async def health() -> dict[str, object]:
     info: dict[str, object] = {
         "status": "ok",
         "service": "response-api",
-        "commit": git_head(),
+        "commit": COMMIT,
         "started_at": STARTED_AT.isoformat(),
     }
     try:
