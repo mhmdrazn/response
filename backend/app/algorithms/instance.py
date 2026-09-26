@@ -26,10 +26,11 @@ IF_DRAIN_S = 120.0
 # `waterway_type` in if.csv; anything unlisted falls back to 1.0.
 IF_DRAIN_FACTOR = {"river": 0.75, "stream": 1.25}
 
-# Longest deployment observed in the Damkar log (berangkat -> tiba_pangkalan,
-# 930 min over 408 records). A route may not outlast one real deployment;
-# without it the solvers buy coverage with 23-hour tours.
-ROUTE_HORIZON_S = 930 * 60.0
+# A route may not outlast one real deployment, or the solvers buy coverage with
+# 23-hour tours. Set to the 90th percentile of berangkat -> tiba_pangkalan in
+# the Damkar log (517 min over 408 records), which covers all but the 10%
+# longest days. The observed maximum, 930 min, is too slack to bind.
+ROUTE_HORIZON_S = 517 * 60.0
 
 # Cost per second a route runs past the horizon. Work past it already earns
 # nothing, but that only makes overtime worthless, not costly — local search

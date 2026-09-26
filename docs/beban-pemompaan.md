@@ -229,9 +229,11 @@ dibiarkan, bab perbandingan akan menyimpulkan hal yang salah.
 
 ### Perbaikan
 
-**Horizon** diambil dari deployment terpanjang di log Damkar,
-`berangkat -> tiba_pangkalan`, **930 menit = 15,5 jam** (n=408, p90 8,6 jam,
-p95 10,1 jam). Penegakannya tiga lapis:
+**Horizon** diambil dari `berangkat -> tiba_pangkalan` di log Damkar (n=408) pada
+persentil ke-90: **517 menit = 8,6 jam**, mencakup semua kecuali 10% hari
+terpanjang. Maksimum yang teramati, 930 menit, sempat dipakai lebih dulu tetapi
+terlalu longgar — armada menyelesaikan hampir semua beban tanpa horizon itu
+pernah mengikat. Penegakannya tiga lapis:
 
 1. Konstruksi ACS dan VNS menolak langkah yang tidak sempat pulang sebelum
    horizon
@@ -250,24 +252,26 @@ penuh masih punya ruang.
 
 ### Hasil setelah perbaikan
 
+Horizon p90 = 8,6 jam:
+
 ```
 beban                  V per titik     total    ACS cakupan/waktu/rute   VNS cakupan/waktu/rute
-sekarang (100 L/cm)        2,3 m3   0,08 jt L      100,0% / 28s / 1,5j      98,7% / 45s / 3,0j
-p25  67 mnt di lokasi     32,6 m3   1,11 jt L       99,4% / 45s / 12,2j     99,3% / 45s / 15,4j
-p50 268 mnt di lokasi    131,7 m3   4,48 jt L       99,4% / 45s / 15,5j     99,9% / 46s / 15,5j
-p75 382 mnt di lokasi    188,0 m3   6,39 jt L       99,6% / 46s / 15,5j     99,8% / 46s / 15,5j
+sekarang (100 L/cm)        2,3 m3   0,08 jt L      100,0% / 41s / 1,5j      98,7% / 45s / 3,0j
+p25  67 mnt di lokasi     32,6 m3   1,11 jt L       99,5% / 45s / 8,5j     100,0% / 45s / 8,6j
+p50 268 mnt di lokasi    131,7 m3   4,48 jt L       99,4% / 46s / 8,6j      99,6% / 46s / 8,6j
+p75 382 mnt di lokasi    188,0 m3   6,39 jt L       78,5% / 46s / 8,6j      80,1% / 45s / 8,6j
 ```
 
-VNS naik dari 14,8% ke 99,9% di p50 dan kini **unggul tipis atas ACS** — batas
-konstruktor itu memang seluruh ceritanya. Tidak ada rute yang melewati 15,5 jam.
+VNS naik dari 14,8% ke 99,6% di p50 dan kini **unggul tipis atas ACS** di semua
+skala berat — batas konstruktor itu memang seluruh ceritanya. Tidak ada rute
+yang melewati horizon.
 
-Cakupan tetap tinggi karena armada memang sanggup: beban p75 6,39 juta liter
-butuh sekitar 215 jam-kendaraan, sementara 24 unit × 15,5 jam menyediakan 372
-jam-kendaraan. Jadi horizon belum mengikat pada skala ini.
+Titik jenuh armada jatuh antara p50 dan p75, dan aritmetikanya cocok: 24 unit ×
+8,6 jam = 207 jam-kendaraan tersedia; p50 menuntut ±151 jam-kendaraan (muat,
+cakupan ~99%), p75 menuntut ±215 (tidak muat, cakupan ~80%).
 
-Perlu dicatat, 15,5 jam adalah kejadian **terpanjang**, bukan yang lazim. Bila
-nanti ingin rencana yang lebih ketat, p90 (8,6 jam) pilihan yang lebih wajar dan
-akan membuat cakupan benar-benar bersaing.
+Di p75 inilah constraint lunak akhirnya bekerja sungguhan: solusi menyisakan
+seperlima beban, tidak ditolak, dan sisanya bergulir ke periode berikutnya.
 
 ## Catatan risiko
 
