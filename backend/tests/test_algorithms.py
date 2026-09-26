@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from app.algorithms.acs import ACSParams, HybridACS
 from app.algorithms.evaluator import validate_hard_constraints
@@ -43,9 +44,17 @@ def test_vns_feasible_and_finite(s2):
     assert np.isfinite(sol.evaluation.objective_z)
 
 
-def test_standby_full_routes_start_with_if(s2):
+@pytest.mark.parametrize("solver", ["acs", "vns"])
+def test_standby_full_routes_start_with_if(s2, solver):
+    # Vehicles idle with a full tank, so the water carried from the depot has to
+    # go to an IF before any pumping. The tank model makes that physically true;
+    # this guards the plan from showing a pointless flood stop ahead of it.
     inst = _instance(s2)
-    sol = HybridACS(inst, ACSParams(iterations=6, n_ants=6, seed=1, time_limit_s=15)).solve()
+    sol = (
+        HybridACS(inst, ACSParams(iterations=6, n_ants=6, seed=1, time_limit_s=15))
+        if solver == "acs"
+        else VNS(inst, VNSParams(max_iterations=12, seed=1, time_limit_s=15))
+    ).solve()
     nd, nf = inst.n_depots, inst.n_floods
 
     def kind(i: int) -> str:
@@ -54,3 +63,6 @@ def test_standby_full_routes_start_with_if(s2):
     for route in sol.routes:
         if any(kind(n) == "F" for n in route[1:-1]):  # active route
             assert kind(route[1]) == "I", "a deployed vehicle must empty at an IF first"
+
+    for r in sol.evaluation.routes:
+        assert r.visits[0].tank_load_after == r.capacity, "standby tank must start full"
