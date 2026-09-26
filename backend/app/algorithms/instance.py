@@ -165,7 +165,14 @@ def build_instance(
         [(f.get("ketinggian_cm") if f.get("ketinggian_cm") is not None else 20.0) for f in floods],
         dtype=float,
     )
-    volumes = np.maximum(depths, 5.0) * volume_per_cm  # min 5cm to avoid zeros
+    # `volume_l` is the pumping workload calibrated from the Damkar handling log
+    # (see preprocessing/workload.py). The depth proxy is only a fallback for
+    # scenarios built before that column existed.
+    from_file = np.array(
+        [float(f.get("volume_l") or np.nan) for f in floods], dtype=float
+    ) if floods else np.array([], dtype=float)
+    fallback = np.maximum(depths, 5.0) * volume_per_cm  # min 5cm to avoid zeros
+    volumes = np.where(np.isfinite(from_file) & (from_file > 0), from_file, fallback)
 
     # SI: use externally computed values if available, else placeholder from depth.
     if si_values is None:

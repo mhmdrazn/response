@@ -48,13 +48,13 @@ Perubahan:
 
 ### Berikutnya
 
-| Tahap | Isi | Bergantung data |
+| Tahap | Isi | Status |
 |---|---|---|
-| A | Beban dari durasi penanganan empiris | ya |
-| B | Waktu buang per-IF | sebagian |
-| C | Analisis sensitivitas | tidak |
+| A | Beban dari durasi penanganan empiris | selesai |
+| B | Waktu buang per-IF | selesai |
+| C | Analisis sensitivitas | belum |
 
-## Tahap A — beban dari durasi empiris
+## Tahap A — beban dari durasi empiris (selesai)
 
 `app/data/files/sources/damkar_geocoded.csv` menyimpan `mulai_penanganan` dan
 `selesai` untuk 408 kejadian.
@@ -109,6 +109,50 @@ menebak: porsi memompa jatuh dari geometri jaringan itu sendiri.
 `k` diambil 1 sebagai batas bawah. Kunjungan berulang oleh beberapa unit sudah
 didukung model (satu titik boleh muncul di beberapa rute), jadi jumlah unit
 per lokasi memang hasil keputusan optimasi, bukan masukan tetap.
+
+### Implementasi
+
+`app/preprocessing/workload.py` mengubah log menjadi tabel **kelas kedalaman →
+median durasi di lokasi**, lalu tiap titik menarik nilai harapan kelasnya.
+Durasi milik titik itu sendiri tidak pernah dipakai untuk bebannya sendiri —
+itulah yang menjaga kalibrasi tetap di luar sampel.
+
+```
+kelas cm   kalibrasi penuh   holdout s2-jun   pompa    volume
+0-10           238 mnt           247 mnt      61 mnt   121.481 L
+10-20          269 mnt           273 mnt      67 mnt   134.321 L
+20-30          273 mnt           316 mnt      78 mnt   155.556 L
+30-50          353 mnt           382 mnt      94 mnt   188.148 L
+>50            382 mnt           382 mnt      94 mnt   188.148 L
+```
+
+Siklus buang dihitung per titik dari matriks waktu (IF tercepat, pulang-pergi,
+plus waktu buang outlet itu), bukan satu angka rata-rata.
+
+Alurnya:
+
+- `build.py` menghitung `volume_l` setelah matriks jadi, lalu menulis ulang
+  `floods.csv` dengan kolom itu. Hari-hari milik skenario dikeluarkan dari
+  kalibrasi
+- `instance.py` memakai `volume_l` bila ada; proksi kedalaman tinggal cadangan
+  untuk skenario lama
+- Intake runtime (`scenario_edit.py`) memberi titik baru nilai harapan kelas
+  kedalamannya — laporan yang baru masuk memang belum punya `selesai`
+- `scripts/backfill_workload.py` mengisi kolom itu pada skenario yang sudah ada
+  memakai matriks tersimpan, tanpa memanggil OSRM atau Overpass
+
+### Hasil pada data nyata
+
+```
+skenario  titik   beban        ACS cakupan/rute      VNS cakupan/rute
+s1-jan       17   2,37 jt L    99,6% / 8,6j          100,0% / 8,6j
+s2-jun       34   5,37 jt L    94,4% / 8,6j           93,3% / 8,6j
+s3-nov       27   3,17 jt L    99,3% / 8,6j           99,8% / 8,6j
+```
+
+Tidak ada lembur pada ketiganya. `s2-jun` yang paling berat: 11 titik tersisa,
+0,30 juta liter bergulir ke periode berikutnya, 1.304 kunjungan IF, komputasi
+46 detik.
 
 Implementasi: kolom `volume_l` pada `floods.csv`, dihitung saat preprocessing.
 `instance.py` memakainya bila ada, konstanta lama tinggal jadi cadangan.

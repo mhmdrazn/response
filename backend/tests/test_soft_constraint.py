@@ -9,18 +9,25 @@ from app.algorithms.vns import VNS, VNSParams
 from app.severity.index import compute_severity_index
 
 
-def _instance(b, volume_per_cm=100.0, unserved_penalty=500.0):
+def _instance(b, volume_scale=1.0, unserved_penalty=500.0):
+    """Scenario instance, optionally with its workload scaled.
+
+    Scaling happens after the build because floods.csv now carries a calibrated
+    `volume_l`, which takes priority over the depth proxy.
+    """
     sev = compute_severity_index(b.floods, b.faskes)
-    return build_instance(
+    inst = build_instance(
         depots_df=b.depots,
         floods_df=b.floods,
         ifs_df=b.ifs,
         dist_matrix=b.distance_matrix,
         time_matrix=b.time_matrix,
         si_values=sev.si_values,
-        volume_per_cm=volume_per_cm,
         unserved_penalty=unserved_penalty,
     )
+    if volume_scale != 1.0:
+        inst.volumes = inst.volumes * volume_scale
+    return inst
 
 
 def test_idle_solution_is_penalised_not_rejected(s2):
@@ -35,19 +42,22 @@ def test_idle_solution_is_penalised_not_rejected(s2):
 
 
 def test_full_coverage_has_no_penalty(s2):
-    inst = _instance(s2)
-    sol = HybridACS(inst, ACSParams(iterations=6, n_ants=6, seed=1, time_limit_s=15)).solve()
+    # Light enough that the fleet finishes, so the no-penalty path is exercised
+    # rather than skipped.
+    inst = _instance(s2, volume_scale=0.02)
+    sol = HybridACS(inst, ACSParams(iterations=20, n_ants=12, seed=1, time_limit_s=20)).solve()
     ev = sol.evaluation
-    if ev.unserved_volume <= 1.0:
-        assert ev.penalty == 0.0
-        assert ev.score == ev.objective_z
-        assert coverage_ratio(inst, ev) == 1.0
+
+    assert ev.unserved_volume <= 1.0, "this instance should be fully servable"
+    assert ev.penalty == 0.0
+    assert ev.score == ev.objective_z
+    assert coverage_ratio(inst, ev) == 1.0
 
 
 def test_solvers_survive_undeliverable_demand(s2):
     # Demand well past what 24 vehicles can move inside one deployment. Under
     # the old hard constraint both solvers raised; now they return a partial plan.
-    inst = _instance(s2, volume_per_cm=20000.0)
+    inst = _instance(s2, volume_scale=10.0)
 
     acs = HybridACS(inst, ACSParams(iterations=4, n_ants=4, seed=1, time_limit_s=15)).solve()
     vns = VNS(inst, VNSParams(max_iterations=6, seed=1, time_limit_s=15)).solve()
@@ -62,7 +72,7 @@ def test_solvers_survive_undeliverable_demand(s2):
 def test_time_limit_is_respected_under_heavy_demand(s2):
     # Local search scans grow with route length, so the budget has to be checked
     # inside the operators, not only between solver iterations.
-    inst = _instance(s2, volume_per_cm=3000.0)
+    inst = _instance(s2, volume_scale=2.0)
     limit = 20.0
 
     t0 = time.perf_counter()
@@ -79,7 +89,7 @@ def test_time_limit_is_respected_under_heavy_demand(s2):
 
 def test_no_route_outlasts_the_deployment_horizon(s2):
     # Without the horizon the solvers bought coverage with 23-hour tours.
-    inst = _instance(s2, volume_per_cm=20000.0)
+    inst = _instance(s2, volume_scale=10.0)
 
     acs = HybridACS(inst, ACSParams(iterations=4, n_ants=4, seed=5, time_limit_s=15)).solve()
     vns = VNS(inst, VNSParams(max_iterations=6, seed=5, time_limit_s=15)).solve()
@@ -94,7 +104,7 @@ def test_no_route_outlasts_the_deployment_horizon(s2):
 def test_vns_is_not_capped_to_three_visits(s2):
     # The old constructor capped visits at max(3, n_floods*2//n_vehicles), which
     # collapsed VNS on any heavy scenario regardless of the horizon.
-    inst = _instance(s2, volume_per_cm=20000.0)
+    inst = _instance(s2, volume_scale=10.0)
     sol = VNS(inst, VNSParams(max_iterations=6, seed=5, time_limit_s=15)).solve()
 
     busiest = max(
@@ -114,8 +124,8 @@ def test_drain_time_varies_with_outlet(s2):
 
 
 def test_higher_penalty_never_lowers_coverage(s2):
-    lo = _instance(s2, volume_per_cm=20000.0, unserved_penalty=1.0)
-    hi = _instance(s2, volume_per_cm=20000.0, unserved_penalty=500.0)
+    lo = _instance(s2, volume_scale=10.0, unserved_penalty=1.0)
+    hi = _instance(s2, volume_scale=10.0, unserved_penalty=500.0)
     p = ACSParams(iterations=4, n_ants=4, seed=7, time_limit_s=15)
 
     cov_lo = coverage_ratio(lo, HybridACS(lo, p).solve().evaluation)

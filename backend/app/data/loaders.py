@@ -52,7 +52,7 @@ def load_floods(path: Path) -> pd.DataFrame:
             "Ketinggian (cm)": "ketinggian_cm",
         }
     )
-    for col in ("ketinggian_cm", "road_class", "dist_faskes_m", "lat", "lon"):
+    for col in ("ketinggian_cm", "road_class", "dist_faskes_m", "volume_l", "lat", "lon"):
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce")
     df = df.dropna(subset=["lat", "lon"]).reset_index(drop=True)

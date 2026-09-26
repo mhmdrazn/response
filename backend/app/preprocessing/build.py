@@ -18,7 +18,7 @@ from app.config import (
     scenario_matrix_paths,
 )
 from app.data import loaders
-from app.preprocessing import faskes, matrix, roads
+from app.preprocessing import faskes, matrix, roads, workload
 
 
 def _to_backend_schema(points: pd.DataFrame, road_class: list[int], dist_faskes: list[float]) -> pd.DataFrame:
@@ -32,6 +32,12 @@ def _to_backend_schema(points: pd.DataFrame, road_class: list[int], dist_faskes:
         "road_class": pd.Series(road_class, dtype=int),
         "dist_faskes_m": np.round(dist_faskes, 2),
     })
+
+
+def _scenario_dates(points: pd.DataFrame) -> set[str]:
+    """Days this scenario covers — held out so its own log rows never calibrate it."""
+    d = pd.to_datetime(points.get("datetime"), errors="coerce")
+    return set(d.dt.strftime("%Y-%m-%d").dropna())
 
 
 def _update_manifest(meta: dict) -> None:
@@ -78,6 +84,21 @@ def build_scenario(
     dpath, tpath = scenario_matrix_paths(scenario_id)
     np.save(dpath, dist)
     np.save(tpath, time_m)
+
+    # Workload needs the IF travel times, so it lands after the matrices and the
+    # scenario file is rewritten with the extra column.
+    print(f"[{scenario_id}] beban pemompaan ...")
+    n_d, n_f = len(depots), len(floods)
+    table = workload.calibrate_on_scene(exclude_dates=_scenario_dates(points))
+    volumes = workload.volumes_for_points(
+        depths_cm=floods["ketinggian_cm"].to_numpy(),
+        time_flood_to_if=time_m[n_d:n_d + n_f, n_d + n_f:],
+        if_waterway_types=ifs.get("waterway_type", pd.Series([""] * len(ifs))).tolist(),
+        table=table,
+    )
+    out = pd.read_csv(scenario_floods_path(scenario_id))
+    out["volume_l"] = np.round(volumes, 1)
+    out.to_csv(scenario_floods_path(scenario_id), index=False)
 
     meta = {
         "id": scenario_id,
