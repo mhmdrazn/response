@@ -141,18 +141,54 @@ Alurnya:
 - `scripts/backfill_workload.py` mengisi kolom itu pada skenario yang sudah ada
   memakai matriks tersimpan, tanpa memanggil OSRM atau Overpass
 
+### Cacat ketiga: sisa yang tak pernah terambil
+
+Hasil pertama memberi ACS 99,6% / 94,4% / 99,3% — tidak pernah 100%, padahal
+armada punya waktu. Penelusurannya:
+
+```
+fase 1 berhenti di ronde 105/179
+pembukuan konstruksi : sisa 554.348 L pada 8 titik
+fase overflow jalan  : True
+setelah overflow     : sisa 0 L        <- konstruksi merasa tuntas
+evaluator            : sisa 6.829 L    <- kenyataannya tidak
+```
+
+Konstruksi membukukan volume berselang-seling antar kendaraan, sementara
+evaluator memutar ulang satu rute sampai habis baru rute berikutnya. Urutan
+yang berbeda memberi isi tangki yang berbeda saat sebuah kendaraan tiba di satu
+titik, sehingga ia memompa lebih sedikit daripada yang dikira konstruksi.
+Selisihnya kecil (0,3%) tetapi tidak pernah hilang, karena local search hanya
+memindah perhentian yang sudah ada — ia tidak bisa menambah kunjungan.
+
+Perbaikannya: kedua solver kini menutup dengan **repair berbasis evaluator** —
+selama masih ada sisa, sisipkan IF + titik itu ke kendaraan termurah yang masih
+muat dalam horizon. Tiga detik anggaran waktu disisihkan untuknya, karena
+pencarian selalu memakai jatahnya sampai habis dan repair di dalam loop keburu
+berhenti di deadline.
+
+Kelayakan horizon ikut menentukan pilihan kendaraan, bukan diuji setelah satu
+kendaraan terpilih: kru terdekat biasanya yang tersibuk, jadi menguji hanya dia
+membuat repair menyerah padahal kru lain masih sanggup.
+
 ### Hasil pada data nyata
 
 ```
-skenario  titik   beban        ACS cakupan/rute      VNS cakupan/rute
-s1-jan       17   2,37 jt L    99,6% / 8,6j          100,0% / 8,6j
-s2-jun       34   5,37 jt L    94,4% / 8,6j           93,3% / 8,6j
-s3-nov       27   3,17 jt L    99,3% / 8,6j           99,8% / 8,6j
+skenario  titik   beban       ACS cakupan / Z        VNS cakupan / Z
+s1-jan       17   2,37 jt L   100,000% / 2,90 jt     100,000% / 3,54 jt
+s2-jun       34   5,37 jt L    94,524% / 9,51 jt      96,454% / 9,68 jt
+s3-nov       27   3,17 jt L   100,000% / 3,37 jt     100,000% / 4,22 jt
 ```
 
-Tidak ada lembur pada ketiganya. `s2-jun` yang paling berat: 11 titik tersisa,
-0,30 juta liter bergulir ke periode berikutnya, 1.304 kunjungan IF, komputasi
-46 detik.
+Semua rute berhenti di 8,6 jam, tanpa lembur, komputasi 42 detik.
+
+Hasilnya terbagi: ACS unggul di `s1-jan` dan `s3-nov` lewat Z pada cakupan yang
+sama, VNS unggul di `s2-jun` lewat cakupan. `s2-jun` justru contoh kenapa
+peringkat harus mendahulukan cakupan — di sana Z milik VNS **lebih tinggi**,
+tetapi ia menuntaskan 1,9 poin persen beban lebih banyak.
+
+`s2-jun` satu-satunya yang mengikat horizon: beban 5,37 juta liter melampaui
+207 jam-kendaraan yang tersedia, jadi sebagian bergulir ke periode berikutnya.
 
 Implementasi: kolom `volume_l` pada `floods.csv`, dihitung saat preprocessing.
 `instance.py` memakainya bila ada, konstanta lama tinggal jadi cadangan.

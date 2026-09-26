@@ -113,6 +113,20 @@ def test_vns_is_not_capped_to_three_visits(s2):
     assert busiest > 3, f"VNS still capped at {busiest} flood visits per route"
 
 
+def test_both_solvers_close_servable_demand(s2):
+    # The constructors book volume round-robin while the evaluator replays one
+    # route at a time, so a few thousand litres used to be stranded that local
+    # search could never pick up — it only moves existing stops.
+    inst = _instance(s2, volume_scale=0.3)
+
+    acs = HybridACS(inst, ACSParams(iterations=30, n_ants=12, seed=2, time_limit_s=30)).solve()
+    vns = VNS(inst, VNSParams(max_iterations=60, seed=2, time_limit_s=30)).solve()
+
+    for name, sol in (("ACS", acs), ("VNS", vns)):
+        cov = coverage_ratio(inst, sol.evaluation)
+        assert cov > 0.999, f"{name} stranded {sol.evaluation.unserved_volume:.0f} L"
+
+
 def test_drain_time_varies_with_outlet(s2):
     inst = _instance(s2)
     types = [str(f.get("waterway_type") or "") for f in inst.ifs]

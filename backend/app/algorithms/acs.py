@@ -13,10 +13,14 @@ import numpy as np
 
 from app.algorithms.evaluator import (
     SolutionEval,
+    all_floods_served,
     evaluate_solution,
 )
 from app.algorithms.instance import PUMP_RATE_LPS, SERVICE_SETUP_S, Instance
 from app.algorithms.local_search import polish
+
+# Seconds held back from the time budget for the closing repair pass.
+REPAIR_RESERVE_S = 3.0
 
 
 @dataclass
@@ -225,6 +229,85 @@ class HybridACS:
         d = self.inst.dist_matrix[i, pool]
         return int(pool[int(np.argmin(d))])
 
+    # ---------------- Repair ----------------
+
+    def _repair(
+        self,
+        routes: list[list[int]],
+        capacities: list[int],
+        deadline: float | None = None,
+    ) -> SolutionEval:
+        """Pick up work the constructor thinks it placed but the evaluator does not.
+
+        The constructor books volume round-robin across vehicles while the
+        evaluator replays one whole route at a time, so a vehicle can reach a
+        point with a different amount of free tank than the constructor assumed
+        and pump less. Local search cannot recover it — its operators only move
+        existing stops — so coverage is repaired here against the evaluator,
+        the same way VNS does.
+        """
+        ev = evaluate_solution(self.inst, routes, capacities)
+        for _ in range(self.inst.n_floods * 3):
+            if all_floods_served(ev.remaining_volume):
+                break
+            if deadline is not None and time.perf_counter() >= deadline:
+                break
+            if not self._repair_one(routes, capacities, ev):
+                break
+            ev = evaluate_solution(self.inst, routes, capacities)
+        return ev
+
+    def _repair_one(
+        self,
+        routes: list[list[int]],
+        capacities: list[int],
+        ev: SolutionEval,
+    ) -> bool:
+        """Append IF + one unserved flood to the cheapest vehicle that still fits."""
+        slots = np.where(ev.remaining_volume > 0.5)[0]
+        if len(slots) == 0:
+            return False
+        slot = int(slots[0])
+        flood = self.inst.flood_indices[slot]
+        assigned = int(self.inst.nearest_depot[slot])
+        t = self.inst.time_matrix
+        if_base = self.inst.n_depots + self.inst.n_floods
+        horizon = self.inst.route_horizon_s
+
+        best_vi, best_added, best_if = -1, float("inf"), -1
+        # Prefer the flood's own depot (HC6), then fall back to any vehicle.
+        for pool in ([vi for vi in range(len(routes)) if routes[vi][0] == assigned],
+                     list(range(len(routes)))):
+            for vi in pool:
+                route = routes[vi]
+                if len(route) < 2:
+                    continue
+                prev, depot = route[-2], route[-1]
+                nif = self._nearest(flood, self.inst.if_indices)
+                pump = min(float(ev.remaining_volume[slot]), float(capacities[vi]))
+                added = (
+                    float(t[prev, nif])
+                    + float(self.inst.if_drain_s[nif - if_base])
+                    + float(t[nif, flood])
+                    + SERVICE_SETUP_S
+                    + pump / PUMP_RATE_LPS
+                    + float(t[flood, depot])
+                    - float(t[prev, depot])
+                )
+                if ev.routes[vi].total_time + added > horizon:
+                    continue
+                if added < best_added:
+                    best_vi, best_added, best_if = vi, added, nif
+            if best_vi >= 0:
+                break
+
+        if best_vi < 0:
+            return False
+        routes[best_vi] = routes[best_vi][:-1] + [
+            best_if, flood, routes[best_vi][-1]
+        ]
+        return True
+
     # ---------------- Pheromone updates ----------------
 
     def _local_update(self, i: int, j: int) -> None:
@@ -248,6 +331,9 @@ class HybridACS:
         deadline = (
             start + self.p.time_limit_s if self.p.time_limit_s is not None else None
         )
+        # Hold a slice of the budget back so the closing repair still runs when
+        # the search uses every second it is given. Coverage is decided there.
+        search_deadline = deadline - REPAIR_RESERVE_S if deadline is not None else None
         best_routes: list[list[int]] | None = None
         best_caps: list[int] | None = None
         best_score = float("inf")
@@ -260,7 +346,7 @@ class HybridACS:
             iter_best_caps: list[int] | None = None
 
             for _ in range(self.p.n_ants):
-                if deadline is not None and time.perf_counter() >= deadline:
+                if search_deadline is not None and time.perf_counter() >= search_deadline:
                     break
                 routes, caps = self._construct_one_ant()
                 ev = evaluate_solution(self.inst, routes, caps)
@@ -275,18 +361,29 @@ class HybridACS:
                 trace.best_z.append(fallback)
                 continue
 
+            # Close the gap between the constructor's bookkeeping and the
+            # evaluator before polishing, since polish can only move stops.
+            iter_best_score = self._repair(
+                iter_best_routes, iter_best_caps or [], search_deadline
+            ).score
+
             # Stratified polish: quick per iter, full every 5 iter.
             # Quick = only 2-opt + relocate (fast). Full adds or-opt + exchange.
             if it % 5 == 0 and it > 0:
                 iter_best_routes, iter_best_score, ev = polish(
                     self.inst, iter_best_routes, iter_best_caps, iter_best_score,
-                    max_rounds=3, quick=False, deadline=deadline,
+                    max_rounds=3, quick=False, deadline=search_deadline,
                 )
             else:
                 iter_best_routes, iter_best_score, ev = polish(
                     self.inst, iter_best_routes, iter_best_caps, iter_best_score,
-                    max_rounds=1, quick=True, deadline=deadline,
+                    max_rounds=1, quick=True, deadline=search_deadline,
                 )
+
+            # Polish reorders stops, which can strand volume again, so repair
+            # once more on what it produced.
+            ev = self._repair(iter_best_routes, iter_best_caps or [], search_deadline)
+            iter_best_score = ev.score
 
             if iter_best_score < best_score:
                 best_score = iter_best_score
@@ -298,10 +395,7 @@ class HybridACS:
             trace.iter_best_z.append(float(iter_best_score))
             trace.best_z.append(float(best_score))
 
-            if (
-                self.p.time_limit_s is not None
-                and time.perf_counter() - start > self.p.time_limit_s
-            ):
+            if search_deadline is not None and time.perf_counter() >= search_deadline:
                 break
 
         if best_routes is None or best_eval is None or best_caps is None:
@@ -311,11 +405,11 @@ class HybridACS:
         # deep-polish the best-so-far solution. Runs all four operators
         # with high max_rounds; guarded by remaining time budget.
         elapsed = time.perf_counter() - start
-        budget_left = (self.p.time_limit_s or 0.0) - elapsed
+        budget_left = (self.p.time_limit_s or 0.0) - REPAIR_RESERVE_S - elapsed
         if budget_left > 2.0:
             polished_routes, polished_score, polished_eval = polish(
                 self.inst, best_routes, best_caps, best_score,
-                max_rounds=10, quick=False, deadline=deadline,
+                max_rounds=10, quick=False, deadline=search_deadline,
             )
             if polished_score + 1e-9 < best_score:
                 best_routes = polished_routes
@@ -323,6 +417,11 @@ class HybridACS:
                 best_eval = polished_eval
                 trace.best_z.append(float(best_score))
                 trace.iter_best_z.append(float(best_score))
+
+        # Always close on a repair: the search may have spent every second it
+        # had, leaving the in-loop repairs to bail out on the deadline.
+        best_eval = self._repair(best_routes, best_caps, deadline)
+        best_score = best_eval.score
 
         elapsed = time.perf_counter() - start
         return ACSSolution(

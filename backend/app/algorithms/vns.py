@@ -18,6 +18,9 @@ from app.algorithms.evaluator import (
 from app.algorithms.instance import PUMP_RATE_LPS, SERVICE_SETUP_S, Instance
 from app.algorithms.local_search import polish
 
+# Seconds held back from the time budget for the closing repair pass.
+REPAIR_RESERVE_S = 3.0
+
 
 @dataclass
 class VNSParams:
@@ -198,56 +201,74 @@ class VNS:
         scores = scores * noise
         return int(candidates[int(np.argmax(scores))])
 
+    def _repair(
+        self,
+        routes: list[list[int]],
+        capacities: list[int],
+        deadline: float | None = None,
+    ) -> SolutionEval:
+        """Pick up volume that shaking and polish stranded.
+
+        The initial solution is repaired to full coverage, but the operators
+        reorder stops afterwards and a vehicle can then reach a point with less
+        free tank than before. They can only move existing stops, never add
+        one, so coverage is restored here against the evaluator.
+        """
+        ev = evaluate_solution(self.inst, routes, capacities)
+        for _ in range(self.inst.n_floods * 3):
+            if all_floods_served(ev.remaining_volume):
+                break
+            if deadline is not None and time.perf_counter() >= deadline:
+                break
+            if not self._repair_one(routes, capacities, ev.remaining_volume):
+                break
+            ev = evaluate_solution(self.inst, routes, capacities)
+        return ev
+
     def _repair_one(
         self,
         routes: list[list[int]],
         capacities: list[int],
         remaining_volume: np.ndarray,
-    ) -> None:
+    ) -> bool:
         unserved = [
             (k, fi)
             for k, fi in enumerate(self.inst.flood_indices)
             if remaining_volume[k] > 0.5
         ]
         if not unserved:
-            return
+            return False
 
         flood_slot, flood_node = unserved[0]
         assigned_depot = int(self.inst.nearest_depot[flood_slot])
-
-        # Prefer vehicles from flood's assigned depot, fall back to nearest any
-        best_vi = -1
-        best_dist = float("inf")
-        for vi in range(len(routes)):
-            depot_of_vehicle = routes[vi][0]
-            if depot_of_vehicle != assigned_depot:
-                continue
-            last_stop = routes[vi][-2] if len(routes[vi]) >= 2 else routes[vi][0]
-            d = float(self.inst.dist_matrix[last_stop, flood_node])
-            if d < best_dist:
-                best_dist = d
-                best_vi = vi
-
-        if best_vi < 0:
-            for vi in range(len(routes)):
-                last_stop = routes[vi][-2] if len(routes[vi]) >= 2 else routes[vi][0]
-                d = float(self.inst.dist_matrix[last_stop, flood_node])
-                if d < best_dist:
-                    best_dist = d
-                    best_vi = vi
-
-        if best_vi < 0:
-            return
-
-        route = routes[best_vi]
         nearest_if = self._nearest(flood_node, self.inst.if_indices)
-        depot = route[-1]
-        candidate = route[:-1] + [nearest_if, flood_node, depot]
-        # Repair may not push a crew past its deployment horizon; an over-long
-        # route earns nothing anyway once the evaluator stops the clock.
-        if self._route_time(candidate, capacities[best_vi]) > self.inst.route_horizon_s:
-            return
-        routes[best_vi] = candidate
+
+        # Prefer the flood's own depot (HC6), then any vehicle. Horizon fit is
+        # part of choosing, not a check on one pre-picked vehicle: the closest
+        # crew is usually the busiest, so testing only that one gives up while
+        # another could still take the work.
+        best_vi, best_dist, best_route = -1, float("inf"), None
+        for pool in (
+            [vi for vi in range(len(routes)) if routes[vi][0] == assigned_depot],
+            list(range(len(routes))),
+        ):
+            for vi in pool:
+                route = routes[vi]
+                last_stop = route[-2] if len(route) >= 2 else route[0]
+                d = float(self.inst.dist_matrix[last_stop, flood_node])
+                if d >= best_dist:
+                    continue
+                candidate = route[:-1] + [nearest_if, flood_node, route[-1]]
+                if self._route_time(candidate, capacities[vi]) > self.inst.route_horizon_s:
+                    continue
+                best_vi, best_dist, best_route = vi, d, candidate
+            if best_vi >= 0:
+                break
+
+        if best_vi < 0 or best_route is None:
+            return False
+        routes[best_vi] = best_route
+        return True
 
     def _route_time(self, route: list[int], cap: int) -> float:
         """Duration of one route, replaying the tank the way the evaluator does.
@@ -365,8 +386,9 @@ class VNS:
         deadline = (
             start + self.p.time_limit_s if self.p.time_limit_s is not None else None
         )
+        search_deadline = deadline - REPAIR_RESERVE_S if deadline is not None else None
 
-        routes, capacities = self._greedy_initial(deadline)
+        routes, capacities = self._greedy_initial(search_deadline)
         ev = evaluate_solution(self.inst, routes, capacities)
 
         best_routes = [list(r) for r in routes]
@@ -389,7 +411,7 @@ class VNS:
                     shaken_ev = evaluate_solution(self.inst, shaken, best_caps)
                     polished, pol_score, pol_ev = polish(
                         self.inst, shaken, best_caps, shaken_ev.score,
-                        max_rounds=2, quick=True, deadline=deadline,
+                        max_rounds=2, quick=True, deadline=search_deadline,
                     )
                 except Exception:
                     k += 1
@@ -404,20 +426,19 @@ class VNS:
                 else:
                     k += 1
 
-                if (
-                    self.p.time_limit_s is not None
-                    and time.perf_counter() - start > self.p.time_limit_s
-                ):
+                if search_deadline is not None and time.perf_counter() >= search_deadline:
                     break
 
             trace.iter_best_z.append(float(iter_score))
             trace.best_z.append(float(best_score))
 
-            if (
-                self.p.time_limit_s is not None
-                and time.perf_counter() - start > self.p.time_limit_s
-            ):
+            if search_deadline is not None and time.perf_counter() >= search_deadline:
                 break
+
+        # Always close on a repair: the search may have spent its whole budget,
+        # leaving shaking and polish free to strand volume.
+        best_eval = self._repair(best_routes, best_caps, deadline)
+        best_score = best_eval.score
 
         elapsed = time.perf_counter() - start
         return VNSSolution(
