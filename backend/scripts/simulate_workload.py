@@ -79,6 +79,7 @@ def main() -> None:
     print(f"siklus buang IF   : {cycle_s:.0f} s ({cycle_s / 60:.1f} menit)")
     print(f"debit pompa       : {PUMP_RATE_LPS * 60:.0f} L/menit")
     print(f"tangki rata-rata  : {cap} L")
+    print(f"horizon per rute  : {base.route_horizon_s / 3600:.1f} jam")
     print()
 
     t_pump = pumping_minutes(args.minutes, cycle_s, cap)
@@ -96,7 +97,10 @@ def main() -> None:
         ("p75 382 mnt di lokasi", pumping_minutes(382.0, cycle_s, cap)),
     ]
 
-    header = f"{'beban':<24}{'V per titik':>13}{'total':>12}{'ACS':>18}{'VNS':>18}"
+    header = (
+        f"{'beban':<24}{'V per titik':>13}{'total':>12}"
+        f"{'ACS  cakupan/waktu/rute':>26}{'VNS  cakupan/waktu/rute':>26}"
+    )
     print(header)
     print("-" * len(header))
 
@@ -119,14 +123,18 @@ def main() -> None:
                               time_limit_s=args.time_limit),
                 ).solve()
             elapsed = time.perf_counter() - t0
-            out.append(f"{coverage_ratio(inst, sol.evaluation) * 100:5.1f}% / {elapsed:4.1f}s")
+            ev = sol.evaluation
+            longest = max(r.total_time for r in ev.routes) / 3600
+            out.append(
+                f"{coverage_ratio(inst, ev) * 100:5.1f}% /{elapsed:4.1f}s /{longest:4.1f}j"
+            )
 
         inst = make(volume)
         per_point = inst.volumes.mean()
         total = inst.volumes.sum()
         print(
             f"{label:<24}{per_point / 1000:9.1f} m3{total / 1_000_000:9.2f} jt L"
-            f"{out[0]:>18}{out[1]:>18}"
+            f"{out[0]:>26}{out[1]:>26}"
         )
 
 

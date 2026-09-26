@@ -206,44 +206,68 @@ beban.
 ## Simulasi dampak Tahap A
 
 `backend/scripts/simulate_workload.py` menghitung ulang instance di memori pada
-beberapa skala beban tanpa menyentuh data. Hasil pada `s2-jun`, cap 45 detik:
+beberapa skala beban tanpa menyentuh data.
 
-```
-beban                     V per titik      total          ACS            VNS
-sekarang (100 L/cm)           2,3 m3    0,08 jt L   100,0% / 17s   100,0% / 45s
-p25   67 mnt di lokasi       32,6 m3    1,11 jt L    99,6% / 45s    56,3% / 45s
-p50  268 mnt di lokasi      131,7 m3    4,48 jt L    99,5% / 45s    14,8% / 45s
-p75  382 mnt di lokasi      188,0 m3    6,39 jt L    99,6% / 45s     9,2% / 45s
-```
+### Temuan pertama: dua cacat model
 
-Dugaan awal bahwa cakupan akan runtuh ternyata salah, dan penyebabnya
-memunculkan dua cacat model yang lebih penting daripada angka bebannya sendiri.
+Simulasi awal memberi ACS 99,5% dan VNS 14,8% pada beban p50. Cakupan yang tidak
+runtuh itu justru membongkar dua cacat.
 
-### Tidak ada batas horizon shift
+**Tidak ada batas horizon.** ACS bertahan 99,5% dengan memanjangkan rute: median
+4,8 jam, **maksimum 23,3 jam**, 1.138 kunjungan IF. Cakupan dibeli dengan rute
+yang tidak mungkin dijalankan.
 
-ACS bertahan di 99,6% pada beban 4,48 juta liter dengan cara memanjangkan rute:
-median 4,8 jam, **maksimum 23,3 jam**, 1.138 kunjungan IF. Model tidak punya
-batas durasi per kendaraan, jadi cakupan dibeli dengan rute yang tidak mungkin
-dijalankan.
-
-Selama volume masih 2,3 m³ hal ini tidak terlihat. Dengan beban empiris, batas
-horizon (misal 8 jam per unit) menjadi syarat agar angka cakupan berarti — dan
-justru di situlah constraint lunak mulai bekerja sungguhan.
-
-### VNS terbatas secara struktural
-
-`_build_greedy_route` membatasi kunjungan genangan per rute:
+**VNS terbatas secara struktural.** `_build_greedy_route` membatasi kunjungan:
 
 ```
 max_flood_visits = max(3, (n_floods * 2) // n_vehicles + 1)   -> 3
 ```
 
-Dengan 34 titik dan 24 kendaraan, batasnya 3. VNS tidak akan pernah bisa
-menyusun rute panjang, sehingga runtuh ke 14,8% sementara ACS hampir tuntas.
-Kekalahan VNS di sini **artefak konstruktor, bukan mutu algoritma**.
+Batas 3 kunjungan per rute membuat VNS tidak akan pernah bisa menggarap skenario
+berat. Kekalahannya artefak konstruktor, bukan mutu algoritma — dan kalau
+dibiarkan, bab perbandingan akan menyimpulkan hal yang salah.
 
-Kalau ini dibiarkan, bab perbandingan ACS vs VNS akan menyimpulkan hal yang
-salah. Batas itu harus diikat ke beban nyata, bukan ke jumlah titik.
+### Perbaikan
+
+**Horizon** diambil dari deployment terpanjang di log Damkar,
+`berangkat -> tiba_pangkalan`, **930 menit = 15,5 jam** (n=408, p90 8,6 jam,
+p95 10,1 jam). Penegakannya tiga lapis:
+
+1. Konstruksi ACS dan VNS menolak langkah yang tidak sempat pulang sebelum
+   horizon
+2. Evaluator berhenti menghitung pemompaan setelah horizon — kerja lembur tidak
+   berimbalan
+3. Kelebihan waktu diberi harga `HORIZON_PENALTY = 5000` per detik. Satu detik
+   lembur paling banter membeli satu detik pemompaan yang bernilai
+   `UNSERVED_PENALTY × max(SI)` = 500, jadi bobot sepuluh kali lipat menutup
+   ruang tukar. Tanpa lapis ini local search masih menyisakan lembur, karena
+   "tidak berimbalan" belum berarti "mahal"
+
+**Batas kunjungan VNS dihapus**, diganti horizon yang sama. Satu bug ikut
+ketahuan: `_route_time` pada fase repair mengabaikan waktu pompa, padahal itu
+bagian terbesar satu perhentian di skenario berat, sehingga repair mengira rute
+penuh masih punya ruang.
+
+### Hasil setelah perbaikan
+
+```
+beban                  V per titik     total    ACS cakupan/waktu/rute   VNS cakupan/waktu/rute
+sekarang (100 L/cm)        2,3 m3   0,08 jt L      100,0% / 28s / 1,5j      98,7% / 45s / 3,0j
+p25  67 mnt di lokasi     32,6 m3   1,11 jt L       99,4% / 45s / 12,2j     99,3% / 45s / 15,4j
+p50 268 mnt di lokasi    131,7 m3   4,48 jt L       99,4% / 45s / 15,5j     99,9% / 46s / 15,5j
+p75 382 mnt di lokasi    188,0 m3   6,39 jt L       99,6% / 46s / 15,5j     99,8% / 46s / 15,5j
+```
+
+VNS naik dari 14,8% ke 99,9% di p50 dan kini **unggul tipis atas ACS** — batas
+konstruktor itu memang seluruh ceritanya. Tidak ada rute yang melewati 15,5 jam.
+
+Cakupan tetap tinggi karena armada memang sanggup: beban p75 6,39 juta liter
+butuh sekitar 215 jam-kendaraan, sementara 24 unit × 15,5 jam menyediakan 372
+jam-kendaraan. Jadi horizon belum mengikat pada skala ini.
+
+Perlu dicatat, 15,5 jam adalah kejadian **terpanjang**, bukan yang lazim. Bila
+nanti ingin rencana yang lebih ketat, p90 (8,6 jam) pilihan yang lebih wajar dan
+akan membuat cakupan benar-benar bersaing.
 
 ## Catatan risiko
 

@@ -15,7 +15,7 @@ from app.algorithms.evaluator import (
     SolutionEval,
     evaluate_solution,
 )
-from app.algorithms.instance import Instance
+from app.algorithms.instance import PUMP_RATE_LPS, SERVICE_SETUP_S, Instance
 from app.algorithms.local_search import polish
 
 
@@ -115,12 +115,27 @@ class HybridACS:
         # Standby full: a deployed vehicle must visit an IF (empty) before it can
         # pump. Starting full makes the "tank full -> go to IF" branch fire first.
         tanks = [float(capacities[vi]) for vi in range(n_vehicles)]
+        clocks = [0.0] * n_vehicles
+
+        def step(vi: int, nxt: int, service_s: float) -> bool:
+            """Append nxt to vi's route if it still gets home inside the horizon."""
+            cur = routes[vi][-1]
+            t = self.inst.time_matrix
+            arrival = clocks[vi] + float(t[cur, nxt])
+            home = float(t[nxt, depots[vi]])
+            if arrival + service_s + home > self.inst.route_horizon_s:
+                return False
+            clocks[vi] = arrival + service_s
+            routes[vi].append(nxt)
+            self._local_update(cur, nxt)
+            return True
 
         order = list(range(n_vehicles))
         self._rng.shuffle(order)
 
         max_rounds = self.inst.n_floods * 2 + self.inst.n_ifs + 5
         depot_floods = self.inst.depot_flood_sets
+        if_base = self.inst.n_depots + self.inst.n_floods
 
         for _round in range(max_rounds):
             if not np.any(volumes_left > 0.5):
@@ -141,8 +156,9 @@ class HybridACS:
 
                 if tanks[vi] >= cap - 1e-3:
                     nearest_if = self._nearest(cur, self.inst.if_indices)
-                    routes[vi].append(nearest_if)
-                    self._local_update(cur, nearest_if)
+                    drain = float(self.inst.if_drain_s[nearest_if - if_base])
+                    if not step(vi, nearest_if, drain):
+                        continue
                     tanks[vi] = 0.0
                     made_progress = True
                     continue
@@ -153,10 +169,10 @@ class HybridACS:
                 pump = float(min(volumes_left[slot], free))
                 if pump <= 0:
                     continue
+                if not step(vi, nxt, SERVICE_SETUP_S + pump / PUMP_RATE_LPS):
+                    continue
                 volumes_left[slot] -= pump
                 tanks[vi] += pump
-                routes[vi].append(nxt)
-                self._local_update(cur, nxt)
                 made_progress = True
             if not made_progress:
                 break
@@ -178,8 +194,9 @@ class HybridACS:
                     cap = capacities[vi]
                     if tanks[vi] >= cap - 1e-3:
                         nearest_if = self._nearest(cur, self.inst.if_indices)
-                        routes[vi].append(nearest_if)
-                        self._local_update(cur, nearest_if)
+                        drain = float(self.inst.if_drain_s[nearest_if - if_base])
+                        if not step(vi, nearest_if, drain):
+                            continue
                         tanks[vi] = 0.0
                         made_progress = True
                         continue
@@ -189,10 +206,10 @@ class HybridACS:
                     pump = float(min(volumes_left[slot], free))
                     if pump <= 0:
                         continue
+                    if not step(vi, nxt, SERVICE_SETUP_S + pump / PUMP_RATE_LPS):
+                        continue
                     volumes_left[slot] -= pump
                     tanks[vi] += pump
-                    routes[vi].append(nxt)
-                    self._local_update(cur, nxt)
                     made_progress = True
                 if not made_progress:
                     break

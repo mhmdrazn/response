@@ -45,9 +45,9 @@ def test_full_coverage_has_no_penalty(s2):
 
 
 def test_solvers_survive_undeliverable_demand(s2):
-    # 40x the demand cannot fit the fleet inside the time cap. Under the old
-    # hard constraint both solvers raised; now they must return a partial plan.
-    inst = _instance(s2, volume_per_cm=4000.0)
+    # Demand well past what 24 vehicles can move inside one deployment. Under
+    # the old hard constraint both solvers raised; now they return a partial plan.
+    inst = _instance(s2, volume_per_cm=20000.0)
 
     acs = HybridACS(inst, ACSParams(iterations=4, n_ants=4, seed=1, time_limit_s=15)).solve()
     vns = VNS(inst, VNSParams(max_iterations=6, seed=1, time_limit_s=15)).solve()
@@ -77,6 +77,32 @@ def test_time_limit_is_respected_under_heavy_demand(s2):
     assert vns_elapsed < limit * 1.3, f"VNS overran the cap: {vns_elapsed:.1f}s"
 
 
+def test_no_route_outlasts_the_deployment_horizon(s2):
+    # Without the horizon the solvers bought coverage with 23-hour tours.
+    inst = _instance(s2, volume_per_cm=20000.0)
+
+    acs = HybridACS(inst, ACSParams(iterations=4, n_ants=4, seed=5, time_limit_s=15)).solve()
+    vns = VNS(inst, VNSParams(max_iterations=6, seed=5, time_limit_s=15)).solve()
+
+    for sol in (acs, vns):
+        longest = max(r.total_time for r in sol.evaluation.routes)
+        assert longest <= inst.route_horizon_s + 1.0, (
+            f"route lasts {longest / 3600:.1f}h > {inst.route_horizon_s / 3600:.1f}h"
+        )
+
+
+def test_vns_is_not_capped_to_three_visits(s2):
+    # The old constructor capped visits at max(3, n_floods*2//n_vehicles), which
+    # collapsed VNS on any heavy scenario regardless of the horizon.
+    inst = _instance(s2, volume_per_cm=20000.0)
+    sol = VNS(inst, VNSParams(max_iterations=6, seed=5, time_limit_s=15)).solve()
+
+    busiest = max(
+        sum(1 for v in r.visits if v.node_type == "flood") for r in sol.evaluation.routes
+    )
+    assert busiest > 3, f"VNS still capped at {busiest} flood visits per route"
+
+
 def test_drain_time_varies_with_outlet(s2):
     inst = _instance(s2)
     types = [str(f.get("waterway_type") or "") for f in inst.ifs]
@@ -88,8 +114,8 @@ def test_drain_time_varies_with_outlet(s2):
 
 
 def test_higher_penalty_never_lowers_coverage(s2):
-    lo = _instance(s2, volume_per_cm=4000.0, unserved_penalty=1.0)
-    hi = _instance(s2, volume_per_cm=4000.0, unserved_penalty=500.0)
+    lo = _instance(s2, volume_per_cm=20000.0, unserved_penalty=1.0)
+    hi = _instance(s2, volume_per_cm=20000.0, unserved_penalty=500.0)
     p = ACSParams(iterations=4, n_ants=4, seed=7, time_limit_s=15)
 
     cov_lo = coverage_ratio(lo, HybridACS(lo, p).solve().evaluation)

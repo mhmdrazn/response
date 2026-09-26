@@ -15,7 +15,7 @@ from app.algorithms.evaluator import (
     all_floods_served,
     evaluate_solution,
 )
-from app.algorithms.instance import Instance
+from app.algorithms.instance import PUMP_RATE_LPS, SERVICE_SETUP_S, Instance
 from app.algorithms.local_search import polish
 
 
@@ -131,11 +131,14 @@ class VNS:
         route: list[int] = [depot]
         tank = float(cap)  # standby full: force an IF stop before pumping
         current = depot
-        flood_visits = 0
-        max_flood_visits = max(
-            3, (self.inst.n_floods * 2) // max(len(self.inst.vehicles), 1) + 1
-        )
-        max_steps = self.inst.n_floods * 2 + self.inst.n_ifs + 5
+        clock = 0.0
+        # How far a route may go is set by the deployment horizon, not by a
+        # visit count: tying it to n_floods/n_vehicles capped every route at 3
+        # visits and left VNS unable to work a heavy scenario at all.
+        horizon = self.inst.route_horizon_s
+        t = self.inst.time_matrix
+        if_base = self.inst.n_depots + self.inst.n_floods
+        max_steps = (self.inst.n_floods + self.inst.n_ifs) * 4 + 5
         own_floods = self.inst.depot_flood_sets.get(depot, set())
 
         for _ in range(max_steps):
@@ -149,12 +152,17 @@ class VNS:
                     fi for fi in own_floods
                     if volumes_left[self._flood_lookup[fi]] > 0.5
                 ]
-            if not served or flood_visits >= max_flood_visits:
+            if not served:
                 break
 
             if tank >= cap - 1e-3:
                 nearest_if = self._nearest(current, self.inst.if_indices)
+                drain = float(self.inst.if_drain_s[nearest_if - if_base])
+                arrival = clock + float(t[current, nearest_if])
+                if arrival + drain + float(t[nearest_if, depot]) > horizon:
+                    break
                 route.append(nearest_if)
+                clock = arrival + drain
                 tank = 0.0
                 current = nearest_if
                 continue
@@ -163,10 +171,14 @@ class VNS:
             flood_slot = self._flood_lookup[nxt]
             free = cap - tank
             pump = min(volumes_left[flood_slot], free)
+            service = SERVICE_SETUP_S + pump / PUMP_RATE_LPS
+            arrival = clock + float(t[current, nxt])
+            if arrival + service + float(t[nxt, depot]) > horizon:
+                break
             volumes_left[flood_slot] -= pump
             tank += pump
             route.append(nxt)
-            flood_visits += 1
+            clock = arrival + service
             current = nxt
 
         route.append(depot)
@@ -230,10 +242,37 @@ class VNS:
         route = routes[best_vi]
         nearest_if = self._nearest(flood_node, self.inst.if_indices)
         depot = route[-1]
-        route.pop()
-        route.append(nearest_if)
-        route.append(flood_node)
-        route.append(depot)
+        candidate = route[:-1] + [nearest_if, flood_node, depot]
+        # Repair may not push a crew past its deployment horizon; an over-long
+        # route earns nothing anyway once the evaluator stops the clock.
+        if self._route_time(candidate, capacities[best_vi]) > self.inst.route_horizon_s:
+            return
+        routes[best_vi] = candidate
+
+    def _route_time(self, route: list[int], cap: int) -> float:
+        """Duration of one route, replaying the tank the way the evaluator does.
+
+        Pump time is the bulk of a stop on a heavy scenario, so leaving it out
+        makes repair think a full route still has room.
+        """
+        t = self.inst.time_matrix
+        if_base = self.inst.n_depots + self.inst.n_floods
+        volumes = self.inst.volumes.copy()
+        tank = float(cap)
+        total = 0.0
+        for a, b in zip(route[:-1], route[1:]):
+            total += float(t[a, b])
+            if b >= if_base:
+                total += float(self.inst.if_drain_s[b - if_base])
+                tank = 0.0
+            elif b >= self.inst.n_depots:
+                slot = b - self.inst.n_depots
+                pump = min(volumes[slot], cap - tank)
+                if pump > 0:
+                    total += SERVICE_SETUP_S + pump / PUMP_RATE_LPS
+                    volumes[slot] -= pump
+                    tank += pump
+        return total
 
     def _nearest(self, i: int, pool: list[int]) -> int:
         d = self.inst.dist_matrix[i, pool]

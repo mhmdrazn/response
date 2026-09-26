@@ -26,6 +26,18 @@ IF_DRAIN_S = 120.0
 # `waterway_type` in if.csv; anything unlisted falls back to 1.0.
 IF_DRAIN_FACTOR = {"river": 0.75, "stream": 1.25}
 
+# Longest deployment observed in the Damkar log (berangkat -> tiba_pangkalan,
+# 930 min over 408 records). A route may not outlast one real deployment;
+# without it the solvers buy coverage with 23-hour tours.
+ROUTE_HORIZON_S = 930 * 60.0
+
+# Cost per second a route runs past the horizon. Work past it already earns
+# nothing, but that only makes overtime worthless, not costly — local search
+# would still lengthen a route when some other part of the move improved.
+# One extra second buys at most one second of pumping, worth at most
+# UNSERVED_PENALTY * max(SI) = 500; ten times that leaves no room to trade.
+HORIZON_PENALTY = 5000.0
+
 # Weight on severity-weighted pumping work left undone. Both terms of the
 # objective are in severity-seconds, so this stays dimensionless. Calibrated on
 # s2-jun: at 100 the solvers settled for 99.3% coverage that was achievable, at
@@ -72,6 +84,11 @@ class Instance:
     # Soft-constraint weight for unserved pumping work.
     unserved_penalty: float = UNSERVED_PENALTY
 
+    # Seconds a single vehicle may stay deployed on one route, and the cost of
+    # each second beyond it.
+    route_horizon_s: float = ROUTE_HORIZON_S
+    horizon_penalty: float = HORIZON_PENALTY
+
     # Geometry constraint: each flood assigned to its nearest depot
     nearest_depot: np.ndarray = field(default_factory=lambda: np.array([], dtype=int))
     # Quick lookup: depot_node_index -> set of flood node indices assigned to it
@@ -91,6 +108,8 @@ def build_instance(
     si_values: np.ndarray | None = None,
     volume_per_cm: float = DEFAULT_VOLUME_PER_CM,
     unserved_penalty: float = UNSERVED_PENALTY,
+    route_horizon_s: float = ROUTE_HORIZON_S,
+    horizon_penalty: float = HORIZON_PENALTY,
 ) -> Instance:
     depots = [_row_to_dict(r) for _, r in depots_df.iterrows()]
     floods = [_row_to_dict(r) for _, r in floods_df.iterrows()]
@@ -197,6 +216,8 @@ def build_instance(
         if_indices=if_indices,
         vehicles=vehicles,
         unserved_penalty=float(unserved_penalty),
+        route_horizon_s=float(route_horizon_s),
+        horizon_penalty=float(horizon_penalty),
         nearest_depot=nearest_depot,
         depot_flood_sets=depot_flood_sets,
     )

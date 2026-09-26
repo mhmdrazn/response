@@ -44,7 +44,8 @@ class SolutionEval:
     total_flood_visits: int
     remaining_volume: np.ndarray      # per flood, aligned to flood_indices
     unserved_volume: float = 0.0      # liters of pumping work left undone
-    penalty: float = 0.0              # severity-weighted cost of that work
+    overtime_s: float = 0.0           # seconds routes run past the horizon
+    penalty: float = 0.0              # cost of undone work plus overtime
     score: float = 0.0                # objective_z + penalty; what solvers rank on
 
 
@@ -103,6 +104,10 @@ def evaluate_solution(
             if ntype == "flood":
                 flood_idx = cur - inst.n_depots
                 remaining_here = volumes_left[flood_idx]
+                # Past the deployment horizon the crew is off duty: the visit
+                # earns nothing, so extending a route stops paying off.
+                if clock > inst.route_horizon_s:
+                    remaining_here = 0.0
                 if remaining_here <= 0:
                     r.visits.append(
                         VisitLog(
@@ -155,8 +160,10 @@ def evaluate_solution(
     # litres to pumping seconds puts the penalty in the same severity-seconds
     # unit as Z, so the two terms are directly comparable.
     left = np.maximum(volumes_left, 0.0)
+    overtime = sum(max(0.0, r.total_time - inst.route_horizon_s) for r in route_evals)
     penalty = float(
         inst.unserved_penalty * np.sum(inst.si_values * (left / PUMP_RATE_LPS))
+        + inst.horizon_penalty * overtime
     )
 
     return SolutionEval(
@@ -168,6 +175,7 @@ def evaluate_solution(
         total_flood_visits=total_flood,
         remaining_volume=volumes_left,
         unserved_volume=float(left.sum()),
+        overtime_s=float(overtime),
         penalty=penalty,
         score=z_total + penalty,
     )
@@ -215,6 +223,13 @@ def validate_hard_constraints(
                     f"tank={v.tank_load_after:.1f} > cap={r.capacity}"
                 )
                 break
+
+        # HC7: Route fits inside one deployment.
+        if r.total_time > inst.route_horizon_s + tol:
+            violations.append(
+                f"HC7 horizon: route {k} lasts {r.total_time / 3600:.1f}h > "
+                f"{inst.route_horizon_s / 3600:.1f}h"
+            )
 
         # HC5: Tank is 0 after visiting an IF.
         for v in r.visits:
