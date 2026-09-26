@@ -19,42 +19,22 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from app.config import SHARED_FILES, scenario_floods_path, scenario_matrix_paths
+from app.config import scenario_floods_path
 from app.data import loaders, registry
 from app.preprocessing import workload
 
 
 def backfill(scenario_id: str, dry_run: bool) -> None:
     floods = loaders.load_floods(scenario_floods_path(scenario_id))
-    ifs = loaders.load_ifs(SHARED_FILES["if"])
-    depots = loaders.load_depots(SHARED_FILES["depo"])
-
-    _, tpath = scenario_matrix_paths(scenario_id)
-    if not tpath.exists():
-        print(f"[{scenario_id}] lewati: {tpath.name} tidak ada")
-        return
-    time_m = np.load(tpath)
-
-    n_d, n_f, n_i = len(depots), len(floods), len(ifs)
-    if time_m.shape != (n_d + n_f + n_i,) * 2:
-        print(f"[{scenario_id}] lewati: matriks {time_m.shape} != {n_d}+{n_f}+{n_i}")
-        return
-
-    dates = set(
-        pd.to_datetime(floods["datetime"], errors="coerce").dt.strftime("%Y-%m-%d").dropna()
-    )
-    table = workload.calibrate_on_scene(exclude_dates=dates)
+    n_f = len(floods)
     volumes = workload.volumes_for_points(
         depths_cm=floods["ketinggian_cm"].to_numpy(),
-        time_flood_to_if=time_m[n_d:n_d + n_f, n_d + n_f:],
-        if_waterway_types=ifs.get("waterway_type", pd.Series([""] * n_i)).tolist(),
-        table=table,
+        road_classes=floods.get("road_class", pd.Series([np.nan] * n_f)).to_numpy(),
     )
-
     print(
-        f"[{scenario_id}] {n_f} titik | holdout {len(dates)} hari | "
-        f"volume median {np.median(volumes) / 1000:.1f} m3, "
-        f"total {volumes.sum() / 1_000_000:.2f} jt L"
+        f"[{scenario_id}] {n_f} titik | volume median {np.median(volumes) / 1000:.1f} m3"
+        f", total {volumes.sum() / 1_000_000:.2f} jt L"
+        f", rit rata-rata {np.mean(volumes) / 4000:.1f}"
     )
     if dry_run:
         return

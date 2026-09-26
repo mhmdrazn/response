@@ -185,6 +185,26 @@ def all_floods_served(remaining: np.ndarray, tol: float = 1.0) -> bool:
     return bool(np.all(remaining <= tol))
 
 
+def prune_idle_stops(
+    inst: Instance, routes: list[list[int]], ev: SolutionEval
+) -> list[list[int]]:
+    """Drop flood stops that pump nothing.
+
+    A vehicle that arrives with a full tank, or at a point already drained,
+    pumps zero and the stop is pure travel. Removing it leaves the tank state
+    untouched, so every later stop is reached sooner and coverage cannot fall.
+    Local search never removes these itself — its operators only reorder.
+    """
+    pruned: list[list[int]] = []
+    for route, r_eval in zip(routes, ev.routes):
+        idle = {
+            i for i, v in enumerate(r_eval.visits)
+            if v.node_type == "flood" and v.volume_pumped <= 0.0
+        }
+        pruned.append([n for i, n in enumerate(route) if i not in idle])
+    return pruned
+
+
 def coverage_ratio(inst: Instance, ev: SolutionEval) -> float:
     """Fraction of total pumping work completed, in [0, 1]."""
     total = float(inst.volumes.sum())

@@ -37,24 +37,17 @@ def _write_floods(sid: str, floods: pd.DataFrame) -> None:
     floods.drop(columns=["id"], errors="ignore").to_csv(scenario_floods_path(sid), index=False)
 
 
-def _workload_l(depth_cm: Any, time_to_ifs: np.ndarray | None, ifs: pd.DataFrame) -> float:
-    """Expected pumping workload for an intake point.
-
-    A point reported right now has no recorded duration, so it draws the
-    expected on-scene time for its depth class from the calibrated log.
-    """
+def _workload_l(depth_cm: Any, road_class: Any) -> float:
+    """Pumping workload for an intake point, from its depth and road width."""
     depth = pd.to_numeric(depth_cm, errors="coerce")
-    cycle = (
-        workload.if_cycle_seconds(
-            time_to_ifs, ifs.get("waterway_type", pd.Series([""] * len(ifs))).tolist()
-        )
-        if time_to_ifs is not None and len(time_to_ifs)
-        else workload.FALLBACK_CYCLE_S
+    rc = pd.to_numeric(road_class, errors="coerce")
+    return round(
+        workload.volume_liters(
+            float(depth) if pd.notna(depth) else None,
+            float(rc) if pd.notna(rc) else None,
+        ),
+        1,
     )
-    on_scene = workload.expected_on_scene_s(
-        float(depth) if pd.notna(depth) else None, list(workload.default_table())
-    )
-    return round(workload.volume_liters(on_scene, cycle), 1)
 
 
 def _row_index(floods: pd.DataFrame, flood_id: str) -> int:
@@ -75,12 +68,10 @@ def add_flood(sid: str, payload: dict[str, Any]) -> dict[str, Any]:
         row.setdefault("road_class", rc)
         row.setdefault("dist_faskes_m", dfk)
 
-        time_to_ifs = None
         if b.distance_matrix is not None:
             lats, lons = _node_coords(b.depots, floods, b.ifs)  # old nodes
             rd, cd, rt, ct = enrich.node_vectors(float(lat), float(lon), lats, lons)
             pos = len(b.depots) + len(floods)  # new flood at end of floods block
-            time_to_ifs = rt[pos:]
             _save_matrices(
                 sid,
                 mx.insert_node(b.distance_matrix, pos, rd, cd),
@@ -88,7 +79,7 @@ def add_flood(sid: str, payload: dict[str, Any]) -> dict[str, Any]:
             )
 
         row.setdefault(
-            "volume_l", _workload_l(row.get("ketinggian_cm"), time_to_ifs, b.ifs)
+            "volume_l", _workload_l(row.get("ketinggian_cm"), row.get("road_class"))
         )
 
     _write_floods(sid, pd.concat([floods, pd.DataFrame([row])], ignore_index=True))
@@ -108,7 +99,6 @@ def update_flood(sid: str, flood_id: str, payload: dict[str, Any]) -> dict[str, 
 
     lat = float(floods.at[i, "lat"])
     lon = float(floods.at[i, "lon"])
-    time_to_ifs = None
     if coords_changed:
         rc, dfk = enrich.enrich_attrs(lat, lon, faskes_df=b.faskes)
         floods.at[i, "road_class"] = rc
@@ -118,7 +108,6 @@ def update_flood(sid: str, flood_id: str, payload: dict[str, Any]) -> dict[str, 
             lats, lons = _node_coords(b.depots, b.floods, b.ifs)
             rd, cd, rt, ct = enrich.node_vectors(lat, lon, lats, lons)
             pos = len(b.depots) + i
-            time_to_ifs = rt[len(b.depots) + len(b.floods):]
             _save_matrices(
                 sid,
                 mx.replace_node(b.distance_matrix, pos, rd, cd),
@@ -129,7 +118,7 @@ def update_flood(sid: str, flood_id: str, payload: dict[str, Any]) -> dict[str, 
         if "volume_l" not in floods.columns:
             floods["volume_l"] = np.nan
         floods.at[i, "volume_l"] = _workload_l(
-            floods.at[i, "ketinggian_cm"], time_to_ifs, b.ifs
+            floods.at[i, "ketinggian_cm"], floods.at[i, "road_class"]
         )
 
     _write_floods(sid, floods)

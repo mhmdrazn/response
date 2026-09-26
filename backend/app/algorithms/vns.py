@@ -14,6 +14,7 @@ from app.algorithms.evaluator import (
     SolutionEval,
     all_floods_served,
     evaluate_solution,
+    prune_idle_stops,
 )
 from app.algorithms.instance import PUMP_RATE_LPS, SERVICE_SETUP_S, Instance
 from app.algorithms.local_search import polish
@@ -443,6 +444,8 @@ class VNS:
         # Always close on a repair: the search may have spent its whole budget,
         # leaving shaking and polish free to strand volume.
         best_eval = self._repair(best_routes, best_caps, deadline)
+        best_routes = prune_idle_stops(self.inst, best_routes, best_eval)
+        best_eval = evaluate_solution(self.inst, best_routes, best_caps)
         best_score = best_eval.score
 
         # The repair runs after the last trace entry, so without this the curve

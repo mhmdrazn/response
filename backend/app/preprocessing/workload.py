@@ -1,140 +1,83 @@
-"""Derive per-point pumping workload from the Damkar handling log.
+"""Turn a reported flood point into the pumping workload the fleet must move.
 
-The recorded on-scene span covers pumping *and* the repeated drives to an IF
-and back. The optimiser models those trips itself, so only the pumping share
-may become demand, or the shuttle is counted twice:
+The damkar log records a coordinate and a depth, never an extent, so the
+ponded water is treated as a box over the roadway:
 
-    T_on_scene = setup + T_pump + (Q * T_pump / C) * cycle
-    T_pump     = (T_on_scene - setup) / (1 + Q * cycle / C)
-    volume     = Q * T_pump
+    volume = road width x ponding length x depth to remove
 
-A point's own `selesai` is not available when its route is being planned, so it
-is never used for its own demand. Instead the log is calibrated once into a
-depth-class -> median duration table, and a point draws the expected duration
-for its depth. Days belonging to the scenario being built are held out, which
-keeps the calibration out of sample.
+Road width comes from the point's road_class. Ponding length is a parameter:
+one report marks one local pond, and a flood spanning further is logged as
+several points. Depth to remove is what sits above the level at which the road
+is passable again — crews stop when the water is down, not when it is dry.
+
+The haul count follows from the volume, which is the point of the model: how
+many times a vehicle must come back is derived, not assumed.
 """
 
 from __future__ import annotations
 
-from functools import lru_cache
-from pathlib import Path
-
 import numpy as np
-import pandas as pd
 
-from app.algorithms.instance import (
-    IF_DRAIN_FACTOR,
-    IF_DRAIN_S,
-    PUMP_RATE_LPS,
-    SERVICE_SETUP_S,
-    VEHICLE_CAPACITIES_L,
-)
-from app.config import GEOCODED_MASTER
+# Carriageway width in metres per road_class ordinal (see config.HIGHWAY_ORDINAL:
+# 5 trunk/primary, 4 secondary, 3 tertiary, 2 residential, 1 service).
+ROAD_WIDTH_M = {1: 3.5, 2: 5.0, 3: 7.0, 4: 10.0, 5: 14.0}
+DEFAULT_ROAD_WIDTH_M = 7.0
 
-# Depth classes in cm. Median handling time rises monotonically across these,
-# though depth explains little of the variance (r = 0.18) — hence classes
-# rather than a regression.
-DEPTH_EDGES = [0.0, 10.0, 20.0, 30.0, 50.0, np.inf]
+# Stretch of road one reported point stands for.
+PONDING_LENGTH_M = 25.0
 
-# Used when the log yields nothing for a class (or at all): the pooled median
-# on-scene span, 268 min over 408 records.
-FALLBACK_ON_SCENE_S = 268 * 60.0
+# Water may be left behind once the road is passable again.
+SAFE_DEPTH_CM = 10.0
 
-# Median IF round trip measured on s2-jun, for intake when no travel matrix is
-# available to measure the point's own.
-FALLBACK_CYCLE_S = 366.0
+# A point already at or under the safe depth was still reported and attended,
+# so it carries a token workload rather than none.
+MIN_EFFECTIVE_DEPTH_CM = 5.0
+
+DEFAULT_DEPTH_CM = 20.0
 
 
-def _on_scene_seconds(df: pd.DataFrame) -> pd.Series:
-    start = pd.to_datetime(df.get("mulai_penanganan"), errors="coerce", utc=True)
-    end = pd.to_datetime(df.get("selesai"), errors="coerce", utc=True)
-    secs = (end - start).dt.total_seconds()
-    return secs.where((secs > 0) & (secs < 48 * 3600))
+def effective_depth_cm(depth_cm: float | None) -> float:
+    """Centimetres of water the fleet is expected to remove at one point."""
+    d = DEFAULT_DEPTH_CM if depth_cm is None or not np.isfinite(depth_cm) else float(depth_cm)
+    return max(d - SAFE_DEPTH_CM, MIN_EFFECTIVE_DEPTH_CM)
 
 
-def calibrate_on_scene(
-    master: Path = GEOCODED_MASTER,
-    exclude_dates: set[str] | None = None,
-) -> list[float]:
-    """Median on-scene seconds per depth class, holding out the given dates."""
-    df = pd.read_csv(master)
-    if exclude_dates:
-        keep = ~pd.to_datetime(df["tanggal"], errors="coerce").dt.strftime(
-            "%Y-%m-%d"
-        ).isin(exclude_dates)
-        df = df[keep]
-
-    secs = _on_scene_seconds(df)
-    depth = pd.to_numeric(df.get("depth_cm"), errors="coerce")
-    classes = pd.cut(depth, DEPTH_EDGES, labels=False, include_lowest=True)
-
-    pooled = float(secs.median()) if secs.notna().any() else FALLBACK_ON_SCENE_S
-    out: list[float] = []
-    for k in range(len(DEPTH_EDGES) - 1):
-        sel = secs[classes == k].dropna()
-        out.append(float(sel.median()) if len(sel) >= 5 else pooled)
-    return out
+def road_width_m(road_class: float | None) -> float:
+    if road_class is None or not np.isfinite(road_class):
+        return DEFAULT_ROAD_WIDTH_M
+    return ROAD_WIDTH_M.get(int(road_class), DEFAULT_ROAD_WIDTH_M)
 
 
-@lru_cache(maxsize=1)
-def default_table() -> tuple[float, ...]:
-    """Calibration over the whole log, for intake where no scenario is held out."""
-    try:
-        return tuple(calibrate_on_scene())
-    except Exception:  # noqa: BLE001 — master log missing or unreadable
-        return tuple([FALLBACK_ON_SCENE_S] * (len(DEPTH_EDGES) - 1))
-
-
-def expected_on_scene_s(depth_cm: float | None, table: list[float]) -> float:
-    if depth_cm is None or not np.isfinite(depth_cm):
-        return FALLBACK_ON_SCENE_S
-    k = int(np.clip(np.searchsorted(DEPTH_EDGES, depth_cm, side="left") - 1,
-                    0, len(table) - 1))
-    return table[k]
-
-
-def if_cycle_seconds(
-    time_to_ifs: np.ndarray,
-    if_waterway_types: list[str],
+def volume_liters(
+    depth_cm: float | None,
+    road_class: float | None,
+    ponding_length_m: float = PONDING_LENGTH_M,
 ) -> float:
-    """Round trip to the quickest IF outlet: drive there, drain, drive back."""
-    drains = np.array(
-        [IF_DRAIN_S * IF_DRAIN_FACTOR.get(str(t or ""), 1.0) for t in if_waterway_types],
-        dtype=float,
-    )
-    return float(np.min(2.0 * np.asarray(time_to_ifs, dtype=float) + drains))
+    """Litres to pump at one flood point. 1 m3 = 1000 L."""
+    area = road_width_m(road_class) * ponding_length_m
+    return area * (effective_depth_cm(depth_cm) / 100.0) * 1000.0
 
 
-def pumping_seconds(on_scene_s: float, cycle_s: float, capacity_l: float) -> float:
-    usable = max(0.0, on_scene_s - SERVICE_SETUP_S)
-    return usable / (1.0 + PUMP_RATE_LPS * cycle_s / capacity_l)
-
-
-def volume_liters(on_scene_s: float, cycle_s: float, capacity_l: float | None = None) -> float:
-    cap = capacity_l if capacity_l else float(np.mean(VEHICLE_CAPACITIES_L))
-    return PUMP_RATE_LPS * pumping_seconds(on_scene_s, cycle_s, cap)
+def hauls(volume_l: float, capacity_l: float) -> float:
+    """How many tank loads that volume takes — the examiner's return count."""
+    return volume_l / capacity_l if capacity_l > 0 else 0.0
 
 
 def volumes_for_points(
     depths_cm: np.ndarray,
-    time_flood_to_if: np.ndarray,
-    if_waterway_types: list[str],
-    table: list[float],
+    road_classes: np.ndarray,
+    ponding_length_m: float = PONDING_LENGTH_M,
 ) -> np.ndarray:
-    """Workload in litres for each flood point.
-
-    `time_flood_to_if` is the (n_floods, n_ifs) block of the travel-time matrix.
-    """
-    cap = float(np.mean(VEHICLE_CAPACITIES_L))
+    depths = np.asarray(depths_cm, dtype=float)
+    classes = np.asarray(road_classes, dtype=float)
     return np.array(
         [
             volume_liters(
-                expected_on_scene_s(float(d) if np.isfinite(d) else None, table),
-                if_cycle_seconds(time_flood_to_if[i], if_waterway_types),
-                cap,
+                None if not np.isfinite(d) else float(d),
+                None if not np.isfinite(c) else float(c),
+                ponding_length_m,
             )
-            for i, d in enumerate(np.asarray(depths_cm, dtype=float))
+            for d, c in zip(depths, classes)
         ],
         dtype=float,
     )
