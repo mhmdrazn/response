@@ -32,8 +32,8 @@ class VNSParams:
 
 @dataclass
 class VNSTrace:
-    best_z: list[float] = field(default_factory=list)
-    iter_best_z: list[float] = field(default_factory=list)
+    best_score: list[float] = field(default_factory=list)
+    iter_best_score: list[float] = field(default_factory=list)
 
 
 @dataclass
@@ -429,8 +429,8 @@ class VNS:
                 if search_deadline is not None and time.perf_counter() >= search_deadline:
                     break
 
-            trace.iter_best_z.append(float(iter_score))
-            trace.best_z.append(float(best_score))
+            trace.iter_best_score.append(float(iter_score))
+            trace.best_score.append(float(best_score))
 
             if search_deadline is not None and time.perf_counter() >= search_deadline:
                 break
@@ -439,6 +439,12 @@ class VNS:
         # leaving shaking and polish free to strand volume.
         best_eval = self._repair(best_routes, best_caps, deadline)
         best_score = best_eval.score
+
+        # The repair runs after the last trace entry, so without this the curve
+        # would end somewhere other than the score reported beside it.
+        if not trace.best_score or trace.best_score[-1] != best_score:
+            trace.best_score.append(float(best_score))
+            trace.iter_best_score.append(float(best_score))
 
         elapsed = time.perf_counter() - start
         return VNSSolution(

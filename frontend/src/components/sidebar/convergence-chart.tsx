@@ -22,11 +22,11 @@ export function ConvergenceChart({ data }: ConvergenceChartProps) {
   return (
     <div className="flex flex-col gap-[6px]">
       <div className="text-[10px] font-bold uppercase tracking-[0.9px] text-slate">
-        Konvergensi (best Z per iterasi)
+        Konvergensi (skor terbaik per iterasi)
       </div>
       <div className="flex gap-[6px]">
         <span className="flex items-center justify-center whitespace-nowrap text-[9px] font-bold uppercase tracking-[0.6px] text-slate [writing-mode:vertical-rl] [transform:rotate(180deg)]">
-          Skor Z
+          Skor Total
         </span>
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="h-[150px] w-full">
@@ -59,7 +59,7 @@ export function ConvergenceChart({ data }: ConvergenceChartProps) {
                 />
                 <Line
                   type="monotone"
-                  dataKey="iter_best_z"
+                  dataKey="iter_best_score"
                   stroke="var(--color-smoke)"
                   strokeWidth={1.5}
                   dot={false}
@@ -67,7 +67,7 @@ export function ConvergenceChart({ data }: ConvergenceChartProps) {
                 />
                 <Line
                   type="monotone"
-                  dataKey="best_z"
+                  dataKey="best_score"
                   stroke="var(--color-midnight-ink)"
                   strokeWidth={2}
                   dot={false}

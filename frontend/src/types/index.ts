@@ -79,8 +79,9 @@ export interface RouteOut {
 
 export interface ConvergencePoint {
   iteration: number;
-  best_z: number;
-  iter_best_z: number;
+  /** objective_z plus the unserved/overtime penalty — what the solvers rank on. */
+  best_score: number;
+  iter_best_score: number;
 }
 
 export interface OptimizationResult {

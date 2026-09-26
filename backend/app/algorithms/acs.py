@@ -40,8 +40,8 @@ class ACSParams:
 
 @dataclass
 class ACSTrace:
-    best_z: list[float] = field(default_factory=list)
-    iter_best_z: list[float] = field(default_factory=list)
+    best_score: list[float] = field(default_factory=list)
+    iter_best_score: list[float] = field(default_factory=list)
 
 
 @dataclass
@@ -357,8 +357,8 @@ class HybridACS:
 
             if iter_best_routes is None:
                 fallback = best_score if best_score != float("inf") else 0.0
-                trace.iter_best_z.append(fallback)
-                trace.best_z.append(fallback)
+                trace.iter_best_score.append(fallback)
+                trace.best_score.append(fallback)
                 continue
 
             # Close the gap between the constructor's bookkeeping and the
@@ -392,8 +392,8 @@ class HybridACS:
                 best_eval = ev
 
             self._global_update(best_routes or iter_best_routes, best_score)
-            trace.iter_best_z.append(float(iter_best_score))
-            trace.best_z.append(float(best_score))
+            trace.iter_best_score.append(float(iter_best_score))
+            trace.best_score.append(float(best_score))
 
             if search_deadline is not None and time.perf_counter() >= search_deadline:
                 break
@@ -415,13 +415,19 @@ class HybridACS:
                 best_routes = polished_routes
                 best_score = polished_score
                 best_eval = polished_eval
-                trace.best_z.append(float(best_score))
-                trace.iter_best_z.append(float(best_score))
+                trace.best_score.append(float(best_score))
+                trace.iter_best_score.append(float(best_score))
 
         # Always close on a repair: the search may have spent every second it
         # had, leaving the in-loop repairs to bail out on the deadline.
         best_eval = self._repair(best_routes, best_caps, deadline)
         best_score = best_eval.score
+
+        # The repair runs after the last trace entry, so without this the curve
+        # would end somewhere other than the score reported beside it.
+        if not trace.best_score or trace.best_score[-1] != best_score:
+            trace.best_score.append(float(best_score))
+            trace.iter_best_score.append(float(best_score))
 
         elapsed = time.perf_counter() - start
         return ACSSolution(

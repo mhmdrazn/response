@@ -57,8 +57,11 @@ class RouteOut(_Base):
 
 class ConvergencePoint(_Base):
     iteration: int
-    best_z: float
-    iter_best_z: float
+    # The solvers rank on objective_z plus the unserved/overtime penalty, so
+    # that is what the curve tracks. Naming it best_z invited reading it as
+    # the objective alone, which differs whenever coverage is short.
+    best_score: float
+    iter_best_score: float
 
 
 class OptimizationResponse(_Base):

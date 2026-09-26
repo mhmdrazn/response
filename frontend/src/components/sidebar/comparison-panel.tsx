@@ -96,8 +96,8 @@ export function ComparisonPanel({ comparison }: ComparisonPanelProps) {
   const maxLen = Math.max(acs.convergence.length, vns.convergence.length);
   const chartData = Array.from({ length: maxLen }, (_, i) => ({
     iteration: i + 1,
-    acs: i < acs.convergence.length ? acs.convergence[i].best_z : null,
-    vns: i < vns.convergence.length ? vns.convergence[i].best_z : null,
+    acs: i < acs.convergence.length ? acs.convergence[i].best_score : null,
+    vns: i < vns.convergence.length ? vns.convergence[i].best_score : null,
   }));
 
   const colHeaderCls =
@@ -161,7 +161,7 @@ export function ComparisonPanel({ comparison }: ComparisonPanelProps) {
         </div>
         <div className="flex gap-[6px]">
           <span className="flex items-center justify-center whitespace-nowrap text-[9px] font-bold uppercase tracking-[0.6px] text-slate [writing-mode:vertical-rl] [transform:rotate(180deg)]">
-            Skor Z
+            Skor Total
           </span>
           <div className="flex min-w-0 flex-1 flex-col">
             <div className="h-[168px] w-full">

@@ -170,7 +170,7 @@ def _to_response(
         )
 
     convergence = [
-        ConvergencePoint(iteration=i + 1, best_z=b, iter_best_z=ib)
+        ConvergencePoint(iteration=i + 1, best_score=b, iter_best_score=ib)
         for i, (b, ib) in enumerate(zip(convergence_best, convergence_iter))
     ]
 
@@ -225,8 +225,8 @@ async def run_acs(
             routes=sol.routes,
             capacities=sol.capacities,
             ev=sol.evaluation,
-            convergence_best=sol.trace.best_z,
-            convergence_iter=sol.trace.iter_best_z,
+            convergence_best=sol.trace.best_score,
+            convergence_iter=sol.trace.iter_best_score,
             computation_time_s=sol.computation_time_s,
             algorithm="acs",
         )
@@ -261,8 +261,8 @@ async def run_vns(
             routes=sol.routes,
             capacities=sol.capacities,
             ev=sol.evaluation,
-            convergence_best=sol.trace.best_z,
-            convergence_iter=sol.trace.iter_best_z,
+            convergence_best=sol.trace.best_score,
+            convergence_iter=sol.trace.iter_best_score,
             computation_time_s=sol.computation_time_s,
             algorithm="vns",
         )
