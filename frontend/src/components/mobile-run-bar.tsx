@@ -3,11 +3,15 @@
 import { Play, Settings2 } from "lucide-react";
 
 import type { AlgorithmType } from "../lib/api";
+import type { OptimizationStage } from "../hooks/use-optimization";
 
 interface MobileRunBarProps {
   algorithm: AlgorithmType;
   onAlgorithmChange: (a: AlgorithmType) => void;
   isLoading: boolean;
+  elapsedSeconds: number;
+  progress: number;
+  stage: OptimizationStage;
   onRun: () => void;
   onOpenSettings: () => void;
 }
@@ -18,11 +22,14 @@ export function MobileRunBar({
   algorithm,
   onAlgorithmChange,
   isLoading,
+  elapsedSeconds,
+  progress,
+  stage,
   onRun,
   onOpenSettings,
 }: MobileRunBarProps) {
   return (
-    <div className="pointer-events-auto flex items-center gap-8 rounded-lg border border-frost bg-pure-white p-8">
+    <div className="pointer-events-auto relative flex items-center gap-8 rounded-lg border border-frost bg-pure-white p-8">
       <div className="flex flex-shrink-0 gap-[4px] rounded-lg bg-periwinkle-wash p-[4px]">
         <MiniTab
           active={algorithm === "acs"}
@@ -47,7 +54,7 @@ export function MobileRunBar({
         {isLoading ? (
           <>
             <Spinner />
-            Menghitung...
+            Menghitung {elapsedSeconds.toFixed(1)} dtk...
           </>
         ) : (
           <>
@@ -56,6 +63,16 @@ export function MobileRunBar({
           </>
         )}
       </button>
+
+      {isLoading ? (
+        <div className="absolute bottom-0 left-0 right-0 h-[4px] overflow-hidden rounded-b-lg bg-frost">
+          <div
+            className="h-full bg-indigo-ink transition-[width] duration-100"
+            style={{ width: `${progress}%` }}
+            aria-label={`${stage === "vns" ? "VNS" : "ACS"} ${elapsedSeconds.toFixed(1)} detik`}
+          />
+        </div>
+      ) : null}
 
       <button
         type="button"

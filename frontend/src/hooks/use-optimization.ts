@@ -7,11 +7,15 @@ import { readJSON, removeKey, writeJSON } from "../lib/storage";
 import type { ComparisonResult, OptimizationResult } from "../types";
 
 export type RunKind = "single" | "compare";
+export type OptimizationStage = "acs" | "vns" | null;
 
 export interface UseOptimization {
   result: OptimizationResult | null;
   comparison: ComparisonResult | null;
   isLoading: boolean;
+  elapsedSeconds: number;
+  progress: number;
+  stage: OptimizationStage;
   error: string | null;
   /** Epoch ms of the last successful run; null before any run. */
   completedAt: number | null;
@@ -55,12 +59,31 @@ export function useOptimization(): UseOptimization {
   const [result, setResult] = useState<OptimizationResult | null>(null);
   const [comparison, setComparison] = useState<ComparisonResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [stage, setStage] = useState<OptimizationStage>(null);
   const [error, setError] = useState<string | null>(null);
   const [completedAt, setCompletedAt] = useState<number | null>(null);
   const [lastRunKind, setLastRunKind] = useState<RunKind | null>(null);
   const [runSignal, setRunSignal] = useState(0);
   const [hydrated, setHydrated] = useState(false);
   const skipNextPersist = useRef(true);
+  const startedAt = useRef<number | null>(null);
+  const targetDuration = useRef(60);
+
+  useEffect(() => {
+    if (!isLoading) return;
+    const updateElapsed = () => {
+      if (startedAt.current !== null) {
+        const elapsed = (Date.now() - startedAt.current) / 1000;
+        setElapsedSeconds(elapsed);
+        setProgress(Math.min(95, (elapsed / targetDuration.current) * 100));
+      }
+    };
+    updateElapsed();
+    const timer = window.setInterval(updateElapsed, 100);
+    return () => window.clearInterval(timer);
+  }, [isLoading]);
 
   useEffect(() => {
     const stored = loadStored();
@@ -96,6 +119,11 @@ export function useOptimization(): UseOptimization {
 
   const run = useCallback(async (req: RunRequest, scenario?: string) => {
     setIsLoading(true);
+    startedAt.current = Date.now();
+    targetDuration.current = req.params.time_limit_s ?? 60;
+    setElapsedSeconds(0);
+    setProgress(0);
+    setStage(req.algorithm);
     setError(null);
     setComparison(null);
     try {
@@ -104,6 +132,7 @@ export function useOptimization(): UseOptimization {
           ? await api.runACS(req.params, scenario)
           : await api.runVNS(req.params, scenario);
       setResult(r);
+      setProgress(100);
       setLastRunKind("single");
       setCompletedAt(Date.now());
       setRunSignal((s) => s + 1);
@@ -111,22 +140,30 @@ export function useOptimization(): UseOptimization {
       setError(err instanceof Error ? err.message : "Optimasi gagal.");
     } finally {
       setIsLoading(false);
+      startedAt.current = null;
+      setStage(null);
     }
   }, []);
 
   const runComparison = useCallback(
     async (seed?: number, scenario?: string, timeLimitS?: number) => {
     setIsLoading(true);
+    startedAt.current = Date.now();
+    const limit = timeLimitS ?? DEFAULT_ACS_PARAMS.time_limit_s ?? 60;
+    targetDuration.current = limit * 2;
+    setElapsedSeconds(0);
+    setProgress(0);
+    setStage("acs");
     setError(null);
     setResult(null);
     setComparison(null);
     try {
       const s = seed ?? 42;
-      const limit = timeLimitS ?? DEFAULT_ACS_PARAMS.time_limit_s;
       const acsResult = await api.runACS(
         { ...DEFAULT_ACS_PARAMS, seed: s, time_limit_s: limit },
         scenario,
       );
+      setStage("vns");
       const vnsResult = await api.runVNS(
         { ...DEFAULT_VNS_PARAMS, seed: s, time_limit_s: limit },
         scenario,
@@ -141,6 +178,8 @@ export function useOptimization(): UseOptimization {
       setError(err instanceof Error ? err.message : "Perbandingan gagal.");
     } finally {
       setIsLoading(false);
+      startedAt.current = null;
+      setStage(null);
     }
   },
   [],
@@ -159,6 +198,9 @@ export function useOptimization(): UseOptimization {
     result,
     comparison,
     isLoading,
+    elapsedSeconds,
+    progress,
+    stage,
     error,
     completedAt,
     lastRunKind,

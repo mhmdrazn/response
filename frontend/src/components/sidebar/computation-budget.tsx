@@ -19,7 +19,7 @@ interface ComputationBudgetProps {
 export function ComputationBudgetSelect({ value, onChange, disabled }: ComputationBudgetProps) {
   return (
     <div className="flex flex-col gap-[6px]">
-      <span className="text-[10px] font-bold uppercase tracking-[0.9px] text-slate">
+      <span className="text-[10px] font-bold uppercase tracking-normal text-slate">
         Anggaran Komputasi{" "}
         <span className="font-medium normal-case tracking-normal">(batas waktu per algoritma)</span>
       </span>
@@ -36,7 +36,7 @@ export function ComputationBudgetSelect({ value, onChange, disabled }: Computati
               onClick={() => onChange(s)}
               className={`font-manrope flex flex-col items-center gap-[2px] rounded-md border px-[6px] py-[9px] text-center transition-colors ${
                 selected
-                  ? "border-midnight-ink bg-periwinkle-wash"
+                  ? "border-frost bg-periwinkle-wash"
                   : "border-frost bg-pure-white hover:bg-mist"
               } ${disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}
             >

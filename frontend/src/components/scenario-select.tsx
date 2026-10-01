@@ -15,14 +15,14 @@ export function ScenarioSelect({ scenarios, value, onChange }: ScenarioSelectPro
 
   const options: SelectOption[] = scenarios.map((sc) => ({
     value: sc.id,
-    label: sc.name,
+    label: toTitleCase(sc.name),
     hint: sc.n_points != null ? `${sc.n_points} titik` : undefined,
   }));
 
   return (
     <div className="flex flex-col gap-[6px]">
-      <span className="text-[10px] font-bold uppercase tracking-[0.9px] text-slate">
-        Skenario Banjir
+      <span className="text-[10px] font-bold uppercase tracking-normal text-slate">
+        Study Area
       </span>
       <SelectMenu
         options={options}
@@ -32,4 +32,10 @@ export function ScenarioSelect({ scenarios, value, onChange }: ScenarioSelectPro
       />
     </div>
   );
+}
+
+function toTitleCase(value: string): string {
+  return value
+    .toLocaleLowerCase("id-ID")
+    .replace(/\b\w/g, (character) => character.toLocaleUpperCase("id-ID"));
 }

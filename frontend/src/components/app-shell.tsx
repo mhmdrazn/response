@@ -121,6 +121,9 @@ export function AppShell() {
     result,
     comparison,
     isLoading,
+    elapsedSeconds,
+    progress,
+    stage,
     error: optError,
     completedAt,
     lastRunKind,
@@ -213,6 +216,9 @@ export function AppShell() {
     <AlgorithmPanel
       mode={mode}
       isLoading={isLoading}
+      elapsedSeconds={elapsedSeconds}
+      progress={progress}
+      stage={stage}
       hasResult={result !== null}
       error={optError}
       algorithm={algoCfg.algorithm}
@@ -433,6 +439,9 @@ export function AppShell() {
                   algorithm={algoCfg.algorithm}
                   onAlgorithmChange={algoCfg.setAlgorithm}
                   isLoading={isLoading}
+                  elapsedSeconds={elapsedSeconds}
+                  progress={progress}
+                  stage={stage}
                   onRun={handleRun}
                   onOpenSettings={() => setMobilePanel("algorithm")}
                 />

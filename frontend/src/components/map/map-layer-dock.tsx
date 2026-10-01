@@ -88,7 +88,7 @@ export function MapLayerDock({
         className="font-manrope flex w-full cursor-pointer items-center gap-[6px] border-0 bg-transparent px-[10px] py-8 text-left"
       >
         <Layers size={14} strokeWidth={2} color="var(--color-slate)" />
-        <span className="flex-1 text-[11px] font-bold tracking-[-0.1px] text-midnight-ink">
+        <span className="flex-1 text-[11px] font-bold tracking-normal text-midnight-ink">
           Lapisan Peta
         </span>
         <ChevronDown
@@ -156,7 +156,7 @@ function BaseMapTile({
       aria-pressed={active}
       onClick={onClick}
       className={`flex min-w-0 flex-1 cursor-pointer flex-col items-center gap-[4px] overflow-hidden rounded-md border-2 bg-pure-white p-0 transition-colors ${
-        active ? "border-steel" : "border-frost"
+        "border-frost"
       }`}
     >
       <img
@@ -186,7 +186,7 @@ function PanelSection({
 }) {
   return (
     <div className="flex flex-col gap-[6px]">
-      <div className="pl-[2px] text-[10px] font-bold uppercase tracking-[0.9px] text-slate">
+      <div className="pl-[2px] text-[10px] font-bold uppercase tracking-normal text-slate">
         {label}
       </div>
       <div className={`flex gap-[5px] ${noWrap ? "flex-nowrap" : "flex-wrap"}`}>{children}</div>

@@ -1,14 +1,6 @@
 import type { Metadata } from "next";
-import { Manrope } from "next/font/google";
 import "leaflet/dist/leaflet.css";
 import "./globals.css";
-
-const manrope = Manrope({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-manrope-google",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "Response",
@@ -18,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="id" className={manrope.variable} suppressHydrationWarning>
+    <html lang="id" suppressHydrationWarning>
       <body suppressHydrationWarning>{children}</body>
     </html>
   );

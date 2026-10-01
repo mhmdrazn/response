@@ -133,8 +133,8 @@ export function SelectMenu({ options, value, onChange, ariaLabel, placeholder }:
         aria-activedescendant={open ? `${listId}-${active}` : undefined}
         onClick={() => (open ? setOpen(false) : openMenu())}
         onKeyDown={onKeyDown}
-        className={`font-manrope flex w-full cursor-pointer items-center gap-8 rounded-md border bg-pure-white px-[10px] py-[8px] text-left text-[12px] tracking-[-0.1px] text-midnight-ink outline-none transition-colors hover:bg-mist focus-visible:border-midnight-ink ${
-          open ? "border-midnight-ink bg-mist" : "border-frost"
+        className={`font-manrope flex w-full cursor-pointer items-center gap-8 rounded-md border bg-pure-white px-[10px] py-[8px] text-left text-[12px] tracking-normal text-midnight-ink outline-none transition-colors hover:bg-mist focus-visible:border-frost ${
+          open ? "border-frost bg-mist" : "border-frost"
         }`}
       >
         <span className="min-w-0 flex-1 truncate font-bold">
@@ -179,7 +179,7 @@ export function SelectMenu({ options, value, onChange, ariaLabel, placeholder }:
                     onMouseEnter={() => setActive(i)}
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => choose(i)}
-                    className={`font-manrope flex cursor-pointer items-center gap-8 rounded-[6px] px-[10px] py-[8px] text-[12px] tracking-[-0.1px] transition-colors ${
+                    className={`font-manrope flex cursor-pointer items-center gap-8 rounded-[6px] px-[10px] py-[8px] text-[12px] tracking-normal transition-colors ${
                       isSelected
                         ? "bg-periwinkle-wash font-bold text-midnight-ink"
                         : i === active

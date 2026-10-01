@@ -4,6 +4,7 @@ import { ChevronDown, Play, RotateCcw } from "lucide-react";
 import { useState } from "react";
 
 import type { AlgorithmType } from "../../lib/api";
+import type { OptimizationStage } from "../../hooks/use-optimization";
 import type { ACSParams, AppMode, ScenarioMeta, VNSParams } from "../../types";
 import { ScenarioSelect } from "../scenario-select";
 import { ComputationBudgetSelect, type ComputationBudget } from "./computation-budget";
@@ -11,6 +12,9 @@ import { ComputationBudgetSelect, type ComputationBudget } from "./computation-b
 interface AlgorithmPanelProps {
   mode: AppMode;
   isLoading: boolean;
+  elapsedSeconds: number;
+  progress: number;
+  stage: OptimizationStage;
   onRun: () => void;
   onCompare: () => void;
   onReset: () => void;
@@ -32,6 +36,9 @@ interface AlgorithmPanelProps {
 export function AlgorithmPanel({
   mode,
   isLoading,
+  elapsedSeconds,
+  progress,
+  stage,
   onRun,
   onCompare,
   onReset,
@@ -92,12 +99,6 @@ export function AlgorithmPanel({
               onClick={() => onAlgorithmChange("vns")}
               label="VNS"
             />
-          </div>
-
-          <div className="border-frost bg-mist text-steel rounded-md border px-[10px] py-[7px] text-[11px] leading-[1.4] font-medium tracking-[-0.11px]">
-            {algorithm === "acs"
-              ? "Hybrid Ant Colony System — konstruksi solusi berbasis feromon + pencarian lokal"
-              : "Variable Neighborhood Search — eksplorasi lingkungan sistematik + pencarian lokal"}
           </div>
 
           {mode === "advanced" ? (
@@ -178,10 +179,6 @@ export function AlgorithmPanel({
 
           <ComputationBudgetSelect value={budgetS} onChange={onBudgetChange} disabled={isLoading} />
 
-          <p className="text-slate text-[11px] leading-[1.4] font-medium tracking-[-0.11px]">
-            Pencarian dibatasi {budgetS} detik per algoritma. Perbandingan ACS vs VNS menjalankan
-            keduanya berurutan, sekitar {budgetS * 2} detik.
-          </p>
         </div>
 
         {/* Pinned: the run controls stay in view however much the form scrolls. */}
@@ -225,6 +222,21 @@ export function AlgorithmPanel({
             ) : null}
           </div>
 
+          {isLoading ? (
+            <div className="flex flex-col gap-[5px]" aria-live="polite">
+              <div className="flex items-center justify-between text-[11px] font-semibold text-steel">
+                <span>{stage === "vns" ? "Menjalankan VNS" : "Menjalankan ACS"}</span>
+                <span>{elapsedSeconds.toFixed(1)} detik</span>
+              </div>
+              <div className="h-[5px] overflow-hidden rounded-full bg-frost">
+                <div
+                  className="h-full rounded-full bg-indigo-ink transition-[width] duration-100"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </div>
+          ) : null}
+
           <button
             type="button"
             disabled={isLoading}
@@ -233,7 +245,7 @@ export function AlgorithmPanel({
               isLoading ? "cursor-wait" : "cursor-pointer"
             }`}
           >
-            Bandingkan ACS vs VNS
+            Bandingkan ACS Vs VNS
           </button>
 
           {error ? (
