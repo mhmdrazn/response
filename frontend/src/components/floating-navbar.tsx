@@ -3,8 +3,7 @@
 import { LayoutDashboard, Maximize2, PanelLeftClose } from "lucide-react";
 
 import { ModeToggle } from "./mode-toggle";
-import { ScenarioSelect } from "./scenario-select";
-import type { AppLayout, AppMode, ScenarioMeta } from "../types";
+import type { AppLayout, AppMode } from "../types";
 
 interface FloatingNavbarProps {
   mode: AppMode;
@@ -13,9 +12,6 @@ interface FloatingNavbarProps {
   layout?: AppLayout;
   onToggleLayout?: () => void;
   onHidePanels?: () => void;
-  scenarios?: ScenarioMeta[];
-  scenario?: string;
-  onScenarioChange?: (id: string) => void;
   /** Extra classes (e.g. hide/show transition state) appended to the root. */
   className?: string;
 }
@@ -27,9 +23,6 @@ export function FloatingNavbar({
   layout,
   onToggleLayout,
   onHidePanels,
-  scenarios,
-  scenario,
-  onScenarioChange,
   className = "",
 }: FloatingNavbarProps) {
   return (
@@ -60,12 +53,6 @@ export function FloatingNavbar({
           </span>
         ) : null}
       </div>
-      {!compact && scenarios && onScenarioChange ? (
-        <>
-          <div className="h-24 w-px flex-shrink-0 bg-frost" />
-          <ScenarioSelect scenarios={scenarios} value={scenario} onChange={onScenarioChange} />
-        </>
-      ) : null}
       <div className="flex-1" />
       {onHidePanels ? (
         <button

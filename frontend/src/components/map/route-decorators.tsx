@@ -1,7 +1,7 @@
 "use client";
 
 import L from "leaflet";
-import { useCallback, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useMap } from "react-leaflet";
 
 import { ROUTE_COLORS } from "../../lib/map-constants";
@@ -13,29 +13,7 @@ interface RouteDecoratorsProps {
   animating: boolean;
 }
 
-const ARROW_SPACING_PX = 90;
 const ANIM_DURATION_S = 20;
-
-function bearing(p1: [number, number], p2: [number, number]): number {
-  const toRad = Math.PI / 180;
-  const dLon = (p2[1] - p1[1]) * toRad;
-  const lat1 = p1[0] * toRad;
-  const lat2 = p2[0] * toRad;
-  const y = Math.sin(dLon) * Math.cos(lat2);
-  const x =
-    Math.cos(lat1) * Math.sin(lat2) -
-    Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
-  return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
-}
-
-function arrowIcon(color: string, angle: number): L.DivIcon {
-  return L.divIcon({
-    className: "",
-    iconSize: [12, 12],
-    iconAnchor: [6, 6],
-    html: `<svg width="12" height="12" viewBox="0 0 12 12" style="transform:rotate(${angle}deg)"><polygon points="6,1 11,11 6,8 1,11" fill="${color}" opacity="0.85"/></svg>`,
-  });
-}
 
 function vehicleIcon(color: string): L.DivIcon {
   return L.divIcon({
@@ -64,67 +42,13 @@ function interpolate(
   ];
 }
 
-function pixelDist(map: L.Map, a: [number, number], b: [number, number]): number {
-  const pa = map.latLngToContainerPoint(a);
-  const pb = map.latLngToContainerPoint(b);
-  return Math.sqrt((pa.x - pb.x) ** 2 + (pa.y - pb.y) ** 2);
-}
-
 export function RouteDecorators({ routes, highlightId, animating }: RouteDecoratorsProps) {
   const map = useMap();
-  const arrowLayer = useRef<L.LayerGroup>(L.layerGroup());
   const vehicleMarkers = useRef<Map<string, L.Marker>>(new Map());
   const animRef = useRef<number>(0);
   const routeDataRef = useRef<
     Map<string, { pts: [number, number][]; cumDist: number[]; totalDist: number }>
   >(new Map());
-
-  const buildArrows = useCallback(() => {
-    arrowLayer.current.clearLayers();
-
-    for (const r of routes) {
-      const pts = r.polyline as [number, number][];
-      if (pts.length < 2) continue;
-      const color = ROUTE_COLORS[r.route_color_index % ROUTE_COLORS.length];
-      const dimmed = highlightId !== null && highlightId !== r.vehicle_id;
-
-      let accPx = ARROW_SPACING_PX * 0.6;
-      for (let i = 1; i < pts.length; i++) {
-        const d = pixelDist(map, pts[i - 1], pts[i]);
-        accPx += d;
-        if (accPx >= ARROW_SPACING_PX) {
-          accPx = 0;
-          const angle = bearing(pts[i - 1], pts[i]);
-          const mid: [number, number] = [
-            (pts[i - 1][0] + pts[i][0]) / 2,
-            (pts[i - 1][1] + pts[i][1]) / 2,
-          ];
-          const marker = L.marker(mid, {
-            icon: arrowIcon(color, angle),
-            interactive: false,
-            keyboard: false,
-          });
-          if (dimmed) marker.setOpacity(0.3);
-          arrowLayer.current.addLayer(marker);
-        }
-      }
-    }
-  }, [routes, highlightId, map]);
-
-  useEffect(() => {
-    arrowLayer.current.addTo(map);
-    return () => {
-      arrowLayer.current.remove();
-    };
-  }, [map]);
-
-  useEffect(() => {
-    buildArrows();
-    map.on("zoomend", buildArrows);
-    return () => {
-      map.off("zoomend", buildArrows);
-    };
-  }, [map, buildArrows]);
 
   // Vehicle animation — only when animating=true
   useEffect(() => {

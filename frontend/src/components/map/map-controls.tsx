@@ -8,7 +8,7 @@ export function MapControls() {
   const map = useMap();
 
   return (
-    <div className="pointer-events-none flex flex-col items-start gap-8">
+    <div className="pointer-events-none flex flex-row items-start gap-8">
       <ControlCluster>
         <IconButton
           label="Kembali ke pusat Surabaya"
@@ -18,7 +18,7 @@ export function MapControls() {
         </IconButton>
       </ControlCluster>
 
-      <ControlCluster vertical>
+      <ControlCluster>
         <IconButton label="Perbesar" onClick={() => map.zoomIn()}>
           <PlusIcon />
         </IconButton>
@@ -31,19 +31,9 @@ export function MapControls() {
   );
 }
 
-function ControlCluster({
-  children,
-  vertical = false,
-}: {
-  children: React.ReactNode;
-  vertical?: boolean;
-}) {
+function ControlCluster({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      className={`pointer-events-auto flex overflow-hidden rounded-lg border border-frost bg-pure-white ${
-        vertical ? "flex-col" : "flex-row"
-      }`}
-    >
+    <div className="pointer-events-auto flex flex-row overflow-hidden rounded-lg border border-frost bg-pure-white">
       {children}
     </div>
   );
@@ -72,7 +62,7 @@ function IconButton({
 }
 
 function Divider() {
-  return <div aria-hidden className="h-px w-full bg-frost" />;
+  return <div aria-hidden className="w-px self-stretch bg-frost" />;
 }
 
 function CompassIcon() {

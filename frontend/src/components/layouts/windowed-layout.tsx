@@ -3,13 +3,12 @@
 import type { ReactNode } from "react";
 
 import type { BaseMapId, OverlayLayerId } from "../../lib/map-constants";
-import type { AppMode, ScenarioMeta } from "../../types";
+import type { AppMode } from "../../types";
 import type { DatasetKey } from "../data-table-modal";
 import { DataDock } from "../map/data-dock";
 import { MapLayerDock } from "../map/map-layer-dock";
 import { LayoutToggle } from "../floating-navbar";
 import { ModeToggle } from "../mode-toggle";
-import { ScenarioSelect } from "../scenario-select";
 
 interface Counts {
   floods: number;
@@ -22,9 +21,7 @@ interface WindowedLayoutProps {
   mode: AppMode;
   onModeChange: (m: AppMode) => void;
   onExitWindowed: () => void;
-  scenarios: ScenarioMeta[];
   scenario: string | undefined;
-  onScenarioChange: (id: string) => void;
 
   overlays: Record<OverlayLayerId, boolean>;
   setOverlay: (id: OverlayLayerId, visible: boolean) => void;
@@ -46,9 +43,7 @@ export function WindowedLayout({
   mode,
   onModeChange,
   onExitWindowed,
-  scenarios,
   scenario,
-  onScenarioChange,
   overlays,
   setOverlay,
   baseMap,
@@ -75,12 +70,6 @@ export function WindowedLayout({
         <span className="ml-8 border-l border-frost pl-[10px] text-[12px] font-semibold leading-none text-slate">
           SPK Damkar Surabaya
         </span>
-        {scenarios.length > 1 ? (
-          <>
-            <div className="h-24 w-px flex-shrink-0 bg-frost" />
-            <ScenarioSelect scenarios={scenarios} value={scenario} onChange={onScenarioChange} />
-          </>
-        ) : null}
         <div className="flex-1" />
         <LayoutToggle layout="windowed" onToggle={onExitWindowed} />
         <div className="h-24 w-px flex-shrink-0 bg-frost" />

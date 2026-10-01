@@ -10,7 +10,7 @@ class _Base(BaseModel):
 
 
 class ACSRequest(_Base):
-    iterations: int = Field(60, ge=1, le=500)
+    iterations: int = Field(30, ge=1, le=500)
     n_ants: int = Field(20, ge=1, le=100)
     alpha: float = Field(1.0, ge=0.1, le=5.0)
     beta: float = Field(1.0, ge=0.1, le=10.0)

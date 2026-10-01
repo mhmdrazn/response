@@ -62,15 +62,35 @@ export function depthToSiPlaceholder(depthCm: number | null | undefined): number
   return Number(normalized.toFixed(2));
 }
 
+// One colour per vehicle. 24 hues picked by farthest-point sampling in CIELAB so
+// that any two differ by dE >= 27, and vehicles of the same depot (neighbours in
+// this list) by dE >= 33. DESIGN.md allows only eight route hues; this is a
+// deliberate exception because one colour per vehicle needs 24 distinct ones.
 export const ROUTE_COLORS: string[] = [
-  "#dc2626",
-  "#e11d48",
-  "#0891b2",
-  "#c026d3",
-  "#ea580c",
-  "#059669",
-  "#7c3aed",
-  "#0284c7",
+  "#a51d7c",
+  "#0fb30f",
+  "#1414ff",
+  "#8ab30f",
+  "#ff14ff",
+  "#17822c",
+  "#144fff",
+  "#c29b00",
+  "#7e00c2",
+  "#7d8217",
+  "#0044c2",
+  "#eb8100",
+  "#148aff",
+  "#ff4314",
+  "#14adff",
+  "#ff144f",
+  "#0fb392",
+  "#ff14b9",
+  "#996300",
+  "#5d1782",
+  "#dc6138",
+  "#173c82",
+  "#822c17",
+  "#b30f48",
 ];
 
 export const BASE_MAP_LAYERS = {

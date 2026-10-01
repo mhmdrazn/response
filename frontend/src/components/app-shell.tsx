@@ -46,8 +46,9 @@ const RESULT_PANEL_WIDTH: Record<string, number> = {
   desktop: 420,
 };
 
-// Clears the collapsed layer/data dock at bottom of map
-const SIDEBAR_BOTTOM_CLEARANCE = 220;
+// The algorithm panel stops above the layer/data docks. LeftPanel publishes
+// their live height as --left-stack-h; 220px is the collapsed fallback.
+const SIDEBAR_BOTTOM_CLEARANCE = "calc(var(--left-stack-h, 220px) + 24px)";
 
 // Shared transition for the hide-all-panels animation (smooth in-place fade).
 const PANEL_ANIM = "transition-opacity duration-300 ease-out";
@@ -192,7 +193,7 @@ export function AppShell() {
     setFocusedRoute(null);
     setHiddenRoutes(new Set());
     setAnimating(false);
-    runComparison(undefined, scenario);
+    runComparison(undefined, scenario, algoCfg.budgetS);
     if (isMobile) setMobilePanel("none");
   }
 
@@ -220,6 +221,11 @@ export function AppShell() {
       updateACS={algoCfg.updateACS}
       vnsParams={algoCfg.vnsParams}
       updateVNS={algoCfg.updateVNS}
+      scenarios={scenarios}
+      scenario={scenario}
+      onScenarioChange={handleScenarioChange}
+      budgetS={algoCfg.budgetS}
+      onBudgetChange={algoCfg.setBudgetS}
       onRun={handleRun}
       onCompare={handleCompare}
       onReset={() => {
@@ -302,9 +308,7 @@ export function AppShell() {
             mode={mode}
             onModeChange={setMode}
             onExitWindowed={() => setLayout("fullscreen")}
-            scenarios={scenarios}
             scenario={scenario}
-            onScenarioChange={handleScenarioChange}
             overlays={overlays}
             setOverlay={setOverlay}
             baseMap={baseMap}
@@ -352,9 +356,6 @@ export function AppShell() {
             layout={layout}
             onToggleLayout={() => setLayout("windowed")}
             onHidePanels={!isMobile ? () => setPanelsHidden(true) : undefined}
-            scenarios={scenarios}
-            scenario={scenario}
-            onScenarioChange={handleScenarioChange}
             className={`${PANEL_ANIM} ${
               panelsHidden ? "pointer-events-none opacity-0" : "pointer-events-auto opacity-100"
             }`}
@@ -371,13 +372,13 @@ export function AppShell() {
           {!isMobile ? (
             <>
               <div
-                className={`absolute left-16 top-[84px] z-[900] flex flex-col gap-[10px] overflow-y-auto ${PANEL_ANIM} ${
+                className={`absolute left-16 top-[84px] z-[900] flex min-h-[200px] flex-col gap-[10px] overflow-hidden ${PANEL_ANIM} ${
                   panelsHidden ? "pointer-events-none opacity-0" : "pointer-events-none opacity-100"
                 }`}
                 style={{ bottom: SIDEBAR_BOTTOM_CLEARANCE, width: panelW }}
               >
                 <div
-                  className={`flex flex-col gap-[10px] ${
+                  className={`flex max-h-full min-h-0 flex-col gap-[10px] ${
                     panelsHidden ? "pointer-events-none" : "pointer-events-auto"
                   }`}
                 >

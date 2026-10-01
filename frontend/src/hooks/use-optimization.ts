@@ -20,7 +20,7 @@ export interface UseOptimization {
    *  storage) — drives the completion toast without firing on reload. */
   runSignal: number;
   run: (req: RunRequest, scenario?: string) => Promise<void>;
-  runComparison: (seed?: number, scenario?: string) => Promise<void>;
+  runComparison: (seed?: number, scenario?: string, timeLimitS?: number) => Promise<void>;
   reset: () => void;
   hydrated: boolean;
 }
@@ -114,15 +114,23 @@ export function useOptimization(): UseOptimization {
     }
   }, []);
 
-  const runComparison = useCallback(async (seed?: number, scenario?: string) => {
+  const runComparison = useCallback(
+    async (seed?: number, scenario?: string, timeLimitS?: number) => {
     setIsLoading(true);
     setError(null);
     setResult(null);
     setComparison(null);
     try {
       const s = seed ?? 42;
-      const acsResult = await api.runACS({ ...DEFAULT_ACS_PARAMS, seed: s }, scenario);
-      const vnsResult = await api.runVNS({ ...DEFAULT_VNS_PARAMS, seed: s }, scenario);
+      const limit = timeLimitS ?? DEFAULT_ACS_PARAMS.time_limit_s;
+      const acsResult = await api.runACS(
+        { ...DEFAULT_ACS_PARAMS, seed: s, time_limit_s: limit },
+        scenario,
+      );
+      const vnsResult = await api.runVNS(
+        { ...DEFAULT_VNS_PARAMS, seed: s, time_limit_s: limit },
+        scenario,
+      );
       const comp: ComparisonResult = { acs: acsResult, vns: vnsResult };
       setComparison(comp);
       setResult(acsResult);
@@ -134,7 +142,9 @@ export function useOptimization(): UseOptimization {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  },
+  [],
+  );
 
   const reset = useCallback(() => {
     setResult(null);

@@ -143,7 +143,7 @@ export const api = {
 };
 
 export const DEFAULT_ACS_PARAMS: ACSParams = {
-  iterations: 60,
+  iterations: 30,
   n_ants: 20,
   alpha: 1.0,
   beta: 1.0,

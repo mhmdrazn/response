@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+
 import type { DatasetKey } from "../data-table-modal";
 import type { BaseMapId, OverlayLayerId } from "../../lib/map-constants";
 import { DataDock } from "./data-dock";
@@ -38,8 +40,27 @@ export function LeftPanel({
   scenario,
   hidden = false,
 }: LeftPanelProps) {
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  // Publish the stack's real height so the algorithm panel above it can stop
+  // short of it. The docks open and close, so a fixed clearance goes stale.
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    const root = document.documentElement;
+    const publish = () => root.style.setProperty("--left-stack-h", `${el.offsetHeight}px`);
+    publish();
+    const ro = new ResizeObserver(publish);
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+      root.style.removeProperty("--left-stack-h");
+    };
+  }, []);
+
   return (
     <div
+      ref={rootRef}
       className={`pointer-events-none absolute bottom-16 left-16 z-[1000] flex w-[340px] flex-col gap-8 transition-opacity duration-300 ease-out ${
         hidden ? "opacity-0 [&_*]:pointer-events-none" : "opacity-100"
       }`}
