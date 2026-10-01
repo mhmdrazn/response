@@ -21,9 +21,9 @@ def _instance(b):
 
 
 def _no_physical_violations(inst, ev):
-    # HC6 (depot-geometry) can appear via the overflow fallback; the physical
-    # constraints (volume served, depot balance, capacity, IF drain) must hold.
-    bad = [v for v in validate_hard_constraints(inst, ev) if not v.startswith("HC6")]
+    # Every hard constraint must hold, the dispatch range (HC6) included: there
+    # is no longer an overflow path that may send an out-of-range crew.
+    bad = validate_hard_constraints(inst, ev)
     assert bad == [], bad
 
 

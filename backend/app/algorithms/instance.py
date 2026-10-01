@@ -34,6 +34,14 @@ IF_DRAIN_FACTOR = {"river": 0.75, "stream": 1.25}
 # and the limit never bound.
 ROUTE_HORIZON_S = 281 * 60.0
 
+# A depot may only dispatch to a flood it can reach within this drive time. Set
+# to the longest response time in the Damkar log (respon_time, 7 min over 409
+# records, median 7). Without it the solvers sent crews across the city: half
+# the pumping visits came from depots over 7 minutes away, up to 27 minutes.
+# A flood no depot reaches in time falls back to its nearest depot, so it is
+# never stranded; if even that crew cannot serve it, it carries over.
+DISPATCH_LIMIT_S = 7 * 60.0
+
 # Local search scans every pair of stops, and on a heavy scenario a route runs
 # to a hundred stops, so a single pass eats the whole budget. Restricting each
 # move to a node's k nearest neighbours is the standard VRP remedy: swaps
@@ -100,10 +108,11 @@ class Instance:
     route_horizon_s: float = ROUTE_HORIZON_S
     horizon_penalty: float = HORIZON_PENALTY
 
-    # Geometry constraint: each flood assigned to its nearest depot
-    nearest_depot: np.ndarray = field(default_factory=lambda: np.array([], dtype=int))
-    # Quick lookup: depot_node_index -> set of flood node indices assigned to it
+    # Dispatch constraint: depots allowed to serve each flood, by flood slot
+    eligible_depots: list[frozenset[int]] = field(default_factory=list)
+    # Quick lookup: depot_node_index -> set of flood node indices it may serve
     depot_flood_sets: dict[int, set[int]] = field(default_factory=dict)
+    dispatch_limit_s: float = DISPATCH_LIMIT_S
 
 
 def _row_to_dict(row: pd.Series) -> dict[str, Any]:
@@ -121,6 +130,7 @@ def build_instance(
     unserved_penalty: float = UNSERVED_PENALTY,
     route_horizon_s: float = ROUTE_HORIZON_S,
     horizon_penalty: float = HORIZON_PENALTY,
+    dispatch_limit_s: float = DISPATCH_LIMIT_S,
 ) -> Instance:
     depots = [_row_to_dict(r) for _, r in depots_df.iterrows()]
     floods = [_row_to_dict(r) for _, r in floods_df.iterrows()]
@@ -209,18 +219,22 @@ def build_instance(
         for cap in VEHICLE_CAPACITIES_L:
             vehicles.append((di, cap))
 
-    # Geometry constraint: assign each flood to its nearest depot
+    # Dispatch constraint: a depot serves a flood only within the drive-time
+    # limit, falling back to the nearest depot when none is in range.
     depot_arr = np.array(depot_indices, dtype=int)
     flood_arr = np.array(flood_indices, dtype=int)
-    if n_depots > 0 and n_floods > 0:
-        sub = dist_matrix[np.ix_(flood_arr, depot_arr)]
-        nearest_depot = depot_arr[np.argmin(sub, axis=1)]
-    else:
-        nearest_depot = np.zeros(n_floods, dtype=int)
-
+    eligible_depots: list[frozenset[int]] = []
     depot_flood_sets: dict[int, set[int]] = {di: set() for di in depot_indices}
-    for k, fi in enumerate(flood_indices):
-        depot_flood_sets[int(nearest_depot[k])].add(fi)
+    if n_depots > 0 and n_floods > 0:
+        drive = time_matrix[np.ix_(depot_arr, flood_arr)]
+        for k, fi in enumerate(flood_indices):
+            in_range = depot_arr[drive[:, k] <= dispatch_limit_s]
+            chosen = in_range if len(in_range) else depot_arr[[int(np.argmin(drive[:, k]))]]
+            eligible_depots.append(frozenset(int(d) for d in chosen))
+            for d in chosen:
+                depot_flood_sets[int(d)].add(fi)
+    else:
+        eligible_depots = [frozenset() for _ in range(n_floods)]
 
     return Instance(
         depots=depots,
@@ -243,6 +257,7 @@ def build_instance(
         unserved_penalty=float(unserved_penalty),
         route_horizon_s=float(route_horizon_s),
         horizon_penalty=float(horizon_penalty),
-        nearest_depot=nearest_depot,
+        eligible_depots=eligible_depots,
         depot_flood_sets=depot_flood_sets,
+        dispatch_limit_s=float(dispatch_limit_s),
     )

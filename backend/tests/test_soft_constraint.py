@@ -145,3 +145,55 @@ def test_higher_penalty_never_lowers_coverage(s2):
     cov_lo = coverage_ratio(lo, HybridACS(lo, p).solve().evaluation)
     cov_hi = coverage_ratio(hi, HybridACS(hi, p).solve().evaluation)
     assert cov_hi >= cov_lo - 0.05
+
+
+def test_dispatch_range_is_respected_by_both_solvers(s2):
+    # Half the pumping visits used to come from depots over 7 minutes away, up to
+    # 27, because overflow and repair accepted any vehicle.
+    inst = _instance(s2)
+    nd = inst.n_depots
+
+    acs = HybridACS(inst, ACSParams(iterations=10, n_ants=8, seed=3, time_limit_s=15)).solve()
+    vns = VNS(inst, VNSParams(max_iterations=20, seed=3, time_limit_s=15)).solve()
+
+    for name, sol in (("ACS", acs), ("VNS", vns)):
+        for r in sol.evaluation.routes:
+            for v in r.visits:
+                if v.node_type == "flood" and v.volume_pumped > 0:
+                    allowed = inst.eligible_depots[v.node_index - nd]
+                    assert r.depot_index in allowed, (
+                        f"{name}: depot {r.depot_index} out of range of flood {v.node_index}"
+                    )
+
+
+def test_every_flood_keeps_at_least_one_eligible_depot(s2):
+    inst = _instance(s2)
+    assert all(len(d) >= 1 for d in inst.eligible_depots)
+
+
+def test_fewer_depots_are_eligible_than_exist(s2):
+    inst = _instance(s2)
+    used = set().union(*inst.eligible_depots)
+    assert len(used) < inst.n_depots, "some depots must stay out of reach of every flood"
+
+
+def test_acs_spreads_its_budget_over_many_iterations(s2):
+    # Each iteration used to polish to completion, so a 45 s budget fit about six
+    # iterations and pheromone learning barely started. The budget is now sliced.
+    inst = _instance(s2)
+    t0 = time.perf_counter()
+    sol = HybridACS(inst, ACSParams(iterations=15, n_ants=10, seed=4, time_limit_s=15)).solve()
+    elapsed = time.perf_counter() - t0
+
+    assert len(sol.trace.best_score) >= 12, len(sol.trace.best_score)
+    assert elapsed < 15.5, f"overran the budget: {elapsed:.1f}s"
+
+
+def test_sliced_polish_does_not_leave_the_back_routes_untouched():
+    import random
+
+    from app.algorithms.local_search import _order
+
+    firsts = {_order(24, random.Random(s))[0] for s in range(40)}
+    assert len(firsts) > 12, "sweep must not always begin at the same route"
+    assert _order(24, None) == list(range(24))

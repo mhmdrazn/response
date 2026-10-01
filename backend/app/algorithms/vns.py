@@ -93,22 +93,6 @@ class VNS:
                 route_map[vi] = route
                 cap_map[vi] = cap
 
-            # Overflow: if own-depot constraint left unserved floods, allow any
-            # Only use vehicles with empty routes to avoid discarding existing visits
-            if np.any(volumes_left > 0.5):
-                for vi in order:
-                    if np.all(volumes_left <= 0.5):
-                        break
-                    if len(route_map.get(vi, [])) > 2:
-                        continue
-                    depot, cap = self.inst.vehicles[vi]
-                    route, _ = self._build_greedy_route(
-                        depot, cap, volumes_left, allow_all=True,
-                    )
-                    if len(route) > 2:
-                        route_map[vi] = route
-                        cap_map[vi] = cap
-
             routes = [route_map[i] for i in range(n_vehicles)]
             capacities = [cap_map[i] for i in range(n_vehicles)]
 
@@ -134,7 +118,6 @@ class VNS:
         depot: int,
         cap: int,
         volumes_left: np.ndarray,
-        allow_all: bool = False,
     ) -> tuple[list[int], float]:
         route: list[int] = [depot]
         tank = float(cap)  # standby full: force an IF stop before pumping
@@ -150,16 +133,10 @@ class VNS:
         own_floods = self.inst.depot_flood_sets.get(depot, set())
 
         for _ in range(max_steps):
-            if allow_all:
-                served = [
-                    fi for k, fi in enumerate(self.inst.flood_indices)
-                    if volumes_left[k] > 0.5
-                ]
-            else:
-                served = [
-                    fi for fi in own_floods
-                    if volumes_left[self._flood_lookup[fi]] > 0.5
-                ]
+            served = [
+                fi for fi in own_floods
+                if volumes_left[self._flood_lookup[fi]] > 0.5
+            ]
             if not served:
                 break
 
@@ -241,35 +218,38 @@ class VNS:
             for k, fi in enumerate(self.inst.flood_indices)
             if remaining_volume[k] > 0.5
         ]
-        if not unserved:
-            return False
+        # Try each unserved flood until some in-range crew can take it.
+        for flood_slot, flood_node in unserved:
+            if self._repair_flood(routes, capacities, flood_slot, flood_node):
+                return True
+        return False
 
-        flood_slot, flood_node = unserved[0]
-        assigned_depot = int(self.inst.nearest_depot[flood_slot])
+    def _repair_flood(
+        self,
+        routes: list[list[int]],
+        capacities: list[int],
+        flood_slot: int,
+        flood_node: int,
+    ) -> bool:
+        allowed = self.inst.eligible_depots[flood_slot]
         nearest_if = self._nearest(flood_node, self.inst.if_indices)
 
-        # Prefer the flood's own depot (HC6), then any vehicle. Horizon fit is
-        # part of choosing, not a check on one pre-picked vehicle: the closest
-        # crew is usually the busiest, so testing only that one gives up while
-        # another could still take the work.
+        # Only crews from depots in dispatch range. Horizon fit is part of
+        # choosing, not a check on one pre-picked vehicle: the closest crew is
+        # usually the busiest, so testing only that one gives up while another
+        # could still take the work.
         best_vi, best_dist, best_route = -1, float("inf"), None
-        for pool in (
-            [vi for vi in range(len(routes)) if routes[vi][0] == assigned_depot],
-            list(range(len(routes))),
-        ):
-            for vi in pool:
-                route = routes[vi]
-                last_stop = route[-2] if len(route) >= 2 else route[0]
-                d = float(self.inst.dist_matrix[last_stop, flood_node])
-                if d >= best_dist:
-                    continue
-                candidate = route[:-1] + [nearest_if, flood_node, route[-1]]
-                limit = self.inst.route_horizon_s - REPAIR_MARGIN_S
-                if self._route_time(candidate, capacities[vi]) > limit:
-                    continue
-                best_vi, best_dist, best_route = vi, d, candidate
-            if best_vi >= 0:
-                break
+        for vi in (v for v in range(len(routes)) if routes[v][0] in allowed):
+            route = routes[vi]
+            last_stop = route[-2] if len(route) >= 2 else route[0]
+            d = float(self.inst.dist_matrix[last_stop, flood_node])
+            if d >= best_dist:
+                continue
+            candidate = route[:-1] + [nearest_if, flood_node, route[-1]]
+            limit = self.inst.route_horizon_s - REPAIR_MARGIN_S
+            if self._route_time(candidate, capacities[vi]) > limit:
+                continue
+            best_vi, best_dist, best_route = vi, d, candidate
 
         if best_vi < 0 or best_route is None:
             return False
@@ -356,14 +336,11 @@ class VNS:
         pos = self._rng.choice(flood_positions)
         node = src[pos]
 
-        flood_slot = node - self.inst.n_depots
-        assigned_depot = int(self.inst.nearest_depot[flood_slot])
+        allowed = self.inst.eligible_depots[node - self.inst.n_depots]
         eligible = [
             r for r in active
-            if r != src_ri and routes[r][0] == assigned_depot
+            if r != src_ri and routes[r][0] in allowed
         ]
-        if not eligible:
-            eligible = [r for r in active if r != src_ri]
         if not eligible:
             return
 

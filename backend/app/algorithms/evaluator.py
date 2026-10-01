@@ -318,17 +318,17 @@ def validate_hard_constraints(
                 )
                 break
 
-    # HC6: Depot-geometry constraint — floods should be served by nearest depot.
+    # HC6: Dispatch constraint — a flood is served only by a depot within the
+    # drive-time limit (or its nearest depot when none is in range).
     for k, r in enumerate(ev.routes):
         depot = r.depot_index
         for v in r.visits:
             if v.node_type == "flood":
                 flood_slot = v.node_index - inst.n_depots
-                assigned = int(inst.nearest_depot[flood_slot])
-                if assigned != depot:
+                if depot not in inst.eligible_depots[flood_slot]:
                     violations.append(
-                        f"HC6 depot-geometry: route {k} (depot {depot}) "
-                        f"serves flood {v.node_index} assigned to depot {assigned}"
+                        f"HC6 dispatch: route {k} (depot {depot}) serves flood "
+                        f"{v.node_index} beyond its dispatch range"
                     )
 
     return violations
