@@ -1,8 +1,5 @@
 "use client";
 
-import { X } from "lucide-react";
-import { useEffect, type ReactNode } from "react";
-
 import { formatDateTimeId } from "../../lib/format";
 import { formatDuration, formatMeters, formatNumber } from "../../lib/format-metrics";
 import {
@@ -18,6 +15,20 @@ import {
   siColor,
 } from "../../lib/map-constants";
 import type { FloodPoint, OptimizationResult } from "../../types";
+import {
+  DetailColumns,
+  DetailFact,
+  DetailFacts,
+  DetailNote,
+  DetailSection,
+  DetailShell,
+  DetailStat,
+  DetailStats,
+  LOG_ROW_CLS,
+  LogHead,
+  LogList,
+  LogRows,
+} from "./detail-parts";
 
 /** Average of the two tank sizes in the fleet, used to express litres as loads. */
 const AVG_TANK_L = 4000;
@@ -61,65 +72,35 @@ export function FloodDetailPanel({
   const status = STATUS[service.status];
   const when = formatDateTimeId(flood.datetime);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
   return (
-    <section
-      aria-label={`Detail genangan ${index + 1}`}
-      className={`@container pointer-events-auto flex max-h-[min(436px,50vh)] w-full flex-col overflow-hidden bg-pure-white ${
-        variant === "embedded" ? "border-t border-frost" : "rounded-lg border border-frost"
-      }`}
-    >
-      <header className="flex flex-shrink-0 items-center gap-[10px] border-b border-frost px-[16px] py-[10px]">
+    <DetailShell
+      label={`Detail genangan ${index + 1}`}
+      closeLabel="Tutup detail genangan"
+      onClose={onClose}
+      variant={variant}
+      mark={
         <span
           aria-hidden
           className="inline-block h-[12px] w-[12px] flex-shrink-0 rounded-full"
           style={{ background: siColor(si) }}
         />
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-x-8 gap-y-[2px]">
-            <h2 className="m-0 text-[14px] font-bold leading-[1.2] tracking-[-0.15px] text-midnight-ink">
-              Genangan {index + 1}
-            </h2>
-            <span
-              className={`rounded-md px-[8px] py-px text-[10.5px] font-bold tracking-[0.2px] ${status.cls}`}
-            >
-              {status.label}
-            </span>
-          </div>
-          <p className="m-0 mt-[2px] truncate text-[11.5px] font-medium text-slate">
-            {flood.deskripsi?.trim() || "Tanpa deskripsi lokasi"}
-          </p>
-        </div>
-        <SeverityChip si={si} />
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Tutup detail genangan"
-          title="Tutup (Esc)"
-          className="inline-flex h-[28px] w-[28px] flex-shrink-0 cursor-pointer items-center justify-center rounded-md border border-frost bg-pure-white text-steel transition-colors hover:bg-mist"
-        >
-          <X size={14} strokeWidth={2.2} />
-        </button>
-      </header>
-
+      }
+      title={`Genangan ${index + 1}`}
+      badge={status}
+      subtitle={flood.deskripsi?.trim() || "Tanpa deskripsi lokasi"}
+      trailing={<SeverityChip si={si} />}
+    >
       <Stats flood={flood} service={service} />
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 overflow-y-auto @min-[680px]:grid-cols-[minmax(250px,0.85fr)_minmax(0,1.5fr)] @min-[680px]:divide-x @min-[680px]:divide-frost @min-[680px]:overflow-hidden">
-        <Section title="Lokasi & kondisi">
-          <dl className="m-0 grid grid-cols-[auto_minmax(0,1fr)] gap-x-[14px] gap-y-[6px] text-[12px]">
-            <Fact label="Peringkat severity" value={`${rank} dari ${total}`} />
-            <Fact
+      <DetailColumns>
+        <DetailSection title="Lokasi & kondisi">
+          <DetailFacts>
+            <DetailFact label="Peringkat severity" value={`${rank} dari ${total}`} />
+            <DetailFact
               label="Ketinggian"
               value={flood.ketinggian_cm != null ? `${formatNumber(flood.ketinggian_cm)} cm` : "-"}
             />
-            <Fact
+            <DetailFact
               label="Kelas jalan"
               value={
                 flood.road_class != null
@@ -128,21 +109,24 @@ export function FloodDetailPanel({
                   : "-"
               }
             />
-            <Fact
+            <DetailFact
               label="Faskes terdekat"
               value={flood.dist_faskes_m != null ? formatMeters(flood.dist_faskes_m) : "-"}
             />
-            <Fact label="Dilaporkan" value={when ?? "-"} />
-            <Fact label="Koordinat" value={`${flood.lat.toFixed(5)}, ${flood.lon.toFixed(5)}`} />
-          </dl>
+            <DetailFact label="Dilaporkan" value={when ?? "-"} />
+            <DetailFact
+              label="Koordinat"
+              value={`${flood.lat.toFixed(5)}, ${flood.lon.toFixed(5)}`}
+            />
+          </DetailFacts>
           <Basis flood={flood} />
-        </Section>
+        </DetailSection>
 
-        <Section title="Log kendaraan" fill>
+        <DetailSection title="Log kendaraan" fill>
           <VisitLog service={service} hasPlan={result !== null} />
-        </Section>
-      </div>
-    </section>
+        </DetailSection>
+      </DetailColumns>
+    </DetailShell>
   );
 }
 
@@ -153,15 +137,15 @@ function Stats({ flood, service }: { flood: FloodPoint; service: FloodService })
   const last = service.visits[service.visits.length - 1];
 
   return (
-    <div className="grid flex-shrink-0 grid-cols-2 border-b border-frost @min-[600px]:grid-cols-4">
-      <Stat
+    <DetailStats>
+      <DetailStat
         label="Estimasi beban"
         value={v != null ? `${formatNumber(v)} L` : "-"}
         sub={
           v != null ? `setara ${formatNumber(v / AVG_TANK_L, 1)} muatan tangki` : "belum diestimasi"
         }
       />
-      <Stat
+      <DetailStat
         label="Terpompa"
         value={
           hasPlan && service.coveragePct != null ? `${formatNumber(service.coveragePct, 0)}%` : "-"
@@ -173,7 +157,7 @@ function Stats({ flood, service }: { flood: FloodPoint; service: FloodService })
         }
         progress={hasPlan ? service.coveragePct : null}
       />
-      <Stat
+      <DetailStat
         label="Kunjungan"
         value={hasPlan ? formatNumber(service.visits.length) : "-"}
         sub={
@@ -184,7 +168,7 @@ function Stats({ flood, service }: { flood: FloodPoint; service: FloodService })
             : "belum ada rencana"
         }
       />
-      <Stat
+      <DetailStat
         label="Tiba pertama"
         value={first ? formatDuration(first.arrivalS) : "-"}
         sub={
@@ -194,76 +178,7 @@ function Stats({ flood, service }: { flood: FloodPoint; service: FloodService })
         }
         last
       />
-    </div>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  sub,
-  progress,
-  last = false,
-}: {
-  label: string;
-  value: string;
-  sub: string;
-  progress?: number | null;
-  last?: boolean;
-}) {
-  return (
-    <div
-      className={`flex min-w-0 flex-col gap-[3px] px-[16px] py-[10px] ${
-        last ? "" : "border-r border-frost"
-      }`}
-    >
-      <span className="text-[10px] font-bold uppercase tracking-[0.9px] text-slate">{label}</span>
-      <span className="truncate text-[20px] font-bold leading-[1.1] tracking-[-0.4px] text-midnight-ink tabular-nums">
-        {value}
-      </span>
-      {progress != null ? (
-        <span className="block h-[4px] w-full overflow-hidden rounded-full bg-frost">
-          <span
-            className="soft-grow-x block h-full rounded-full bg-midnight-ink"
-            style={{ width: `${progress}%` }}
-          />
-        </span>
-      ) : null}
-      <span className="truncate text-[11px] font-medium text-slate">{sub}</span>
-    </div>
-  );
-}
-
-function Section({
-  title,
-  children,
-  fill = false,
-}: {
-  title: string;
-  children: ReactNode;
-  /** The children own a scroll region; the section itself does not scroll. */
-  fill?: boolean;
-}) {
-  return (
-    <div
-      className={`flex min-w-0 flex-col gap-[8px] px-[16px] py-[10px] @min-[680px]:min-h-0 ${
-        fill ? "@min-[680px]:overflow-hidden" : "@min-[680px]:overflow-y-auto"
-      }`}
-    >
-      <h3 className="m-0 flex-shrink-0 text-[10px] font-bold uppercase tracking-[0.9px] text-slate">
-        {title}
-      </h3>
-      {children}
-    </div>
-  );
-}
-
-function Fact({ label, value }: { label: string; value: ReactNode }) {
-  return (
-    <>
-      <dt className="font-semibold text-slate">{label}</dt>
-      <dd className="m-0 min-w-0 break-words text-right font-bold text-midnight-ink">{value}</dd>
-    </>
+    </DetailStats>
   );
 }
 
@@ -310,40 +225,43 @@ const LOG_GRID =
 function VisitLog({ service, hasPlan }: { service: FloodService; hasPlan: boolean }) {
   if (!hasPlan) {
     return (
-      <p className="m-0 text-[12px] font-medium leading-[1.45] text-slate">
+      <DetailNote>
         Belum ada rencana rute. Jalankan optimasi untuk melihat kendaraan yang datang ke titik ini.
-      </p>
+      </DetailNote>
     );
   }
   if (service.visits.length === 0) {
     return (
-      <p className="m-0 text-[12px] font-medium leading-[1.45] text-slate">
+      <DetailNote>
         Tidak ada kendaraan yang datang ke titik ini pada rencana saat ini. Bebannya bergulir ke
         periode berikutnya.
         {service.remainingL != null && service.remainingL > 1
           ? ` Sisa ${formatNumber(service.remainingL)} L.`
           : ""}
-      </p>
+      </DetailNote>
     );
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <div
-        className={`${LOG_GRID} flex-shrink-0 border-b border-frost pb-[5px] text-[10px] font-bold uppercase tracking-[0.7px] text-slate`}
-      >
+    <LogList
+      footer={
+        service.remainingL != null && service.remainingL > 1 ? (
+          <p className="m-0 flex-shrink-0 border-t border-frost pt-[6px] text-[11px] font-medium text-slate">
+            Sisa {formatNumber(service.remainingL)} L dilanjutkan ke periode berikutnya.
+          </p>
+        ) : null
+      }
+    >
+      <LogHead grid={LOG_GRID}>
         <span aria-hidden />
         <span>Kendaraan</span>
         <span>Depo</span>
         <span className="text-right">Tiba</span>
         <span className="text-right">Volume</span>
-      </div>
-      <ul className="scrollbar-hidden m-0 min-h-0 flex-1 list-none overflow-y-auto p-0">
+      </LogHead>
+      <LogRows>
         {service.visits.map((v, i) => (
-          <li
-            key={`${v.vehicleId}-${i}`}
-            className={`${LOG_GRID} border-b border-frost py-[6px] text-[11.5px] last:border-b-0`}
-          >
+          <li key={`${v.vehicleId}-${i}`} className={`${LOG_GRID} ${LOG_ROW_CLS}`}>
             <span
               aria-hidden
               className="inline-block h-[10px] w-[10px] rounded-full"
@@ -366,12 +284,7 @@ function VisitLog({ service, hasPlan }: { service: FloodService; hasPlan: boolea
             </span>
           </li>
         ))}
-      </ul>
-      {service.remainingL != null && service.remainingL > 1 ? (
-        <p className="m-0 flex-shrink-0 border-t border-frost pt-[6px] text-[11px] font-medium text-slate">
-          Sisa {formatNumber(service.remainingL)} L dilanjutkan ke periode berikutnya.
-        </p>
-      ) : null}
-    </div>
+      </LogRows>
+    </LogList>
   );
 }
