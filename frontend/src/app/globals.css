@@ -393,6 +393,21 @@ button:not(:disabled):active,
   background: var(--color-mist);
 }
 
+/* Clicking a route or marker focuses it, and the browser draws its focus ring as a
+   black box around the shape's bounding rectangle. Selection is shown by the
+   shape itself (thicker route, halo on markers), so the ring only gets in the way. */
+.leaflet-interactive:focus,
+.leaflet-marker-icon:focus,
+.leaflet-container:focus {
+  outline: none;
+}
+
+/* Chrome leaves hairline gaps between map tiles at fractional zoom or display
+   scaling. A transparent outline widens each tile by a subpixel and closes them. */
+.leaflet-tile {
+  outline: 1px solid transparent;
+}
+
 .leaflet-control-zoom a {
   border-color: var(--color-frost) !important;
   color: var(--color-midnight-ink) !important;
