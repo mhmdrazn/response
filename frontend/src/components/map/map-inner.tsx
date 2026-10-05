@@ -13,7 +13,14 @@ import {
   type OverlayLayerId,
 } from "../../lib/map-constants";
 import type { DatasetKey } from "../data-table-modal";
-import type { Depot, Faskes, FloodPoint, IntermediateFacility, RouteOut } from "../../types";
+import type {
+  Depot,
+  Faskes,
+  FloodPoint,
+  IntermediateFacility,
+  MapSelection,
+  RouteOut,
+} from "../../types";
 import { ChoroplethLayer } from "./choropleth-layer";
 import { ChoroplethLegend } from "./choropleth-legend";
 import { DepotMarkers } from "./depot-markers";
@@ -52,9 +59,9 @@ export interface MapInnerProps {
   scenario?: string;
   /** Hide all floating chrome (controls, docks, legends) for a full-map view. */
   hideChrome?: boolean;
-  /** Flood point whose detail panel is open, and the click handler to open one. */
-  selectedFloodId?: string | null;
-  onSelectFlood?: (id: string) => void;
+  /** Marker whose detail panel is open, and the click handler to open one. */
+  selection?: MapSelection | null;
+  onSelect?: (selection: MapSelection) => void;
 }
 
 function FitBounds({ route }: { route: RouteOut | null }) {
@@ -101,10 +108,12 @@ export function MapInner({
   reloadingData,
   scenario,
   hideChrome = false,
-  selectedFloodId,
-  onSelectFlood,
+  selection,
+  onSelect,
 }: MapInnerProps) {
   const base = BASE_MAP_LAYERS[baseMap];
+  const selectedOf = (kind: MapSelection["kind"]) =>
+    selection?.kind === kind ? selection.id : null;
 
   return (
     <MapContainer
@@ -122,18 +131,42 @@ export function MapInner({
       {overlays.choropleth ? <ChoroplethLayer floods={floods} /> : null}
 
       {overlays.floods ? (
-        <FloodMarkers points={floods} selectedId={selectedFloodId} onSelect={onSelectFlood} />
+        <FloodMarkers
+          points={floods}
+          selectedId={selectedOf("flood")}
+          onSelect={(id) => onSelect?.({ kind: "flood", id })}
+        />
       ) : null}
-      {overlays.depots ? <DepotMarkers depots={depots} /> : null}
-      {overlays.ifs ? <IfMarkers ifs={ifs} /> : null}
-      {overlays.faskes ? <FaskesMarkers faskes={faskes} /> : null}
+      {overlays.depots ? (
+        <DepotMarkers
+          depots={depots}
+          selectedId={selectedOf("depot")}
+          onSelect={(id) => onSelect?.({ kind: "depot", id })}
+        />
+      ) : null}
+      {overlays.ifs ? (
+        <IfMarkers
+          ifs={ifs}
+          selectedId={selectedOf("if")}
+          onSelect={(id) => onSelect?.({ kind: "if", id })}
+        />
+      ) : null}
+      {overlays.faskes ? (
+        <FaskesMarkers
+          faskes={faskes}
+          selectedId={selectedOf("faskes")}
+          onSelect={(id) => onSelect?.({ kind: "faskes", id })}
+        />
+      ) : null}
 
       {routes.length > 0 ? (
         <>
           <RoutePolylines
             routes={routes}
             highlightId={highlightVehicleId}
+            selectedId={selectedOf("route")}
             onHover={setHighlightVehicleId}
+            onSelect={(id) => onSelect?.({ kind: "route", id })}
           />
           <RouteDecorators routes={routes} highlightId={highlightVehicleId} animating={animating} />
         </>

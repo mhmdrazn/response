@@ -1,7 +1,7 @@
 "use client";
 
 import { PanelsTopLeft } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 
 import { useAlgorithmConfig } from "../hooks/use-algorithm-config";
 import { useBreakpoint } from "../hooks/use-breakpoint";
@@ -11,14 +11,18 @@ import { usePresence } from "../hooks/use-presence";
 import type { BaseMapId, OverlayLayerId } from "../lib/map-constants";
 import { OVERLAY_LAYERS } from "../lib/map-constants";
 import { api } from "../lib/api";
-import type { AppLayout, AppMode, RouteOut, ScenarioMeta } from "../types";
+import type { AppLayout, AppMode, MapSelection, RouteOut, ScenarioMeta } from "../types";
 import { ErrorBoundary } from "./error-boundary";
 import { AlgorithmPanel } from "./sidebar/algorithm-panel";
 import { ComparisonPanel } from "./sidebar/comparison-panel";
 import { DataTableModal, type DatasetKey } from "./data-table-modal";
 import { FloatingNavbar } from "./floating-navbar";
 import { WindowedLayout } from "./layouts/windowed-layout";
+import { ClinicDetailPanel } from "./sidebar/clinic-detail-panel";
+import { DepotDetailPanel } from "./sidebar/depot-detail-panel";
 import { FloodDetailPanel } from "./sidebar/flood-detail-panel";
+import { OutletDetailPanel } from "./sidebar/outlet-detail-panel";
+import { RouteDetailPanel } from "./sidebar/route-detail-panel";
 import { ChoroplethLegend } from "./map/choropleth-legend";
 import { MapCanvas } from "./map/map-container";
 import { MobileDataLayerDock } from "./map/mobile-data-layer-dock";
@@ -65,9 +69,9 @@ export function AppShell() {
   const [baseMap, setBaseMap] = useState<BaseMapId>("standard");
   const [highlightVehicleId, setHighlightVehicleId] = useState<string | null>(null);
   const [focusedRoute, setFocusedRoute] = useState<RouteOut | null>(null);
-  const [selectedFloodId, setSelectedFloodId] = useState<string | null>(null);
+  const [selection, setSelection] = useState<MapSelection | null>(null);
   // Lets the detail panel animate out before it unmounts.
-  const { shown: shownFloodId, visible: floodVisible } = usePresence(selectedFloodId);
+  const { shown: shownSelection, visible: detailVisible } = usePresence(selection);
   const [animating, setAnimating] = useState(false);
   const [panelsHidden, setPanelsHidden] = useState(false);
   const [previewDataset, setPreviewDataset] = useState<DatasetKey | null>(null);
@@ -189,7 +193,12 @@ export function AppShell() {
   const panelW = PANEL_WIDTH[bp];
   const resultPanelW = RESULT_PANEL_WIDTH[bp];
 
+  // A route selection points into one plan, so a new run or a reset drops it.
+  const dropRouteSelection = () =>
+    setSelection((prev) => (prev?.kind === "route" ? null : prev));
+
   function handleRun() {
+    dropRouteSelection();
     setFocusedRoute(null);
     setHiddenRoutes(new Set());
     setAnimating(false);
@@ -198,6 +207,7 @@ export function AppShell() {
   }
 
   function handleCompare() {
+    dropRouteSelection();
     setFocusedRoute(null);
     setHiddenRoutes(new Set());
     setAnimating(false);
@@ -209,7 +219,7 @@ export function AppShell() {
     if (id === scenario) return;
     setScenario(id); // useMapData refetches on change
     reset(); // optimization results are per-scenario
-    setSelectedFloodId(null);
+    setSelection(null);
     setFocusedRoute(null);
     setHighlightVehicleId(null);
     setHiddenRoutes(new Set());
@@ -242,6 +252,7 @@ export function AppShell() {
       onCompare={handleCompare}
       onReset={() => {
         reset();
+        dropRouteSelection();
         setFocusedRoute(null);
         setHighlightVehicleId(null);
         setHiddenRoutes(new Set());
@@ -268,19 +279,88 @@ export function AppShell() {
     </>
   ) : null;
 
-  const selectedFlood = (() => {
-    if (!data || !shownFloodId) return null;
-    const index = data.floods.findIndex((f) => f.id === shownFloodId);
-    if (index < 0) return null;
-    const si = (f: { si_value?: number }) => f.si_value ?? 0;
-    const rank = 1 + data.floods.filter((f) => si(f) > si(data.floods[index])).length;
-    return { flood: data.floods[index], index, rank };
-  })();
+  const closeDetail = useCallback(() => setSelection(null), []);
+
+  // The detail panel for whichever marker is selected; null once it has animated out.
+  const renderDetail = (variant: "fullscreen" | "embedded"): ReactNode => {
+    if (!data || !shownSelection) return null;
+    switch (shownSelection.kind) {
+      case "flood": {
+        const index = data.floods.findIndex((f) => f.id === shownSelection.id);
+        if (index < 0) return null;
+        const si = (f: { si_value?: number }) => f.si_value ?? 0;
+        const rank = 1 + data.floods.filter((f) => si(f) > si(data.floods[index])).length;
+        return (
+          <FloodDetailPanel
+            flood={data.floods[index]}
+            index={index}
+            rank={rank}
+            total={data.floods.length}
+            result={result}
+            onClose={closeDetail}
+            variant={variant}
+          />
+        );
+      }
+      case "depot": {
+        const depot = data.depots.find((d) => d.id === shownSelection.id);
+        if (!depot) return null;
+        return (
+          <DepotDetailPanel
+            depot={depot}
+            floods={data.floods}
+            result={result}
+            onClose={closeDetail}
+            variant={variant}
+          />
+        );
+      }
+      case "if": {
+        const outlet = data.ifs.find((f) => f.id === shownSelection.id);
+        if (!outlet) return null;
+        return (
+          <OutletDetailPanel
+            outlet={outlet}
+            result={result}
+            onClose={closeDetail}
+            variant={variant}
+          />
+        );
+      }
+      case "route": {
+        const route = result?.routes.find((r) => r.vehicle_id === shownSelection.id);
+        if (!route || !result) return null;
+        return (
+          <RouteDetailPanel
+            route={route}
+            objectiveZ={result.objective_z}
+            onSelectStop={setSelection}
+            onClose={closeDetail}
+            variant={variant}
+          />
+        );
+      }
+      case "faskes": {
+        const clinic = data.faskes.find((f) => f.id === shownSelection.id);
+        if (!clinic) return null;
+        return (
+          <ClinicDetailPanel
+            clinic={clinic}
+            allClinics={data.faskes}
+            floods={data.floods}
+            onSelectFlood={(id) => setSelection({ kind: "flood", id })}
+            onClose={closeDetail}
+            variant={variant}
+          />
+        );
+      }
+    }
+  };
 
   // Bottom of the map. Fullscreen fills the gap between the left dock stack and
   // the results column (or the severity legend when there are none). The
   // windowed layout does not overlay the map at all: its panel is a row under it.
-  const floodPanelInset = (extra: { isMobile: boolean }) => {
+  const detailPanelInset = (extra: { isMobile: boolean }) => {
     if (extra.isMobile) return { left: 12, right: 12, bottom: 12 };
     return {
       left: panelW + 32,
@@ -289,17 +369,7 @@ export function AppShell() {
     };
   };
 
-  const floodDetailRow = selectedFlood ? (
-    <FloodDetailPanel
-      flood={selectedFlood.flood}
-      index={selectedFlood.index}
-      rank={selectedFlood.rank}
-      total={data?.floods.length ?? 0}
-      result={result}
-      onClose={() => setSelectedFloodId(null)}
-      variant="embedded"
-    />
-  ) : null;
+  const detailRow = renderDetail("embedded");
 
   // Single source for the map element; both layouts pass only what differs.
   const renderMap = (extra: {
@@ -308,12 +378,13 @@ export function AppShell() {
     onReloadData?: () => void;
     reloadingData?: boolean;
     hideChrome?: boolean;
-  }) =>
-    data ? (
+  }) => {
+    const floatingDetail = extra.variant !== "embedded" ? renderDetail("fullscreen") : null;
+    return data ? (
       <>
         <MapCanvas
-          selectedFloodId={selectedFloodId}
-          onSelectFlood={setSelectedFloodId}
+          selection={selection}
+          onSelect={setSelection}
           floods={data.floods}
           depots={data.depots}
           ifs={data.ifs}
@@ -331,29 +402,23 @@ export function AppShell() {
           scenario={scenario}
           {...extra}
         />
-        {selectedFlood && extra.variant !== "embedded" ? (
+        {floatingDetail ? (
           <div
             className={`pointer-events-none absolute z-[950] flex justify-center transition-[opacity,transform] duration-300 ease-out ${
-              panelsHidden || !floodVisible
+              panelsHidden || !detailVisible
                 ? "opacity-0 [&_*]:pointer-events-none"
                 : "opacity-100"
-            } ${floodVisible ? "translate-y-0" : "translate-y-3"}`}
-            style={floodPanelInset(extra)}
+            } ${detailVisible ? "translate-y-0" : "translate-y-3"}`}
+            style={detailPanelInset(extra)}
           >
-            <FloodDetailPanel
-              flood={selectedFlood.flood}
-              index={selectedFlood.index}
-              rank={selectedFlood.rank}
-              total={data.floods.length}
-              result={result}
-              onClose={() => setSelectedFloodId(null)}
-            />
+            {floatingDetail}
           </div>
         ) : null}
       </>
     ) : (
       <MapStatusPlaceholder loading={loading} error={dataError} />
     );
+  };
 
   const dataModal =
     previewDataset && data ? (
@@ -392,8 +457,8 @@ export function AppShell() {
             reloadingData={loading}
             algorithmPanel={algorithmPanelContent}
             mapCard={renderMap({ isMobile: false, variant: "embedded" })}
-            floodDetail={floodDetailRow}
-            floodDetailOpen={floodVisible}
+            detail={detailRow}
+            detailOpen={detailVisible}
             results={resultsPanelContent}
             hasResult={result !== null}
           />

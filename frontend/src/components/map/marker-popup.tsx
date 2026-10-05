@@ -44,6 +44,11 @@ export function PopupRow({ label, value }: PopupRowProps) {
   );
 }
 
+/** Closing line of a hover tooltip whose marker opens a detail panel on click. */
+export function ClickHint() {
+  return <div className="text-[10.5px] font-medium text-slate">Klik untuk detail lengkap</div>;
+}
+
 interface SiPillProps {
   si: number;
   label: string;

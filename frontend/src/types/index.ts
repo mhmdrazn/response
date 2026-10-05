@@ -54,6 +54,14 @@ export interface Faskes {
   type: string | null;
 }
 
+/** The map marker whose detail panel is open. */
+export type SelectionKind = "flood" | "depot" | "if" | "faskes" | "route";
+
+export interface MapSelection {
+  kind: SelectionKind;
+  id: string;
+}
+
 // ---------- Optimization types (match backend/app/models/optimization.py) ----------
 
 export type NodeType = "depot" | "flood" | "if";

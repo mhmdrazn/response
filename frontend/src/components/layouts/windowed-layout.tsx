@@ -34,9 +34,9 @@ interface WindowedLayoutProps {
 
   algorithmPanel: ReactNode;
   mapCard: ReactNode;
-  /** Flood point detail: a row under the map, animated open and closed. */
-  floodDetail?: ReactNode;
-  floodDetailOpen?: boolean;
+  /** Detail of the selected map marker: a row under the map, animated open and closed. */
+  detail?: ReactNode;
+  detailOpen?: boolean;
   results: ReactNode;
   hasResult: boolean;
 }
@@ -57,8 +57,8 @@ export function WindowedLayout({
   reloadingData,
   algorithmPanel,
   mapCard,
-  floodDetail,
-  floodDetailOpen = false,
+  detail,
+  detailOpen = false,
   results,
   hasResult,
 }: WindowedLayoutProps) {
@@ -108,9 +108,9 @@ export function WindowedLayout({
           <div className="relative min-h-0 flex-1">
             <div className="absolute inset-0">{mapCard}</div>
           </div>
-          {floodDetail ? (
-            <div className="soft-row" data-open={floodDetailOpen}>
-              <div>{floodDetail}</div>
+          {detail ? (
+            <div className="soft-row" data-open={detailOpen}>
+              <div>{detail}</div>
             </div>
           ) : null}
         </main>

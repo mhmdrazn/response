@@ -182,3 +182,10 @@ export const OVERLAY_LAYERS: OverlayLayerMeta[] = [
     defaultVisible: false,
   },
 ];
+
+/** Marker accent per facility kind, shared by the map icons and the detail panels. */
+export const FACILITY_COLORS = {
+  depot: "var(--color-depot-accent)",
+  if: "#0284c7",
+  faskes: "#059669",
+} as const;
