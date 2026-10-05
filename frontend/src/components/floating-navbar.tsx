@@ -49,7 +49,7 @@ export function FloatingNavbar({
         </span>
         {!compact ? (
           <span className="ml-8 border-l border-frost pl-[10px] text-[12px] font-semibold leading-none text-slate">
-            Sistem Pendukung Keputusan Dinas Pemadam Kebakaran dan Penyelamatan Kota Surabaya
+            Sistem Pendukung Keputusan - Dinas Pemadam Kebakaran dan Penyelamatan Kota Surabaya
           </span>
         ) : null}
       </div>

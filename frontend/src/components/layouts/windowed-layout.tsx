@@ -73,7 +73,7 @@ export function WindowedLayout({
           Response
         </span>
         <span className="ml-8 border-l border-frost pl-[10px] text-[12px] font-semibold leading-none text-slate">
-          Sistem Pendukung Keputusan Dinas Pemadam Kebakaran dan Penyelamatan Kota Surabaya
+          Sistem Pendukung Keputusan - Dinas Pemadam Kebakaran dan Penyelamatan Kota Surabaya
         </span>
         <div className="flex-1" />
         <LayoutToggle layout="windowed" onToggle={onExitWindowed} />
