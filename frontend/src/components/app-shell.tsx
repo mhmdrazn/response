@@ -7,6 +7,7 @@ import { useAlgorithmConfig } from "../hooks/use-algorithm-config";
 import { useBreakpoint } from "../hooks/use-breakpoint";
 import { useMapData } from "../hooks/use-map-data";
 import { useOptimization } from "../hooks/use-optimization";
+import { usePresence } from "../hooks/use-presence";
 import type { BaseMapId, OverlayLayerId } from "../lib/map-constants";
 import { OVERLAY_LAYERS } from "../lib/map-constants";
 import { api } from "../lib/api";
@@ -65,6 +66,8 @@ export function AppShell() {
   const [highlightVehicleId, setHighlightVehicleId] = useState<string | null>(null);
   const [focusedRoute, setFocusedRoute] = useState<RouteOut | null>(null);
   const [selectedFloodId, setSelectedFloodId] = useState<string | null>(null);
+  // Lets the detail panel animate out before it unmounts.
+  const { shown: shownFloodId, visible: floodVisible } = usePresence(selectedFloodId);
   const [animating, setAnimating] = useState(false);
   const [panelsHidden, setPanelsHidden] = useState(false);
   const [previewDataset, setPreviewDataset] = useState<DatasetKey | null>(null);
@@ -266,26 +269,37 @@ export function AppShell() {
   ) : null;
 
   const selectedFlood = (() => {
-    if (!data || !selectedFloodId) return null;
-    const index = data.floods.findIndex((f) => f.id === selectedFloodId);
+    if (!data || !shownFloodId) return null;
+    const index = data.floods.findIndex((f) => f.id === shownFloodId);
     if (index < 0) return null;
     const si = (f: { si_value?: number }) => f.si_value ?? 0;
     const rank = 1 + data.floods.filter((f) => si(f) > si(data.floods[index])).length;
     return { flood: data.floods[index], index, rank };
   })();
 
-  // Bottom-centre of the free map area. Fullscreen clears the left dock stack
-  // and the results column (or the severity legend when there are none); the
-  // windowed map card is narrow, so the panel sits above its zoom controls.
-  const floodPanelInset = (extra: { isMobile: boolean; variant?: "fullscreen" | "embedded" }) => {
+  // Bottom of the map. Fullscreen fills the gap between the left dock stack and
+  // the results column (or the severity legend when there are none). The
+  // windowed layout does not overlay the map at all: its panel is a row under it.
+  const floodPanelInset = (extra: { isMobile: boolean }) => {
     if (extra.isMobile) return { left: 12, right: 12, bottom: 12 };
-    if (extra.variant === "embedded") return { left: 16, right: 16, bottom: 64 };
     return {
       left: panelW + 32,
       right: result ? resultPanelW + 32 : 150,
       bottom: 16,
     };
   };
+
+  const floodDetailRow = selectedFlood ? (
+    <FloodDetailPanel
+      flood={selectedFlood.flood}
+      index={selectedFlood.index}
+      rank={selectedFlood.rank}
+      total={data?.floods.length ?? 0}
+      result={result}
+      onClose={() => setSelectedFloodId(null)}
+      variant="embedded"
+    />
+  ) : null;
 
   // Single source for the map element; both layouts pass only what differs.
   const renderMap = (extra: {
@@ -317,11 +331,13 @@ export function AppShell() {
           scenario={scenario}
           {...extra}
         />
-        {selectedFlood ? (
+        {selectedFlood && extra.variant !== "embedded" ? (
           <div
-            className={`pointer-events-none absolute z-[950] flex justify-center ${PANEL_ANIM} ${
-              panelsHidden ? "opacity-0 [&_*]:pointer-events-none" : "opacity-100"
-            }`}
+            className={`pointer-events-none absolute z-[950] flex justify-center transition-[opacity,transform] duration-300 ease-out ${
+              panelsHidden || !floodVisible
+                ? "opacity-0 [&_*]:pointer-events-none"
+                : "opacity-100"
+            } ${floodVisible ? "translate-y-0" : "translate-y-3"}`}
             style={floodPanelInset(extra)}
           >
             <FloodDetailPanel
@@ -376,6 +392,8 @@ export function AppShell() {
             reloadingData={loading}
             algorithmPanel={algorithmPanelContent}
             mapCard={renderMap({ isMobile: false, variant: "embedded" })}
+            floodDetail={floodDetailRow}
+            floodDetailOpen={floodVisible}
             results={resultsPanelContent}
             hasResult={result !== null}
           />
@@ -440,7 +458,7 @@ export function AppShell() {
 
               {result ? (
                 <div
-                  className={`absolute bottom-16 right-16 top-16 z-[900] flex flex-col gap-[10px] overflow-hidden ${PANEL_ANIM} ${
+                  className={`soft-enter absolute bottom-16 right-16 top-16 z-[900] flex flex-col gap-[10px] overflow-hidden ${PANEL_ANIM} ${
                     panelsHidden ? "opacity-0 [&_*]:pointer-events-none" : "opacity-100"
                   }`}
                   style={{ width: resultPanelW }}

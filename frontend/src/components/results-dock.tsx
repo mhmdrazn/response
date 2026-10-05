@@ -3,7 +3,7 @@
 import { ChevronDown, FileDown, Pause, Play } from "lucide-react";
 import { useState } from "react";
 
-import { exportReport, exportJSON, exportCSV } from "../lib/export-report";
+import { exportReport, exportExcel } from "../lib/export-report";
 import { ConvergenceChart } from "./sidebar/convergence-chart";
 import { ResultsPanel } from "./sidebar/results-panel";
 import { RouteList } from "./sidebar/route-list";
@@ -81,8 +81,7 @@ export function ResultsDock({
 
           <div className="flex gap-[6px]">
             <ExportBtn label="PDF" onClick={() => exportReport(result)} />
-            <ExportBtn label="JSON" onClick={() => exportJSON(result)} />
-            <ExportBtn label="CSV" onClick={() => exportCSV(result)} />
+            <ExportBtn label="Excel" onClick={() => exportExcel(result)} />
           </div>
         </div>
       </div>

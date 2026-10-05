@@ -96,9 +96,8 @@ function CoverageBar({ result }: { result: OptimizationResult }) {
         {full
           ? "Seluruh beban pemompaan terselesaikan dalam rencana ini."
           : `${result.unserved_points} titik belum tuntas · sisa ${formatNumber(
-              result.unserved_volume_l / 1000,
-              1,
-            )} m³ dilanjutkan ke periode berikutnya.`}
+              result.unserved_volume_l,
+            )} L dilanjutkan ke periode berikutnya.`}
       </div>
     </div>
   );

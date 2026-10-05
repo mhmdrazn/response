@@ -36,10 +36,12 @@ export function RoutePolylines({ routes, highlightId, onHover }: RoutePolylinesP
           >
             <Tooltip sticky direction="top" opacity={1}>
               <div className="min-w-0 max-w-[230px]">
-                <div
-                  className="text-[13px] font-bold tracking-[-0.13px]"
-                  style={{ color }}
-                >
+                <div className="flex items-center gap-[6px] text-[13px] font-bold tracking-[-0.13px] text-midnight-ink">
+                  <span
+                    aria-hidden
+                    className="inline-block h-[10px] w-[10px] flex-shrink-0 rounded-full"
+                    style={{ background: color }}
+                  />
                   Kendaraan {r.vehicle_id}
                 </div>
                 <div className="mb-[4px] text-[11px] font-semibold text-slate">

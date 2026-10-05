@@ -3,6 +3,7 @@ import autoTable from "jspdf-autotable";
 
 import type { OptimizationResult } from "../types";
 import { formatDuration, formatMeters, formatNumber } from "./format-metrics";
+import { downloadXlsx, type Cell } from "./xlsx";
 
 export function exportReport(result: OptimizationResult): void {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
@@ -201,48 +202,87 @@ export function exportReport(result: OptimizationResult): void {
   doc.save(`laporan-optimasi-${new Date().toISOString().slice(0, 10)}.pdf`);
 }
 
-export function exportJSON(result: OptimizationResult): void {
-  const json = JSON.stringify(result, null, 2);
-  const blob = new Blob([json], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `optimasi-${result.algorithm}-${new Date().toISOString().slice(0, 10)}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
+const NODE_KIND: Record<string, string> = { depot: "Depo", flood: "Genangan", if: "IF (buang air)" };
 
-export function exportCSV(result: OptimizationResult): void {
-  const headers = [
-    "vehicle_id",
-    "depot_id",
-    "depot_name",
-    "capacity_l",
-    "visit_count_flood",
-    "visit_count_if",
-    "total_distance_m",
-    "total_time_s",
-    "z_contribution",
+/** Plan as a workbook: a summary, one row per vehicle, one row per stop. */
+export function exportExcel(result: OptimizationResult): void {
+  const summary: Cell[][] = [
+    ["Metrik", "Nilai"],
+    ["Algoritma", result.algorithm.toUpperCase()],
+    ["Skor Respons (Z)", result.objective_z],
+    ["Penalti beban tersisa", result.penalty],
+    ["Skor Total (Z + penalti)", result.score],
+    ["Cakupan pemompaan (%)", Number(result.coverage_pct.toFixed(2))],
+    ["Beban total (L)", Math.round(result.demand_total_l)],
+    ["Beban belum tuntas (L)", Math.round(result.unserved_volume_l)],
+    ["Titik belum tuntas", result.unserved_points],
+    ["Total jarak (km)", Number((result.total_distance_m / 1000).toFixed(2))],
+    ["Total waktu (jam)", Number((result.total_time_s / 3600).toFixed(2))],
+    ["Waktu komputasi (detik)", Number(result.computation_time_s.toFixed(1))],
+    ["Kendaraan aktif", result.n_vehicles],
+    ["Kunjungan genangan", result.total_flood_visits],
+    ["Kunjungan IF", result.total_if_visits],
+    ["Kunjungan ulang", result.total_revisits],
   ];
-  const rows = result.routes.map((r) =>
+
+  const routes: Cell[][] = [
     [
+      "Kendaraan",
+      "Depo",
+      "Kapasitas (L)",
+      "Kunjungan genangan",
+      "Kunjungan IF",
+      "Jarak (km)",
+      "Waktu (menit)",
+      "Kontribusi Z",
+    ],
+    ...result.routes.map((r): Cell[] => [
       r.vehicle_id,
-      r.depot_id,
       r.depot_name,
       r.capacity_l,
       r.visit_count_flood,
       r.visit_count_if,
-      r.total_distance_m.toFixed(2),
-      r.total_time_s.toFixed(2),
-      r.z_contribution.toFixed(2),
-    ].join(","),
+      Number((r.total_distance_m / 1000).toFixed(2)),
+      Number((r.total_time_s / 60).toFixed(1)),
+      Number(r.z_contribution.toFixed(2)),
+    ]),
+  ];
+
+  const stops: Cell[][] = [
+    [
+      "Kendaraan",
+      "Depo",
+      "Urutan",
+      "Jenis",
+      "Titik",
+      "ID titik",
+      "Tiba (menit sejak berangkat)",
+      "Volume dipompa (L)",
+      "Isi tangki sesudahnya (L)",
+    ],
+  ];
+  for (const r of result.routes) {
+    r.visits.forEach((v, i) => {
+      stops.push([
+        r.vehicle_id,
+        r.depot_name,
+        i + 1,
+        NODE_KIND[v.node_type] ?? v.node_type,
+        v.node_name,
+        v.node_id,
+        Number((v.arrival_time_s / 60).toFixed(1)),
+        Math.round(v.volume_pumped_l),
+        Math.round(v.tank_load_after_l),
+      ]);
+    });
+  }
+
+  downloadXlsx(
+    `optimasi-${result.algorithm}-${new Date().toISOString().slice(0, 10)}.xlsx`,
+    [
+      { name: "Ringkasan", rows: summary },
+      { name: "Rute", rows: routes },
+      { name: "Kunjungan", rows: stops },
+    ],
   );
-  const csv = [headers.join(","), ...rows].join("\n");
-  const blob = new Blob([csv], { type: "text/csv" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `rute-${result.algorithm}-${new Date().toISOString().slice(0, 10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
 }

@@ -34,6 +34,9 @@ interface WindowedLayoutProps {
 
   algorithmPanel: ReactNode;
   mapCard: ReactNode;
+  /** Flood point detail: a row under the map, animated open and closed. */
+  floodDetail?: ReactNode;
+  floodDetailOpen?: boolean;
   results: ReactNode;
   hasResult: boolean;
 }
@@ -54,11 +57,13 @@ export function WindowedLayout({
   reloadingData,
   algorithmPanel,
   mapCard,
+  floodDetail,
+  floodDetailOpen = false,
   results,
   hasResult,
 }: WindowedLayoutProps) {
   return (
-    <div className="flex h-screen w-screen flex-col overflow-hidden bg-mist">
+    <div className="windowed-flat flex h-screen w-screen flex-col overflow-hidden bg-pure-white">
       <header className="flex flex-shrink-0 items-center gap-12 border-b border-frost bg-pure-white px-16 py-[10px]">
         <span
           aria-hidden
@@ -76,8 +81,8 @@ export function WindowedLayout({
         <ModeToggle mode={mode} onChange={onModeChange} />
       </header>
 
-      <div className="flex min-h-0 flex-1 gap-12 p-12">
-        <aside className="scrollbar-hidden flex w-[340px] flex-shrink-0 flex-col gap-12 overflow-y-auto">
+      <div className="flex min-h-0 flex-1">
+        <aside className="scrollbar-hidden flex w-[340px] flex-shrink-0 flex-col overflow-y-auto border-r border-frost bg-mist">
           {algorithmPanel}
           <MapLayerDock
             overlays={overlays}
@@ -99,12 +104,19 @@ export function WindowedLayout({
           />
         </aside>
 
-        <main className="relative min-w-0 flex-1 overflow-hidden rounded-lg border border-frost">
-          {mapCard}
+        <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
+          <div className="relative min-h-0 flex-1">
+            <div className="absolute inset-0">{mapCard}</div>
+          </div>
+          {floodDetail ? (
+            <div className="soft-row" data-open={floodDetailOpen}>
+              <div>{floodDetail}</div>
+            </div>
+          ) : null}
         </main>
 
         {hasResult ? (
-          <aside className="scrollbar-hidden flex w-[420px] flex-shrink-0 flex-col gap-12 overflow-y-auto">
+          <aside className="soft-enter scrollbar-hidden flex w-[420px] flex-shrink-0 flex-col overflow-y-auto border-l border-frost bg-mist">
             {results}
           </aside>
         ) : null}

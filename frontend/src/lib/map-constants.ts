@@ -71,35 +71,37 @@ export const ROAD_CLASS_LABELS: Record<number, string> = {
   1: "Layanan / lingkungan",
 };
 
-// One colour per vehicle. 24 hues picked by farthest-point sampling in CIELAB so
-// that any two differ by dE >= 27, and vehicles of the same depot (neighbours in
-// this list) by dE >= 33. DESIGN.md allows only eight route hues; this is a
-// deliberate exception because one colour per vehicle needs 24 distinct ones.
+// One colour per vehicle, light enough to read as lines over the basemap. 24 hues
+// picked by farthest-point sampling in CIELAB (L 58-78) so any two differ by
+// dE >= 26, and vehicles of the same depot (neighbours in this list) by dE >= 27.
+// The index is the vehicle's slot in the fleet, which is fixed by depot order and
+// tank size, so a vehicle keeps its colour on every run. DESIGN.md allows only
+// eight route hues; this is a deliberate exception, one colour per vehicle.
 export const ROUTE_COLORS: string[] = [
-  "#a51d7c",
-  "#0fb30f",
-  "#1414ff",
-  "#8ab30f",
-  "#ff14ff",
-  "#17822c",
-  "#144fff",
-  "#c29b00",
-  "#7e00c2",
-  "#7d8217",
-  "#0044c2",
-  "#eb8100",
-  "#148aff",
-  "#ff4314",
-  "#14adff",
-  "#ff144f",
-  "#0fb392",
-  "#ff14b9",
-  "#996300",
-  "#5d1782",
-  "#dc6138",
-  "#173c82",
-  "#822c17",
-  "#b30f48",
+  "#26d980",
+  "#f600ff",
+  "#6fd912",
+  "#d755f1",
+  "#d9be12",
+  "#a171f4",
+  "#a4cf59",
+  "#ff29b8",
+  "#35b68b",
+  "#ff4d00",
+  "#14a9ff",
+  "#ff9914",
+  "#528bff",
+  "#ff7847",
+  "#2fd5da",
+  "#ff3d84",
+  "#25a8d0",
+  "#ff525d",
+  "#c0a0e3",
+  "#d6be71",
+  "#ff8ff8",
+  "#cd8251",
+  "#f47bab",
+  "#ff938f",
 ];
 
 export const BASE_MAP_LAYERS = {

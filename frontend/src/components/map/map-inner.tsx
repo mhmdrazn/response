@@ -69,6 +69,17 @@ function FitBounds({ route }: { route: RouteOut | null }) {
   return null;
 }
 
+/** Leaflet only re-measures on demand, so follow the container as it resizes. */
+function ResizeSync() {
+  const map = useMap();
+  useEffect(() => {
+    const ro = new ResizeObserver(() => map.invalidateSize({ animate: false }));
+    ro.observe(map.getContainer());
+    return () => ro.disconnect();
+  }, [map]);
+  return null;
+}
+
 export function MapInner({
   floods,
   depots,
@@ -129,6 +140,7 @@ export function MapInner({
       ) : null}
 
       <FitBounds route={focusedRoute} />
+      <ResizeSync />
 
       {isMobile ? (
         <div className="pointer-events-none absolute right-12 top-[78px] z-[1000]">

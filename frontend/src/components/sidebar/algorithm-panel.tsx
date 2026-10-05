@@ -1,6 +1,14 @@
 "use client";
 
-import { ChevronDown, Play, RotateCcw } from "lucide-react";
+import {
+  ChevronDown,
+  Cpu,
+  Play,
+  RotateCcw,
+  Shuffle,
+  Waypoints,
+  type LucideIcon,
+} from "lucide-react";
 import { useState } from "react";
 
 import type { AlgorithmType } from "../../lib/api";
@@ -66,7 +74,8 @@ export function AlgorithmPanel({
         aria-expanded={open}
         className="font-manrope flex w-full cursor-pointer items-center gap-8 border-0 bg-transparent px-[14px] py-12 text-left"
       >
-        <span className="text-slate flex-1 text-[10px] font-bold tracking-[0.9px] uppercase">
+        <Cpu size={14} strokeWidth={2} color="var(--color-slate)" />
+        <span className="text-midnight-ink flex-1 text-[11px] font-bold tracking-normal">
           Algoritma
         </span>
         <ChevronDown
@@ -93,11 +102,13 @@ export function AlgorithmPanel({
               active={algorithm === "acs"}
               onClick={() => onAlgorithmChange("acs")}
               label="Hybrid ACS"
+              Icon={Waypoints}
             />
             <AlgoTab
               active={algorithm === "vns"}
               onClick={() => onAlgorithmChange("vns")}
               label="VNS"
+              Icon={Shuffle}
             />
           </div>
 
@@ -263,10 +274,12 @@ function AlgoTab({
   active,
   onClick,
   label,
+  Icon,
 }: {
   active: boolean;
   onClick: () => void;
   label: string;
+  Icon: LucideIcon;
 }) {
   return (
     <button
@@ -274,12 +287,13 @@ function AlgoTab({
       role="tab"
       aria-selected={active}
       onClick={onClick}
-      className={`flex-1 cursor-pointer rounded-md border-0 px-12 py-[6px] text-[12px] tracking-[-0.12px] transition-[background,color,box-shadow] duration-[150ms] ${
+      className={`inline-flex flex-1 cursor-pointer items-center justify-center gap-[6px] rounded-md border-0 px-12 py-[6px] text-[12px] tracking-[-0.12px] transition-[background,color,box-shadow] duration-[150ms] ${
         active
           ? "bg-active-wash text-active-ink font-bold shadow-[0_1px_2px_0_rgb(0_0_0/0.06)]"
           : "text-slate bg-transparent font-medium shadow-none"
       }`}
     >
+      <Icon size={14} strokeWidth={2} aria-hidden />
       {label}
     </button>
   );

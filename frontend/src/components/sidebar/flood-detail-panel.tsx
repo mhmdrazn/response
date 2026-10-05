@@ -31,6 +31,8 @@ interface FloodDetailPanelProps {
   total: number;
   result: OptimizationResult | null;
   onClose: () => void;
+  /** "embedded": a full-width row under the windowed map. */
+  variant?: "fullscreen" | "embedded";
 }
 
 function siLabel(si: number): string {
@@ -52,6 +54,7 @@ export function FloodDetailPanel({
   total,
   result,
   onClose,
+  variant = "fullscreen",
 }: FloodDetailPanelProps) {
   const si = flood.si_value ?? DEFAULT_SI;
   const service = summarizeFloodService(result, flood.id, flood.volume_l);
@@ -69,9 +72,11 @@ export function FloodDetailPanel({
   return (
     <section
       aria-label={`Detail genangan ${index + 1}`}
-      className="border-frost bg-pure-white @container pointer-events-auto flex max-h-[min(340px,45vh)] w-full max-w-[820px] flex-col overflow-hidden rounded-lg border"
+      className={`@container pointer-events-auto flex max-h-[min(436px,50vh)] w-full flex-col overflow-hidden bg-pure-white ${
+        variant === "embedded" ? "border-t border-frost" : "rounded-lg border border-frost"
+      }`}
     >
-      <header className="border-frost flex flex-shrink-0 items-center gap-[10px] border-b px-[14px] py-[10px]">
+      <header className="flex flex-shrink-0 items-center gap-[10px] border-b border-frost px-[16px] py-[10px]">
         <span
           aria-hidden
           className="inline-block h-[12px] w-[12px] flex-shrink-0 rounded-full"
@@ -79,7 +84,7 @@ export function FloodDetailPanel({
         />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-8 gap-y-[2px]">
-            <h2 className="text-midnight-ink m-0 text-[14px] leading-[1.2] font-bold tracking-[-0.15px]">
+            <h2 className="m-0 text-[14px] font-bold leading-[1.2] tracking-[-0.15px] text-midnight-ink">
               Genangan {index + 1}
             </h2>
             <span
@@ -88,79 +93,184 @@ export function FloodDetailPanel({
               {status.label}
             </span>
           </div>
-          <p className="text-slate m-0 mt-[2px] truncate text-[11.5px] font-medium">
+          <p className="m-0 mt-[2px] truncate text-[11.5px] font-medium text-slate">
             {flood.deskripsi?.trim() || "Tanpa deskripsi lokasi"}
           </p>
         </div>
+        <SeverityChip si={si} />
         <button
           type="button"
           onClick={onClose}
           aria-label="Tutup detail genangan"
           title="Tutup (Esc)"
-          className="border-frost bg-pure-white text-steel hover:bg-mist inline-flex h-[28px] w-[28px] flex-shrink-0 cursor-pointer items-center justify-center rounded-md border transition-colors"
+          className="inline-flex h-[28px] w-[28px] flex-shrink-0 cursor-pointer items-center justify-center rounded-md border border-frost bg-pure-white text-steel transition-colors hover:bg-mist"
         >
           <X size={14} strokeWidth={2.2} />
         </button>
       </header>
 
-      <div className="@min-[500px]:divide-frost grid min-h-0 flex-1 grid-cols-1 overflow-y-auto @min-[500px]:grid-cols-3 @min-[500px]:divide-x">
+      <Stats flood={flood} service={service} />
+
+      <div className="grid min-h-0 flex-1 grid-cols-1 overflow-y-auto @min-[680px]:grid-cols-[minmax(250px,0.85fr)_minmax(0,1.5fr)] @min-[680px]:divide-x @min-[680px]:divide-frost @min-[680px]:overflow-hidden">
         <Section title="Lokasi & kondisi">
-          <Row label="Severity" value={<SeverityChip si={si} />} />
-          <Row label="Peringkat" value={`${rank} dari ${total}`} />
-          <Row
-            label="Ketinggian"
-            value={flood.ketinggian_cm != null ? `${formatNumber(flood.ketinggian_cm)} cm` : "-"}
-          />
-          <Row
-            label="Kelas jalan"
-            value={
-              flood.road_class != null
-                ? (ROAD_CLASS_LABELS[Math.round(flood.road_class)] ?? `Kelas ${flood.road_class}`)
-                : "-"
-            }
-          />
-          <Row
-            label="Faskes terdekat"
-            value={flood.dist_faskes_m != null ? formatMeters(flood.dist_faskes_m) : "-"}
-          />
-          <Row label="Dilaporkan" value={when ?? "-"} />
-          <Row label="Koordinat" value={`${flood.lat.toFixed(5)}, ${flood.lon.toFixed(5)}`} />
+          <dl className="m-0 grid grid-cols-[auto_minmax(0,1fr)] gap-x-[14px] gap-y-[6px] text-[12px]">
+            <Fact label="Peringkat severity" value={`${rank} dari ${total}`} />
+            <Fact
+              label="Ketinggian"
+              value={flood.ketinggian_cm != null ? `${formatNumber(flood.ketinggian_cm)} cm` : "-"}
+            />
+            <Fact
+              label="Kelas jalan"
+              value={
+                flood.road_class != null
+                  ? (ROAD_CLASS_LABELS[Math.round(flood.road_class)] ??
+                    `Kelas ${flood.road_class}`)
+                  : "-"
+              }
+            />
+            <Fact
+              label="Faskes terdekat"
+              value={flood.dist_faskes_m != null ? formatMeters(flood.dist_faskes_m) : "-"}
+            />
+            <Fact label="Dilaporkan" value={when ?? "-"} />
+            <Fact label="Koordinat" value={`${flood.lat.toFixed(5)}, ${flood.lon.toFixed(5)}`} />
+          </dl>
+          <Basis flood={flood} />
         </Section>
 
-        <Section title="Estimasi beban pemompaan">
-          <VolumeBlock flood={flood} />
-        </Section>
-
-        <Section title="Log kendaraan">
-          <VisitLog service={service} volumeL={flood.volume_l ?? null} hasPlan={result !== null} />
+        <Section title="Log kendaraan" fill>
+          <VisitLog service={service} hasPlan={result !== null} />
         </Section>
       </div>
     </section>
   );
 }
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
+function Stats({ flood, service }: { flood: FloodPoint; service: FloodService }) {
+  const v = flood.volume_l;
+  const hasPlan = service.status !== "no-plan";
+  const first = service.visits[0];
+  const last = service.visits[service.visits.length - 1];
+
   return (
-    <div className="flex min-w-0 flex-col gap-[6px] px-[14px] py-[10px]">
-      <h3 className="text-slate m-0 text-[10px] font-bold tracking-[0.9px] uppercase">{title}</h3>
+    <div className="grid flex-shrink-0 grid-cols-2 border-b border-frost @min-[600px]:grid-cols-4">
+      <Stat
+        label="Estimasi beban"
+        value={v != null ? `${formatNumber(v)} L` : "-"}
+        sub={
+          v != null ? `setara ${formatNumber(v / AVG_TANK_L, 1)} muatan tangki` : "belum diestimasi"
+        }
+      />
+      <Stat
+        label="Terpompa"
+        value={
+          hasPlan && service.coveragePct != null ? `${formatNumber(service.coveragePct, 0)}%` : "-"
+        }
+        sub={
+          hasPlan && v != null
+            ? `${formatNumber(service.pumpedL)} dari ${formatNumber(v)} L`
+            : "belum ada rencana"
+        }
+        progress={hasPlan ? service.coveragePct : null}
+      />
+      <Stat
+        label="Kunjungan"
+        value={hasPlan ? formatNumber(service.visits.length) : "-"}
+        sub={
+          hasPlan
+            ? service.visits.length > 0
+              ? `oleh ${service.vehicleCount} kendaraan`
+              : "tidak ada yang datang"
+            : "belum ada rencana"
+        }
+      />
+      <Stat
+        label="Tiba pertama"
+        value={first ? formatDuration(first.arrivalS) : "-"}
+        sub={
+          last && last !== first
+            ? `terakhir ${formatDuration(last.arrivalS)}`
+            : "sejak armada berangkat"
+        }
+        last
+      />
+    </div>
+  );
+}
+
+function Stat({
+  label,
+  value,
+  sub,
+  progress,
+  last = false,
+}: {
+  label: string;
+  value: string;
+  sub: string;
+  progress?: number | null;
+  last?: boolean;
+}) {
+  return (
+    <div
+      className={`flex min-w-0 flex-col gap-[3px] px-[16px] py-[10px] ${
+        last ? "" : "border-r border-frost"
+      }`}
+    >
+      <span className="text-[10px] font-bold uppercase tracking-[0.9px] text-slate">{label}</span>
+      <span className="truncate text-[20px] font-bold leading-[1.1] tracking-[-0.4px] text-midnight-ink tabular-nums">
+        {value}
+      </span>
+      {progress != null ? (
+        <span className="block h-[4px] w-full overflow-hidden rounded-full bg-frost">
+          <span
+            className="soft-grow-x block h-full rounded-full bg-midnight-ink"
+            style={{ width: `${progress}%` }}
+          />
+        </span>
+      ) : null}
+      <span className="truncate text-[11px] font-medium text-slate">{sub}</span>
+    </div>
+  );
+}
+
+function Section({
+  title,
+  children,
+  fill = false,
+}: {
+  title: string;
+  children: ReactNode;
+  /** The children own a scroll region; the section itself does not scroll. */
+  fill?: boolean;
+}) {
+  return (
+    <div
+      className={`flex min-w-0 flex-col gap-[8px] px-[16px] py-[10px] @min-[680px]:min-h-0 ${
+        fill ? "@min-[680px]:overflow-hidden" : "@min-[680px]:overflow-y-auto"
+      }`}
+    >
+      <h3 className="m-0 flex-shrink-0 text-[10px] font-bold uppercase tracking-[0.9px] text-slate">
+        {title}
+      </h3>
       {children}
     </div>
   );
 }
 
-function Row({ label, value }: { label: string; value: ReactNode }) {
+function Fact({ label, value }: { label: string; value: ReactNode }) {
   return (
-    <div className="flex min-w-0 items-baseline justify-between gap-[10px] text-[12px]">
-      <span className="text-slate flex-shrink-0 font-semibold">{label}</span>
-      <span className="text-midnight-ink min-w-0 text-right font-bold break-words">{value}</span>
-    </div>
+    <>
+      <dt className="font-semibold text-slate">{label}</dt>
+      <dd className="m-0 min-w-0 break-words text-right font-bold text-midnight-ink">{value}</dd>
+    </>
   );
 }
 
 function SeverityChip({ si }: { si: number }) {
   return (
     <span
-      className="inline-flex items-center rounded-md px-[8px] py-px text-[11px] font-bold tracking-[0.2px] whitespace-nowrap text-white"
+      className="inline-flex flex-shrink-0 items-center whitespace-nowrap rounded-md px-[9px] py-[3px] text-[11.5px] font-bold tracking-[0.2px] text-white"
       style={{ background: siColor(si) }}
     >
       {siLabel(si)} · {si.toFixed(2)}
@@ -168,141 +278,100 @@ function SeverityChip({ si }: { si: number }) {
   );
 }
 
-function VolumeBlock({ flood }: { flood: FloodPoint }) {
-  const v = flood.volume_l;
-  if (v == null) {
-    return (
-      <p className="text-slate m-0 text-[12px] leading-[1.45] font-medium">
-        Titik ini belum punya estimasi volume. Bangun ulang skenario atau jalankan backfill.
-      </p>
-    );
-  }
-  const m3 = v / 1000;
+/** How the volume estimate arises: the three factors multiplied out. */
+function Basis({ flood }: { flood: FloodPoint }) {
   const width = flood.road_width_m;
   const length = flood.ponding_length_m;
   const depth = flood.effective_depth_cm;
-  const known = width != null && length != null && depth != null;
+  if (flood.volume_l == null || width == null || length == null || depth == null) return null;
 
   return (
-    <>
-      <div className="flex items-baseline gap-[6px]">
-        <span className="text-midnight-ink text-[22px] leading-none font-bold tracking-[-0.4px] tabular-nums">
-          {formatNumber(m3, 1)}
-        </span>
-        <span className="text-steel text-[12px] font-bold">m³</span>
-      </div>
-      <p className="text-steel m-0 text-[12px] leading-[1.4] font-medium">
-        {formatNumber(v)} L, setara kira-kira{" "}
-        <strong className="text-midnight-ink">
-          {formatNumber(v / AVG_TANK_L, 1)} muatan tangki
-        </strong>{" "}
-        (rata-rata {formatNumber(AVG_TANK_L)} L).
-      </p>
-      {known ? (
-        <div className="border-frost bg-mist text-steel flex flex-col gap-[3px] rounded-md border px-[10px] py-[7px] text-[11.5px] leading-[1.4] font-medium">
-          <span className="text-midnight-ink font-bold">
-            {formatNumber(width, 1)} m × {formatNumber(length, 0)} m ×{" "}
-            {formatNumber(depth / 100, 2)} m
-          </span>
-          <span>
-            lebar jalan × panjang genangan × kedalaman yang perlu dibuang
-            {flood.ketinggian_cm != null
-              ? ` (${formatNumber(flood.ketinggian_cm)} cm tercatat, sisa air setinggi batas aman tidak dipompa)`
-              : ""}
-            .
-          </span>
-        </div>
-      ) : null}
-    </>
+    <div className="flex flex-col gap-[3px] rounded-md border border-frost bg-mist px-[10px] py-[8px] text-[11.5px] font-medium leading-[1.4] text-steel">
+      <span className="text-[10px] font-bold uppercase tracking-[0.9px] text-slate">
+        Dasar estimasi
+      </span>
+      <span className="text-[13px] font-bold tabular-nums text-midnight-ink">
+        {formatNumber(width, 1)} m × {formatNumber(length, 0)} m × {formatNumber(depth / 100, 2)} m
+      </span>
+      <span>
+        lebar jalan × panjang genangan × kedalaman yang dibuang
+        {flood.ketinggian_cm != null
+          ? ` (${formatNumber(flood.ketinggian_cm)} cm tercatat dikurangi batas aman)`
+          : ""}
+        .
+      </span>
+    </div>
   );
 }
 
-function VisitLog({
-  service,
-  volumeL,
-  hasPlan,
-}: {
-  service: FloodService;
-  volumeL: number | null;
-  hasPlan: boolean;
-}) {
+const LOG_GRID =
+  "grid grid-cols-[10px_minmax(0,0.9fr)_minmax(0,1.5fr)_84px_72px] items-center gap-x-[10px]";
+
+function VisitLog({ service, hasPlan }: { service: FloodService; hasPlan: boolean }) {
   if (!hasPlan) {
     return (
-      <p className="text-slate m-0 text-[12px] leading-[1.45] font-medium">
+      <p className="m-0 text-[12px] font-medium leading-[1.45] text-slate">
         Belum ada rencana rute. Jalankan optimasi untuk melihat kendaraan yang datang ke titik ini.
       </p>
     );
   }
   if (service.visits.length === 0) {
     return (
-      <p className="text-slate m-0 text-[12px] leading-[1.45] font-medium">
+      <p className="m-0 text-[12px] font-medium leading-[1.45] text-slate">
         Tidak ada kendaraan yang datang ke titik ini pada rencana saat ini. Bebannya bergulir ke
         periode berikutnya.
+        {service.remainingL != null && service.remainingL > 1
+          ? ` Sisa ${formatNumber(service.remainingL)} L.`
+          : ""}
       </p>
     );
   }
 
   return (
-    <>
-      {volumeL != null && service.coveragePct != null ? (
-        <div className="flex flex-col gap-[4px]">
-          <div className="text-steel flex items-baseline justify-between gap-8 text-[11.5px] font-semibold">
-            <span>
-              {formatNumber(service.pumpedL)} dari {formatNumber(volumeL)} L terpompa
-            </span>
-            <span className="text-midnight-ink font-bold tabular-nums">
-              {formatNumber(service.coveragePct, 0)}%
-            </span>
-          </div>
-          <div className="bg-frost h-[5px] w-full overflow-hidden rounded-full">
-            <div
-              className="bg-midnight-ink h-full rounded-full"
-              style={{ width: `${service.coveragePct}%` }}
-            />
-          </div>
-          {service.remainingL != null && service.remainingL > 1 ? (
-            <span className="text-slate text-[11px] font-medium">
-              Sisa {formatNumber(service.remainingL)} L dilanjutkan ke periode berikutnya.
-            </span>
-          ) : null}
-        </div>
-      ) : null}
-
-      <div className="text-slate text-[11px] font-medium">
-        {service.visits.length} kunjungan oleh {service.vehicleCount} kendaraan
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div
+        className={`${LOG_GRID} flex-shrink-0 border-b border-frost pb-[5px] text-[10px] font-bold uppercase tracking-[0.7px] text-slate`}
+      >
+        <span aria-hidden />
+        <span>Kendaraan</span>
+        <span>Depo</span>
+        <span className="text-right">Tiba</span>
+        <span className="text-right">Volume</span>
       </div>
-
-      <ul className="m-0 flex list-none flex-col p-0">
+      <ul className="scrollbar-hidden m-0 min-h-0 flex-1 list-none overflow-y-auto p-0">
         {service.visits.map((v, i) => (
           <li
             key={`${v.vehicleId}-${i}`}
-            className="border-frost flex min-w-0 items-center gap-8 border-t py-[5px] text-[11.5px]"
+            className={`${LOG_GRID} border-b border-frost py-[6px] text-[11.5px] last:border-b-0`}
           >
             <span
               aria-hidden
-              className="inline-block h-[10px] w-[10px] flex-shrink-0 rounded-full"
+              className="inline-block h-[10px] w-[10px] rounded-full"
               style={{ background: ROUTE_COLORS[v.colorIndex % ROUTE_COLORS.length] }}
             />
-            <span className="min-w-0 flex-1">
-              <span className="text-midnight-ink block truncate font-bold">
-                {v.vehicleId} · {formatNumber(v.capacityL)} L
-              </span>
-              <span className="text-slate block truncate font-medium">{v.depotName}</span>
+            <span
+              className="truncate font-bold text-midnight-ink"
+              title={`${v.vehicleId} · ${formatNumber(v.capacityL)} L`}
+            >
+              {v.vehicleId}
             </span>
-            <span className="flex-shrink-0 text-right">
-              <span className="text-midnight-ink block font-bold tabular-nums">
-                {formatDuration(v.arrivalS)}
-              </span>
-              <span className="text-slate block font-medium tabular-nums">
-                {formatNumber(v.pumpedL)} L
-              </span>
+            <span className="truncate font-medium text-slate" title={v.depotName}>
+              {v.depotName}
+            </span>
+            <span className="text-right font-bold tabular-nums text-midnight-ink">
+              {formatDuration(v.arrivalS)}
+            </span>
+            <span className="text-right font-medium tabular-nums text-steel">
+              {formatNumber(v.pumpedL)} L
             </span>
           </li>
         ))}
       </ul>
-      <span className="text-slate text-[10.5px] font-medium">
-        Waktu dihitung sejak armada berangkat dari depo.
-      </span>
-    </>
+      {service.remainingL != null && service.remainingL > 1 ? (
+        <p className="m-0 flex-shrink-0 border-t border-frost pt-[6px] text-[11px] font-medium text-slate">
+          Sisa {formatNumber(service.remainingL)} L dilanjutkan ke periode berikutnya.
+        </p>
+      ) : null}
+    </div>
   );
 }
