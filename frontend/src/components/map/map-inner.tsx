@@ -2,7 +2,7 @@
 
 import type { LatLngBoundsExpression } from "leaflet";
 import L from "leaflet";
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 
 import {
@@ -62,6 +62,10 @@ export interface MapInnerProps {
   /** Marker whose detail panel is open, and the click handler to open one. */
   selection?: MapSelection | null;
   onSelect?: (selection: MapSelection) => void;
+  /** Phone only: extra square buttons stacked under the zoom controls. */
+  mobileTools?: ReactNode;
+  /** Phone only: fade the tool column out, e.g. while a detail sheet covers the map. */
+  mobileToolsHidden?: boolean;
 }
 
 function FitBounds({ route }: { route: RouteOut | null }) {
@@ -110,6 +114,8 @@ export function MapInner({
   hideChrome = false,
   selection,
   onSelect,
+  mobileTools,
+  mobileToolsHidden = false,
 }: MapInnerProps) {
   const base = BASE_MAP_LAYERS[baseMap];
   const selectedOf = (kind: MapSelection["kind"]) =>
@@ -176,8 +182,13 @@ export function MapInner({
       <ResizeSync />
 
       {isMobile ? (
-        <div className="pointer-events-none absolute right-12 top-[78px] z-[1000]">
-          <MapControls />
+        <div
+          className={`pointer-events-none absolute right-12 top-[78px] z-[1000] flex flex-col items-end gap-8 transition-opacity duration-300 ease-out ${
+            mobileToolsHidden ? "opacity-0 [&_*]:pointer-events-none" : "opacity-100"
+          }`}
+        >
+          <MapControls orientation="vertical" />
+          {mobileTools}
         </div>
       ) : null}
 

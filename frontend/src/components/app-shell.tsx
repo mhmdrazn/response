@@ -33,8 +33,10 @@ import { OutletDetailPanel } from "./sidebar/outlet-detail-panel";
 import { RouteDetailPanel } from "./sidebar/route-detail-panel";
 import { ChoroplethLegend } from "./map/choropleth-legend";
 import { MapCanvas } from "./map/map-container";
-import { MobileDataLayerDock } from "./map/mobile-data-layer-dock";
-import { SiLegend } from "./map/si-legend";
+import { DataDock } from "./map/data-dock";
+import { MapLayerDock } from "./map/map-layer-dock";
+import { MapLegend } from "./map/map-legend";
+import { MobileMapTools, type MobileToolId } from "./map/mobile-map-tools";
 import { MobileRunBar } from "./mobile-run-bar";
 import { PanelOverlay } from "./panel-overlay";
 import { ResultsDock } from "./results-dock";
@@ -100,7 +102,9 @@ export function AppShell() {
   const [scenarios, setScenarios] = useState<ScenarioMeta[]>([]);
   const [scenario, setScenario] = useState<string | undefined>(undefined);
 
-  const [mobilePanel, setMobilePanel] = useState<"none" | "algorithm" | "results">("none");
+  const [mobilePanel, setMobilePanel] = useState<"none" | "algorithm" | "results" | MobileToolId>(
+    "none",
+  );
 
   const [hiddenRoutes, setHiddenRoutes] = useState<Set<string>>(new Set());
   const hydratedHidden = useRef(false);
@@ -440,6 +444,8 @@ export function AppShell() {
           onPreviewData={handlePreviewData}
           animating={animating}
           scenario={scenario}
+          mobileTools={extra.isMobile ? <MobileMapTools onOpen={setMobilePanel} /> : undefined}
+          mobileToolsHidden={detailVisible}
           {...extra}
         />
         {floatingDetail ? (
@@ -580,29 +586,18 @@ export function AppShell() {
             </>
           ) : (
             <>
-              <div className="pointer-events-none absolute bottom-16 left-16 right-16 z-[950] flex flex-col gap-[10px]">
+              {/* The bottom stack is only the run bar (and the result peek). Layers, data
+                  and the legend live behind the square buttons on the right, and the
+                  stack steps aside while a detail sheet is open so nothing overlaps. */}
+              <div
+                className={`pointer-events-none absolute bottom-16 left-16 right-16 z-[950] flex flex-col gap-8 transition-[opacity,transform] duration-300 ease-out ${
+                  detailVisible ? "translate-y-3 opacity-0 [&_*]:pointer-events-none" : "opacity-100"
+                }`}
+              >
                 {result ? (
                   <ResultPeekBar
                     objectiveZ={result.objective_z}
                     onOpen={() => setMobilePanel("results")}
-                  />
-                ) : null}
-
-                {data && overlays.choropleth ? <ChoroplethLegend /> : null}
-
-                {data ? <SiLegend inline collapsible /> : null}
-
-                {data ? (
-                  <MobileDataLayerDock
-                    floodCount={data.floods.length}
-                    depotCount={data.depots.length}
-                    ifCount={data.ifs.length}
-                    faskesCount={data.faskes.length}
-                    overlays={overlays}
-                    setOverlay={setOverlay}
-                    baseMap={baseMap}
-                    setBaseMap={setBaseMap}
-                    onPreviewData={handlePreviewData}
                   />
                 ) : null}
 
@@ -624,6 +619,50 @@ export function AppShell() {
                 title="Konfigurasi Algoritma"
               >
                 {algorithmPanelContent}
+              </PanelOverlay>
+
+              <PanelOverlay
+                open={mobilePanel === "layers"}
+                onClose={() => setMobilePanel("none")}
+                title="Lapisan Peta"
+              >
+                <MapLayerDock
+                  bare
+                  overlays={overlays}
+                  setOverlay={setOverlay}
+                  baseMap={baseMap}
+                  setBaseMap={setBaseMap}
+                />
+              </PanelOverlay>
+
+              <PanelOverlay
+                open={mobilePanel === "data"}
+                onClose={() => setMobilePanel("none")}
+                title="Data"
+              >
+                <DataDock
+                  bare
+                  floodCount={data?.floods.length ?? 0}
+                  depotCount={data?.depots.length ?? 0}
+                  ifCount={data?.ifs.length ?? 0}
+                  faskesCount={data?.faskes.length ?? 0}
+                  onPreviewData={(key) => {
+                    setMobilePanel("none");
+                    handlePreviewData(key);
+                  }}
+                  onReloadData={reload}
+                  reloadingData={loading}
+                  scenario={scenario}
+                />
+              </PanelOverlay>
+
+              <PanelOverlay
+                open={mobilePanel === "legend"}
+                onClose={() => setMobilePanel("none")}
+                title="Legenda"
+              >
+                <MapLegend />
+                {overlays.choropleth ? <ChoroplethLegend /> : null}
               </PanelOverlay>
 
               <PanelOverlay

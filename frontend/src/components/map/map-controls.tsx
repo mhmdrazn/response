@@ -4,11 +4,19 @@ import { useMap } from "react-leaflet";
 
 import { DEFAULT_ZOOM, SURABAYA_CENTER } from "../../lib/map-constants";
 
-export function MapControls() {
+interface MapControlsProps {
+  /** "vertical" stacks the compass above the zoom pair, for the phone's right edge. */
+  orientation?: "horizontal" | "vertical";
+}
+
+export function MapControls({ orientation = "horizontal" }: MapControlsProps) {
   const map = useMap();
+  const vertical = orientation === "vertical";
 
   return (
-    <div className="pointer-events-none flex flex-row items-start gap-8">
+    <div
+      className={`pointer-events-none flex items-start gap-8 ${vertical ? "flex-col" : "flex-row"}`}
+    >
       <ControlCluster>
         <IconButton
           label="Kembali ke pusat Surabaya"
@@ -18,11 +26,11 @@ export function MapControls() {
         </IconButton>
       </ControlCluster>
 
-      <ControlCluster>
+      <ControlCluster vertical={vertical}>
         <IconButton label="Perbesar" onClick={() => map.zoomIn()}>
           <PlusIcon />
         </IconButton>
-        <Divider />
+        <Divider vertical={vertical} />
         <IconButton label="Perkecil" onClick={() => map.zoomOut()}>
           <MinusIcon />
         </IconButton>
@@ -31,15 +39,25 @@ export function MapControls() {
   );
 }
 
-function ControlCluster({ children }: { children: React.ReactNode }) {
+export function ControlCluster({
+  children,
+  vertical = false,
+}: {
+  children: React.ReactNode;
+  vertical?: boolean;
+}) {
   return (
-    <div className="pointer-events-auto flex flex-row overflow-hidden rounded-lg border border-frost bg-pure-white">
+    <div
+      className={`pointer-events-auto flex overflow-hidden rounded-lg border border-frost bg-pure-white ${
+        vertical ? "flex-col" : "flex-row"
+      }`}
+    >
       {children}
     </div>
   );
 }
 
-function IconButton({
+export function IconButton({
   label,
   onClick,
   children,
@@ -61,8 +79,13 @@ function IconButton({
   );
 }
 
-function Divider() {
-  return <div aria-hidden className="w-px self-stretch bg-frost" />;
+function Divider({ vertical = false }: { vertical?: boolean }) {
+  return (
+    <div
+      aria-hidden
+      className={vertical ? "h-px self-stretch bg-frost" : "w-px self-stretch bg-frost"}
+    />
+  );
 }
 
 function CompassIcon() {

@@ -36,6 +36,8 @@ interface DataDockProps {
   onReloadData?: () => void;
   reloadingData?: boolean;
   scenario?: string;
+  /** Content only, for use inside a sheet that has its own title and frame. */
+  bare?: boolean;
 }
 
 interface DataCountItem {
@@ -62,6 +64,7 @@ export function DataDock({
   onReloadData,
   reloadingData = false,
   scenario,
+  bare = false,
 }: DataDockProps) {
   const [open, setOpen] = useState(defaultOpen);
   const [meta, setMeta] = useState<DataMetaResponse | null>(null);
@@ -100,26 +103,32 @@ export function DataDock({
   };
 
   return (
-    <div className="pointer-events-auto flex flex-col rounded-lg border border-frost bg-pure-white">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        className="font-manrope flex w-full cursor-pointer items-center gap-[6px] border-0 bg-transparent px-[10px] py-8 text-left"
-      >
-        <Database size={14} strokeWidth={2} color="var(--color-slate)" />
-        <span className="flex-1 text-[11px] font-bold tracking-[-0.1px] text-midnight-ink">
-          Data
-        </span>
-        <ChevronDown
-          size={14}
-          color="var(--color-slate)"
-          className={`transition-transform duration-[220ms] ${open ? "rotate-0" : "-rotate-90"}`}
-        />
-      </button>
+    <div
+      className={`pointer-events-auto flex flex-col ${
+        bare ? "" : "rounded-lg border border-frost bg-pure-white"
+      }`}
+    >
+      {bare ? null : (
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          className="font-manrope flex w-full cursor-pointer items-center gap-[6px] border-0 bg-transparent px-[10px] py-8 text-left"
+        >
+          <Database size={14} strokeWidth={2} color="var(--color-slate)" />
+          <span className="flex-1 text-[11px] font-bold tracking-[-0.1px] text-midnight-ink">
+            Data
+          </span>
+          <ChevronDown
+            size={14}
+            color="var(--color-slate)"
+            className={`transition-transform duration-[220ms] ${open ? "rotate-0" : "-rotate-90"}`}
+          />
+        </button>
+      )}
 
       <div
-        className={`scrollbar-hidden flex flex-col transition-[max-height,opacity,padding] duration-[280ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
+        className={bare ? "scrollbar-hidden flex flex-col" : `scrollbar-hidden flex flex-col transition-[max-height,opacity,padding] duration-[280ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
           open
             ? "pointer-events-auto max-h-[200px] overflow-auto border-t border-frost px-12 pb-12 pt-[10px] opacity-100"
             : "pointer-events-none max-h-0 overflow-hidden border-t border-transparent px-12 py-0 opacity-0"
