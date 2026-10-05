@@ -648,14 +648,18 @@ button:not(:disabled):active,
   display: grid;
   grid-template-rows: 0fr;
   opacity: 0;
+  /* Set by <Reveal> to cancel the parent's flex gap while the row is shut. */
+  margin-top: calc(var(--reveal-gap, 0px) * -1);
   transition:
     grid-template-rows 300ms cubic-bezier(0.2, 0.8, 0.2, 1),
-    opacity 240ms ease;
+    opacity 240ms ease,
+    margin-top 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .soft-row[data-open="true"] {
   grid-template-rows: 1fr;
   opacity: 1;
+  margin-top: 0;
 }
 
 .soft-row > * {

@@ -14,6 +14,7 @@ import { useState } from "react";
 import type { AlgorithmType } from "../../lib/api";
 import type { OptimizationStage } from "../../hooks/use-optimization";
 import type { ACSParams, AppMode, ScenarioMeta, VNSParams } from "../../types";
+import { Reveal } from "../reveal";
 import { ScenarioSelect } from "../scenario-select";
 import { ComputationBudgetSelect, type ComputationBudget } from "./computation-budget";
 
@@ -112,9 +113,9 @@ export function AlgorithmPanel({
             />
           </div>
 
-          {mode === "advanced" ? (
-            algorithm === "acs" ? (
-              <div className="grid grid-cols-2 gap-8">
+          <Reveal open={mode === "advanced"} gap={12}>
+            {algorithm === "acs" ? (
+              <div className="grid grid-cols-2 gap-8 pb-[2px]">
                 <NumInput
                   label="Iterasi Maks"
                   min={1}
@@ -165,7 +166,7 @@ export function AlgorithmPanel({
                 />
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-8">
+              <div className="grid grid-cols-2 gap-8 pb-[2px]">
                 <NumInput
                   label="Iterasi Maks"
                   min={1}
@@ -183,8 +184,8 @@ export function AlgorithmPanel({
                   onChange={(v) => updateVNS("k_max", v)}
                 />
               </div>
-            )
-          ) : null}
+            )}
+          </Reveal>
 
           <ScenarioSelect scenarios={scenarios} value={scenario} onChange={onScenarioChange} />
 

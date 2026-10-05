@@ -4,6 +4,7 @@ import { ChevronDown, FileDown, Pause, Play } from "lucide-react";
 import { useState } from "react";
 
 import { exportReport, exportExcel } from "../lib/export-report";
+import { Reveal } from "./reveal";
 import { ConvergenceChart } from "./sidebar/convergence-chart";
 import { ResultsPanel } from "./sidebar/results-panel";
 import { RouteList } from "./sidebar/route-list";
@@ -170,12 +171,12 @@ export function ResultsDock({
                   hiddenVehicleIds={hiddenVehicleIds}
                   onToggleVehicleVisibility={onToggleVehicleVisibility}
                 />
-                {mode === "advanced" ? (
-                  <>
+                <Reveal open={mode === "advanced"} gap={14}>
+                  <div className="flex flex-col gap-[14px]">
                     <div aria-hidden className="h-px bg-frost" />
                     <ConvergenceChart data={result.convergence} />
-                  </>
-                ) : null}
+                  </div>
+                </Reveal>
               </>
             ) : severity ? (
               <SeverityPanel severity={severity} embedded />

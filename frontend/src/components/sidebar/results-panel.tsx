@@ -5,6 +5,7 @@ import { CheckCircle2, Clock, MapPinned, Route, TrendingDown, Truck } from "luci
 import { formatDateTimeId } from "../../lib/format";
 import { formatDuration, formatMeters, formatNumber } from "../../lib/format-metrics";
 import type { AppMode, OptimizationResult } from "../../types";
+import { Reveal } from "../reveal";
 
 interface ResultsPanelProps {
   result: OptimizationResult;
@@ -55,7 +56,7 @@ export function ResultsPanel({ result, mode, completedAt }: ResultsPanelProps) {
 
       <CoverageBar result={result} />
 
-      {mode === "advanced" ? (
+      <Reveal open={mode === "advanced"} gap={10}>
         <div className="flex gap-8 rounded-md border border-frost bg-mist px-[10px] py-8 text-[11px] font-semibold tracking-[-0.11px] text-steel">
           <Truck size={14} strokeWidth={2} />
           <span>
@@ -63,7 +64,7 @@ export function ResultsPanel({ result, mode, completedAt }: ResultsPanelProps) {
             {formatNumber(result.penalty, 0)}
           </span>
         </div>
-      ) : null}
+      </Reveal>
     </div>
   );
 }
