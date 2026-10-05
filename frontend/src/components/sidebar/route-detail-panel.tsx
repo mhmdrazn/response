@@ -1,8 +1,19 @@
 "use client";
 
-import { Droplets, Truck, Warehouse, Waves, type LucideIcon } from "lucide-react";
+import {
+  Check,
+  Copy,
+  Droplets,
+  Navigation,
+  Truck,
+  Warehouse,
+  Waves,
+  type LucideIcon,
+} from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { formatDuration, formatMeters, formatNumber } from "../../lib/format-metrics";
+import { buildGoogleMapsLink } from "../../lib/gmaps";
 import { FACILITY_COLORS, ROUTE_COLORS } from "../../lib/map-constants";
 import type { MapSelection, NodeType, RouteOut, VisitOut } from "../../types";
 import {
@@ -10,6 +21,7 @@ import {
   DetailFact,
   DetailFacts,
   DetailMark,
+  DetailNote,
   DetailSection,
   DetailShell,
   DetailStat,
@@ -31,6 +43,57 @@ interface RouteDetailPanelProps {
 }
 
 const LOG_GRID = "grid grid-cols-[22px_14px_minmax(0,1fr)_84px_92px] items-center gap-x-[8px]";
+
+function ShareButtons({ url }: { url: string }) {
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!copied) return;
+    const timer = setTimeout(() => setCopied(false), 1800);
+    return () => clearTimeout(timer);
+  }, [copied]);
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+    } catch {
+      /* clipboard blocked: the open button still works */
+    }
+  }
+
+  const btn =
+    "inline-flex h-[28px] flex-shrink-0 cursor-pointer items-center justify-center gap-[5px] rounded-md border border-frost bg-pure-white text-[11.5px] font-bold text-steel transition-colors hover:bg-mist";
+
+  return (
+    <div className="flex flex-shrink-0 items-center gap-[6px]">
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        title="Buka rute ini di Google Maps"
+        aria-label="Buka rute di Google Maps"
+        className={`${btn} min-w-[28px] px-[7px] no-underline @min-[560px]:px-[10px]`}
+      >
+        <Navigation size={13} strokeWidth={2.2} aria-hidden />
+        <span className="hidden @min-[560px]:inline">Google Maps</span>
+      </a>
+      <button
+        type="button"
+        onClick={copy}
+        title={copied ? "Tautan tersalin" : "Salin tautan Google Maps"}
+        aria-label="Salin tautan Google Maps"
+        className={`${btn} w-[28px]`}
+      >
+        {copied ? (
+          <Check size={13} strokeWidth={2.4} aria-hidden />
+        ) : (
+          <Copy size={13} strokeWidth={2.2} aria-hidden />
+        )}
+      </button>
+    </div>
+  );
+}
 
 const STOP_ICON: Record<NodeType, { Icon: LucideIcon; color: string }> = {
   depot: { Icon: Warehouse, color: FACILITY_COLORS.depot },
@@ -61,6 +124,7 @@ export function RouteDetailPanel({
   const pumpedL = floodStops.reduce((s, v) => s + v.volume_pumped_l, 0);
   const distinctFloods = new Set(floodStops.filter((v) => v.volume_pumped_l > 0).map((v) => v.node_id))
     .size;
+  const maps = buildGoogleMapsLink(route);
   const share = objectiveZ > 0 ? (route.z_contribution / objectiveZ) * 100 : null;
 
   return (
@@ -77,6 +141,7 @@ export function RouteDetailPanel({
       title={`Kendaraan ${route.vehicle_id}`}
       badge={{ label: `Tangki ${formatNumber(route.capacity_l)} L`, cls: "bg-periwinkle-wash text-steel" }}
       subtitle={route.depot_name || route.depot_id}
+      trailing={maps ? <ShareButtons url={maps.url} /> : undefined}
     >
       <DetailStats>
         <DetailStat
@@ -121,6 +186,16 @@ export function RouteDetailPanel({
               }
             />
           </DetailFacts>
+          {maps ? (
+            <DetailNote>
+              Tautan Google Maps memuat {maps.placesUsed} titik berbeda dari {maps.visitsTotal}{" "}
+              perhentian: kunjungan berulang ke titik yang sama diringkas
+              {maps.placesUsed < maps.placesTotal
+                ? `, dan titik singgah dibatasi Google Maps hingga ${maps.waypointLimit}`
+                : ""}
+              .
+            </DetailNote>
+          ) : null}
         </DetailSection>
 
         <DetailSection title="Urutan kunjungan" fill>
