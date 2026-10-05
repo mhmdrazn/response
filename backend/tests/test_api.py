@@ -38,3 +38,12 @@ def test_optimize_acs(client):
     )
     assert r.status_code == 200
     assert "objective_z" in r.json()
+
+
+def test_floods_carry_volume_and_its_factors(client):
+    # The detail panel shows how a volume estimate arises, so the API has to send
+    # the factors with it, and they must multiply back to the stored figure.
+    for f in client.get("/api/data/floods?scenario=s2-jun").json():
+        assert f["volume_l"] is not None
+        rebuilt = f["road_width_m"] * f["ponding_length_m"] * f["effective_depth_cm"] / 100 * 1000
+        assert abs(rebuilt - f["volume_l"]) < 1.0, f["id"]

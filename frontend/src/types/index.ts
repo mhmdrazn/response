@@ -10,6 +10,13 @@ export interface FloodPoint {
   datetime: string | null;
   deskripsi: string | null;
   ketinggian_cm: number | null;
+  road_class?: number | null;
+  dist_faskes_m?: number | null;
+  /** Pumping workload in litres, and the factors it is built from. */
+  volume_l?: number | null;
+  road_width_m?: number | null;
+  ponding_length_m?: number | null;
+  effective_depth_cm?: number | null;
   si_value?: number;
 }
 

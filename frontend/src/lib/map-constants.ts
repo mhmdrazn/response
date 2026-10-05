@@ -62,6 +62,15 @@ export function depthToSiPlaceholder(depthCm: number | null | undefined): number
   return Number(normalized.toFixed(2));
 }
 
+// Road class ordinal as classified from OSM highway tags (see roads.py).
+export const ROAD_CLASS_LABELS: Record<number, string> = {
+  5: "Arteri (trunk / primer)",
+  4: "Sekunder",
+  3: "Tersier",
+  2: "Permukiman",
+  1: "Layanan / lingkungan",
+};
+
 // One colour per vehicle. 24 hues picked by farthest-point sampling in CIELAB so
 // that any two differ by dE >= 27, and vehicles of the same depot (neighbours in
 // this list) by dE >= 33. DESIGN.md allows only eight route hues; this is a

@@ -52,6 +52,9 @@ export interface MapInnerProps {
   scenario?: string;
   /** Hide all floating chrome (controls, docks, legends) for a full-map view. */
   hideChrome?: boolean;
+  /** Flood point whose detail panel is open, and the click handler to open one. */
+  selectedFloodId?: string | null;
+  onSelectFlood?: (id: string) => void;
 }
 
 function FitBounds({ route }: { route: RouteOut | null }) {
@@ -87,6 +90,8 @@ export function MapInner({
   reloadingData,
   scenario,
   hideChrome = false,
+  selectedFloodId,
+  onSelectFlood,
 }: MapInnerProps) {
   const base = BASE_MAP_LAYERS[baseMap];
 
@@ -105,7 +110,9 @@ export function MapInner({
       {/* Choropleth sits directly above the basemap so markers/routes overlay it. */}
       {overlays.choropleth ? <ChoroplethLayer floods={floods} /> : null}
 
-      {overlays.floods ? <FloodMarkers points={floods} /> : null}
+      {overlays.floods ? (
+        <FloodMarkers points={floods} selectedId={selectedFloodId} onSelect={onSelectFlood} />
+      ) : null}
       {overlays.depots ? <DepotMarkers depots={depots} /> : null}
       {overlays.ifs ? <IfMarkers ifs={ifs} /> : null}
       {overlays.faskes ? <FaskesMarkers faskes={faskes} /> : null}
@@ -117,11 +124,7 @@ export function MapInner({
             highlightId={highlightVehicleId}
             onHover={setHighlightVehicleId}
           />
-          <RouteDecorators
-            routes={routes}
-            highlightId={highlightVehicleId}
-            animating={animating}
-          />
+          <RouteDecorators routes={routes} highlightId={highlightVehicleId} animating={animating} />
         </>
       ) : null}
 

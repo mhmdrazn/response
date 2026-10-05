@@ -20,6 +20,14 @@ class FloodPoint(_Base):
     datetime: Optional[str] = None
     deskripsi: Optional[str] = None
     ketinggian_cm: Optional[float] = None
+    road_class: Optional[float] = None
+    dist_faskes_m: Optional[float] = None
+    # Pumping workload (litres) and the three factors it is built from, so the
+    # UI can show how an estimate arises instead of only the figure.
+    volume_l: Optional[float] = None
+    road_width_m: Optional[float] = None
+    ponding_length_m: Optional[float] = None
+    effective_depth_cm: Optional[float] = None
 
 
 class Depot(_Base):

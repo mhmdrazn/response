@@ -2,23 +2,23 @@
 
 import L from "leaflet";
 import { useMemo } from "react";
-import { Marker, Popup } from "react-leaflet";
+import { Marker } from "react-leaflet";
 
-import { formatDateTimeId } from "../../lib/format";
-import { DEFAULT_SI, SI_PALETTE, siColor } from "../../lib/map-constants";
+import { DEFAULT_SI, siColor } from "../../lib/map-constants";
 import type { FloodPoint } from "../../types";
-import { DescBlock, PopupRow, PopupShell, SiPill } from "./marker-popup";
 
 interface FloodMarkersProps {
   points: FloodPoint[];
+  selectedId?: string | null;
+  onSelect?: (id: string) => void;
 }
 
-function siLabel(si: number): string {
-  for (const b of SI_PALETTE) if (si <= b.max) return b.labelId;
-  return SI_PALETTE[SI_PALETTE.length - 1].labelId;
-}
-
-function buildIcon(color: string, dotSize: number, isCritical: boolean): L.DivIcon {
+function buildIcon(
+  color: string,
+  dotSize: number,
+  isCritical: boolean,
+  selected: boolean,
+): L.DivIcon {
   const box = 62;
   const pulse = isCritical
     ? `
@@ -32,10 +32,23 @@ function buildIcon(color: string, dotSize: number, isCritical: boolean): L.DivIc
       "></div>
     `
     : "";
+  const ringSize = dotSize + 14;
+  const ring = selected
+    ? `<div style="
+        position:absolute;
+        left:${(box - ringSize) / 2}px; top:${(box - ringSize) / 2}px;
+        width:${ringSize}px; height:${ringSize}px;
+        border-radius:50%;
+        border:2.5px solid #171717;
+        background:rgba(255,255,255,0.35);
+        pointer-events:none;
+      "></div>`
+    : "";
   return L.divIcon({
     html: `
       <div class="flood-marker" style="width:${box}px; height:${box}px;">
         ${pulse}
+        ${ring}
         
         <div class="flood-marker-dot" style="
           width:${dotSize}px;
@@ -50,17 +63,23 @@ function buildIcon(color: string, dotSize: number, isCritical: boolean): L.DivIc
   });
 }
 
-export function FloodMarkers({ points }: FloodMarkersProps) {
+export function FloodMarkers({ points, selectedId, onSelect }: FloodMarkersProps) {
   return (
     <>
-      {points.map((p, idx) => (
-        <FloodMarker key={p.id} point={p} index={idx} />
+      {points.map((p) => (
+        <FloodMarker key={p.id} point={p} selected={p.id === selectedId} onSelect={onSelect} />
       ))}
     </>
   );
 }
 
-function FloodMarker({ point: p, index }: { point: FloodPoint; index: number }) {
+interface FloodMarkerProps {
+  point: FloodPoint;
+  selected: boolean;
+  onSelect?: (id: string) => void;
+}
+
+function FloodMarker({ point: p, selected, onSelect }: FloodMarkerProps) {
   const si = p.si_value ?? DEFAULT_SI;
   const color = siColor(si);
   const dotSize = Math.max(
@@ -68,21 +87,17 @@ function FloodMarker({ point: p, index }: { point: FloodPoint; index: number }) 
     Math.min(26, Math.round(12 + Math.log((p.ketinggian_cm ?? 20) + 1) * 2.4)),
   );
   const isEmergency = si >= 0.6;
-  const icon = useMemo(() => buildIcon(color, dotSize, isEmergency), [color, dotSize, isEmergency]);
-  const when = formatDateTimeId(p.datetime);
+  const icon = useMemo(
+    () => buildIcon(color, dotSize, isEmergency, selected),
+    [color, dotSize, isEmergency, selected],
+  );
 
   return (
-    <Marker position={[p.lat, p.lon]} icon={icon}>
-      <Popup autoPan closeButton maxWidth={280} minWidth={210} offset={[0, -14]}>
-        <PopupShell title={`Genangan ${index + 1}`} subtitle={when ?? undefined}>
-          <PopupRow label="Severity" value={<SiPill si={si} label={siLabel(si)} />} />
-          {p.ketinggian_cm != null ? (
-            <PopupRow label="Ketinggian" value={`${p.ketinggian_cm} cm`} />
-          ) : null}
-          <PopupRow label="Koordinat" value={`${p.lat.toFixed(5)}, ${p.lon.toFixed(5)}`} />
-          <DescBlock text={p.deskripsi} max={160} />
-        </PopupShell>
-      </Popup>
-    </Marker>
+    <Marker
+      position={[p.lat, p.lon]}
+      icon={icon}
+      zIndexOffset={selected ? 1000 : 0}
+      eventHandlers={{ click: () => onSelect?.(p.id) }}
+    />
   );
 }

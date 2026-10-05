@@ -10,6 +10,7 @@ from fastapi import APIRouter, HTTPException, Query
 from app.config import SHARED_FILES, scenario_floods_path
 from app.data import registry, scenario_edit
 from app.data.store import store
+from app.preprocessing import workload
 from app.models.data import (
     Depot,
     DepotCreate,
@@ -111,9 +112,18 @@ async def get_data_meta(scenario: str | None = ScenarioQuery) -> dict[str, dict[
 # --- Reads ---------------------------------------------------------------
 
 
+def _flood_out(row: dict[str, Any]) -> FloodPoint:
+    """A flood row plus the factors behind its volume estimate."""
+    row = {k: _clean(v) for k, v in row.items()}
+    row["road_width_m"] = workload.road_width_m(row.get("road_class"))
+    row["ponding_length_m"] = workload.PONDING_LENGTH_M
+    row["effective_depth_cm"] = workload.effective_depth_cm(row.get("ketinggian_cm"))
+    return FloodPoint(**row)
+
+
 @router.get("/floods", response_model=list[FloodPoint])
 async def get_floods(scenario: str | None = ScenarioQuery) -> list[FloodPoint]:
-    return [FloodPoint(**row) for row in _rows(_df(_sid(scenario), "floods"))]
+    return [_flood_out(row) for row in _rows(_df(_sid(scenario), "floods"))]
 
 
 @router.get("/depo", response_model=list[Depot])
@@ -171,7 +181,7 @@ async def create_flood(
     body: FloodPointCreate, scenario: str | None = ScenarioQuery
 ) -> FloodPoint:
     row = scenario_edit.add_flood(_sid(scenario), body.model_dump())
-    return FloodPoint(**{k: _clean(v) for k, v in row.items()})
+    return _flood_out(row)
 
 
 @router.put("/floods/{flood_id}", response_model=FloodPoint)
@@ -179,7 +189,7 @@ async def update_flood(
     flood_id: str, body: FloodPointUpdate, scenario: str | None = ScenarioQuery
 ) -> FloodPoint:
     row = scenario_edit.update_flood(_sid(scenario), flood_id, body.model_dump())
-    return FloodPoint(**{k: _clean(v) for k, v in row.items()})
+    return _flood_out(row)
 
 
 @router.delete("/floods/{flood_id}", status_code=204)

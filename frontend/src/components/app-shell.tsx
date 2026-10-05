@@ -17,6 +17,7 @@ import { ComparisonPanel } from "./sidebar/comparison-panel";
 import { DataTableModal, type DatasetKey } from "./data-table-modal";
 import { FloatingNavbar } from "./floating-navbar";
 import { WindowedLayout } from "./layouts/windowed-layout";
+import { FloodDetailPanel } from "./sidebar/flood-detail-panel";
 import { ChoroplethLegend } from "./map/choropleth-legend";
 import { MapCanvas } from "./map/map-container";
 import { MobileDataLayerDock } from "./map/mobile-data-layer-dock";
@@ -63,6 +64,7 @@ export function AppShell() {
   const [baseMap, setBaseMap] = useState<BaseMapId>("standard");
   const [highlightVehicleId, setHighlightVehicleId] = useState<string | null>(null);
   const [focusedRoute, setFocusedRoute] = useState<RouteOut | null>(null);
+  const [selectedFloodId, setSelectedFloodId] = useState<string | null>(null);
   const [animating, setAnimating] = useState(false);
   const [panelsHidden, setPanelsHidden] = useState(false);
   const [previewDataset, setPreviewDataset] = useState<DatasetKey | null>(null);
@@ -204,6 +206,7 @@ export function AppShell() {
     if (id === scenario) return;
     setScenario(id); // useMapData refetches on change
     reset(); // optimization results are per-scenario
+    setSelectedFloodId(null);
     setFocusedRoute(null);
     setHighlightVehicleId(null);
     setHiddenRoutes(new Set());
@@ -262,6 +265,28 @@ export function AppShell() {
     </>
   ) : null;
 
+  const selectedFlood = (() => {
+    if (!data || !selectedFloodId) return null;
+    const index = data.floods.findIndex((f) => f.id === selectedFloodId);
+    if (index < 0) return null;
+    const si = (f: { si_value?: number }) => f.si_value ?? 0;
+    const rank = 1 + data.floods.filter((f) => si(f) > si(data.floods[index])).length;
+    return { flood: data.floods[index], index, rank };
+  })();
+
+  // Bottom-centre of the free map area. Fullscreen clears the left dock stack
+  // and the results column (or the severity legend when there are none); the
+  // windowed map card is narrow, so the panel sits above its zoom controls.
+  const floodPanelInset = (extra: { isMobile: boolean; variant?: "fullscreen" | "embedded" }) => {
+    if (extra.isMobile) return { left: 12, right: 12, bottom: 12 };
+    if (extra.variant === "embedded") return { left: 16, right: 16, bottom: 64 };
+    return {
+      left: panelW + 32,
+      right: result ? resultPanelW + 32 : 150,
+      bottom: 16,
+    };
+  };
+
   // Single source for the map element; both layouts pass only what differs.
   const renderMap = (extra: {
     isMobile: boolean;
@@ -271,24 +296,45 @@ export function AppShell() {
     hideChrome?: boolean;
   }) =>
     data ? (
-      <MapCanvas
-        floods={data.floods}
-        depots={data.depots}
-        ifs={data.ifs}
-        faskes={data.faskes}
-        overlays={overlays}
-        setOverlay={setOverlay}
-        baseMap={baseMap}
-        setBaseMap={setBaseMap}
-        routes={visibleRoutes}
-        highlightVehicleId={highlightVehicleId}
-        setHighlightVehicleId={setHighlightVehicleId}
-        focusedRoute={focusedRoute}
-        onPreviewData={handlePreviewData}
-        animating={animating}
-        scenario={scenario}
-        {...extra}
-      />
+      <>
+        <MapCanvas
+          selectedFloodId={selectedFloodId}
+          onSelectFlood={setSelectedFloodId}
+          floods={data.floods}
+          depots={data.depots}
+          ifs={data.ifs}
+          faskes={data.faskes}
+          overlays={overlays}
+          setOverlay={setOverlay}
+          baseMap={baseMap}
+          setBaseMap={setBaseMap}
+          routes={visibleRoutes}
+          highlightVehicleId={highlightVehicleId}
+          setHighlightVehicleId={setHighlightVehicleId}
+          focusedRoute={focusedRoute}
+          onPreviewData={handlePreviewData}
+          animating={animating}
+          scenario={scenario}
+          {...extra}
+        />
+        {selectedFlood ? (
+          <div
+            className={`pointer-events-none absolute z-[950] flex justify-center ${PANEL_ANIM} ${
+              panelsHidden ? "opacity-0 [&_*]:pointer-events-none" : "opacity-100"
+            }`}
+            style={floodPanelInset(extra)}
+          >
+            <FloodDetailPanel
+              flood={selectedFlood.flood}
+              index={selectedFlood.index}
+              rank={selectedFlood.rank}
+              total={data.floods.length}
+              result={result}
+              onClose={() => setSelectedFloodId(null)}
+            />
+          </div>
+        ) : null}
+      </>
     ) : (
       <MapStatusPlaceholder loading={loading} error={dataError} />
     );
