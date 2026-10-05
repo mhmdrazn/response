@@ -12,6 +12,7 @@ import type { BaseMapId, OverlayLayerId } from "../lib/map-constants";
 import { OVERLAY_LAYERS } from "../lib/map-constants";
 import { api } from "../lib/api";
 import type { AppLayout, AppMode, MapSelection, RouteOut, ScenarioMeta } from "../types";
+import { AnimatedHeight } from "./animated-height";
 import { ErrorBoundary } from "./error-boundary";
 import { AlgorithmPanel } from "./sidebar/algorithm-panel";
 import { ComparisonPanel } from "./sidebar/comparison-panel";
@@ -282,7 +283,7 @@ export function AppShell() {
   const closeDetail = useCallback(() => setSelection(null), []);
 
   // The detail panel for whichever marker is selected; null once it has animated out.
-  const renderDetail = (variant: "fullscreen" | "embedded"): ReactNode => {
+  const renderDetailPanel = (variant: "fullscreen" | "embedded"): ReactNode => {
     if (!data || !shownSelection) return null;
     switch (shownSelection.kind) {
       case "flood": {
@@ -355,6 +356,19 @@ export function AppShell() {
         );
       }
     }
+  };
+
+  // Swapping one detail for another eases the height and fades the new content in.
+  const renderDetail = (variant: "fullscreen" | "embedded"): ReactNode => {
+    const panel = renderDetailPanel(variant);
+    if (!panel || !shownSelection) return null;
+    return (
+      <AnimatedHeight>
+        <div key={`${shownSelection.kind}:${shownSelection.id}`} className="soft-fade">
+          {panel}
+        </div>
+      </AnimatedHeight>
+    );
   };
 
   // Bottom of the map. Fullscreen fills the gap between the left dock stack and
