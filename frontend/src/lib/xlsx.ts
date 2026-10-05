@@ -2,16 +2,35 @@ import { strToU8, zipSync } from "fflate";
 
 /**
  * Minimal .xlsx writer: a zip of a few XML parts, no third-party spreadsheet
- * library. Cells are plain text or numbers, the header row is bold and frozen,
- * and column widths follow the content.
+ * library. Each sheet is an optional title and note, a bold header row that stays
+ * in view, and body cells with number formats, light row rules and an optional
+ * filter. Column widths follow the content.
  */
 
-export type Cell = string | number | null;
+export type Format =
+  | "text"
+  | "int"
+  | "dec1"
+  | "dec2"
+  | "section"
+  | "total-text"
+  | "total-int"
+  | "total-dec1"
+  | "total-dec2";
+
+export type Cell = string | number | null | { v: string | number | null; f: Format };
 
 export interface Sheet {
   /** Excel limits sheet names to 31 characters and forbids []:*?/\ */
   name: string;
+  title?: string;
+  note?: string;
+  header: string[];
   rows: Cell[][];
+  /** Default format per column; numbers fall back to int or two decimals. */
+  formats?: Format[];
+  /** Add a filter dropdown to every header cell. */
+  filter?: boolean;
 }
 
 const XML_HEAD = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
@@ -55,53 +74,159 @@ function safeSheetName(name: string, used: Set<string>): string {
   return candidate;
 }
 
-function sheetXml(rows: Cell[][]): string {
+// Index into cellXfs in STYLES_XML.
+const STYLE: Record<Format | "header" | "title" | "note", number> = {
+  header: 1,
+  title: 2,
+  note: 3,
+  text: 4,
+  int: 5,
+  dec1: 6,
+  dec2: 7,
+  section: 8,
+  "total-text": 9,
+  "total-int": 10,
+  "total-dec1": 11,
+  "total-dec2": 12,
+};
+
+function resolve(
+  cell: Cell,
+  column: Format | undefined,
+): { value: string | number | null; f: Format } {
+  if (cell !== null && typeof cell === "object") return { value: cell.v, f: cell.f };
+  if (typeof cell === "number") {
+    return { value: cell, f: column ?? (Number.isInteger(cell) ? "int" : "dec2") };
+  }
+  return { value: cell, f: column === "total-text" ? "total-text" : "text" };
+}
+
+function displayLength(value: string | number | null): number {
+  if (value == null) return 0;
+  if (typeof value === "number") {
+    return value.toLocaleString("id-ID", { maximumFractionDigits: 2 }).length;
+  }
+  return value.length;
+}
+
+function sheetXml(sheet: Sheet): string {
+  const { header, rows, formats = [] } = sheet;
+  const lastCol = Math.max(header.length, ...rows.map((r) => r.length)) - 1;
+
   const widths: number[] = [];
+  const bump = (c: number, len: number) => {
+    widths[c] = Math.max(widths[c] ?? 8, Math.min(len + 2, 60));
+  };
+  header.forEach((h, c) => bump(c, Math.ceil(h.length * 1.1)));
   rows.forEach((row) =>
     row.forEach((cell, c) => {
-      const len = cell == null ? 0 : String(cell).length;
-      widths[c] = Math.max(widths[c] ?? 8, Math.min(len + 2, 60));
+      const { value, f } = resolve(cell, formats[c]);
+      // Section bands hold a label that may overflow into the empty cells beside it.
+      if (f !== "section") bump(c, displayLength(value));
     }),
   );
-
   const cols = widths
     .map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`)
     .join("");
 
-  const body = rows
-    .map((row, r) => {
-      const cells = row
-        .map((cell, c) => {
-          if (cell == null || cell === "") return "";
-          const ref = `${columnLetter(c)}${r + 1}`;
-          const style = r === 0 ? ' s="1"' : "";
-          if (typeof cell === "number") {
-            return Number.isFinite(cell) ? `<c r="${ref}"${style}><v>${cell}</v></c>` : "";
-          }
-          return `<c r="${ref}"${style} t="inlineStr"><is><t xml:space="preserve">${esc(cell)}</t></is></c>`;
-        })
-        .join("");
-      return `<row r="${r + 1}">${cells}</row>`;
-    })
-    .join("");
+  const out: string[] = [];
+  let r = 0;
+  const textCell = (c: number, row: number, text: string, style: number) =>
+    `<c r="${columnLetter(c)}${row}" s="${style}" t="inlineStr"><is><t xml:space="preserve">${esc(text)}</t></is></c>`;
+
+  if (sheet.title) {
+    r++;
+    out.push(
+      `<row r="${r}" ht="24" customHeight="1">${textCell(0, r, sheet.title, STYLE.title)}</row>`,
+    );
+  }
+  if (sheet.note) {
+    r++;
+    out.push(`<row r="${r}">${textCell(0, r, sheet.note, STYLE.note)}</row>`);
+  }
+  if (sheet.title || sheet.note) r++; // blank spacer row
+
+  r++;
+  const headerRow = r;
+  out.push(
+    `<row r="${r}" ht="30" customHeight="1">` +
+      header.map((h, c) => textCell(c, r, h, STYLE.header)).join("") +
+      `</row>`,
+  );
+
+  for (const row of rows) {
+    r++;
+    const rowNo = r;
+    const cells = Array.from({ length: lastCol + 1 }, (_, c) => {
+      const { value, f } = resolve(row[c] ?? null, formats[c]);
+      const ref = `${columnLetter(c)}${rowNo}`;
+      if (value == null || value === "") {
+        // Keep the style so section bands and total rules run across empty cells.
+        return f === "section" || f.startsWith("total") ? `<c r="${ref}" s="${STYLE[f]}"/>` : "";
+      }
+      if (typeof value === "number") {
+        return Number.isFinite(value) ? `<c r="${ref}" s="${STYLE[f]}"><v>${value}</v></c>` : "";
+      }
+      return textCell(c, rowNo, value, STYLE[f]);
+    }).join("");
+    out.push(`<row r="${rowNo}">${cells}</row>`);
+  }
+
+  const filter =
+    sheet.filter && rows.length > 0
+      ? `<autoFilter ref="A${headerRow}:${columnLetter(lastCol)}${r}"/>`
+      : "";
 
   return (
     `${XML_HEAD}<worksheet xmlns="${NS_MAIN}">` +
-    `<sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>` +
-    `<cols>${cols}</cols><sheetData>${body}</sheetData></worksheet>`
+    `<sheetViews><sheetView workbookViewId="0" showGridLines="0">` +
+    `<pane ySplit="${headerRow}" topLeftCell="A${headerRow + 1}" activePane="bottomLeft" state="frozen"/>` +
+    `</sheetView></sheetViews>` +
+    `<cols>${cols}</cols><sheetData>${out.join("")}</sheetData>${filter}</worksheet>`
   );
 }
 
+const font = (inner: string) => `<font>${inner}<name val="Calibri"/></font>`;
+const xf = (numFmtId: number, fontId: number, fillId: number, borderId: number, align: string) =>
+  `<xf numFmtId="${numFmtId}" fontId="${fontId}" fillId="${fillId}" borderId="${borderId}" xfId="0" ` +
+  `applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1">` +
+  `<alignment ${align}/></xf>`;
+
+const MIDDLE = 'vertical="center"';
+
 const STYLES_XML =
   `${XML_HEAD}<styleSheet xmlns="${NS_MAIN}">` +
-  `<fonts count="2"><font><sz val="11"/><name val="Calibri"/></font>` +
-  `<font><b/><sz val="11"/><name val="Calibri"/></font></fonts>` +
-  `<fills count="2"><fill><patternFill patternType="none"/></fill>` +
-  `<fill><patternFill patternType="gray125"/></fill></fills>` +
-  `<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>` +
+  `<numFmts count="1"><numFmt numFmtId="164" formatCode="#,##0.0"/></numFmts>` +
+  `<fonts count="5">` +
+  font('<sz val="11"/>') +
+  font('<b/><sz val="11"/>') +
+  font('<b/><sz val="11"/><color rgb="FFFFFFFF"/>') +
+  font('<b/><sz val="15"/>') +
+  font('<i/><sz val="10"/><color rgb="FF737373"/>') +
+  `</fonts>` +
+  `<fills count="4"><fill><patternFill patternType="none"/></fill>` +
+  `<fill><patternFill patternType="gray125"/></fill>` +
+  `<fill><patternFill patternType="solid"><fgColor rgb="FF171717"/><bgColor indexed="64"/></patternFill></fill>` +
+  `<fill><patternFill patternType="solid"><fgColor rgb="FFF5F5F5"/><bgColor indexed="64"/></patternFill></fill></fills>` +
+  `<borders count="3"><border><left/><right/><top/><bottom/><diagonal/></border>` +
+  `<border><left/><right/><top/><bottom style="thin"><color rgb="FFE5E5E5"/></bottom><diagonal/></border>` +
+  `<border><left/><right/><top style="thin"><color rgb="FF737373"/></top><bottom/><diagonal/></border></borders>` +
   `<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>` +
-  `<cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>` +
-  `<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs>` +
+  `<cellXfs count="13">` +
+  `<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>` + // 0 default
+  xf(0, 2, 2, 0, 'horizontal="center" vertical="center" wrapText="1"') + // 1 header
+  xf(0, 3, 0, 0, MIDDLE) + // 2 title
+  xf(0, 4, 0, 0, MIDDLE) + // 3 note
+  xf(0, 0, 0, 1, MIDDLE) + // 4 text
+  xf(3, 0, 0, 1, MIDDLE) + // 5 int
+  xf(164, 0, 0, 1, MIDDLE) + // 6 one decimal
+  xf(4, 0, 0, 1, MIDDLE) + // 7 two decimals
+  xf(0, 1, 3, 1, MIDDLE) + // 8 section band
+  xf(0, 1, 0, 2, MIDDLE) + // 9 total text
+  xf(3, 1, 0, 2, MIDDLE) + // 10 total int
+  xf(164, 1, 0, 2, MIDDLE) + // 11 total one decimal
+  xf(4, 1, 0, 2, MIDDLE) + // 12 total two decimals
+  `</cellXfs>` +
   `<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>` +
   `</styleSheet>`;
 
@@ -151,7 +276,7 @@ export function buildXlsx(sheets: Sheet[]): Uint8Array {
     "xl/styles.xml": strToU8(STYLES_XML),
   };
   named.forEach((s, i) => {
-    files[`xl/worksheets/sheet${i + 1}.xml`] = strToU8(sheetXml(s.rows));
+    files[`xl/worksheets/sheet${i + 1}.xml`] = strToU8(sheetXml(s));
   });
 
   return zipSync(files);

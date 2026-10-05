@@ -80,8 +80,8 @@ export function ResultsDock({
           <ResultsPanel result={result} mode={mode} completedAt={completedAt} />
 
           <div className="flex gap-[6px]">
-            <ExportBtn label="PDF" onClick={() => exportReport(result)} />
-            <ExportBtn label="Excel" onClick={() => exportExcel(result)} />
+            <ExportBtn label="PDF" onClick={() => exportReport(result, { completedAt })} />
+            <ExportBtn label="Excel" onClick={() => exportExcel(result, { completedAt })} />
           </div>
         </div>
       </div>

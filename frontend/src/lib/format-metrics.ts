@@ -3,10 +3,12 @@ export function formatMeters(m: number): string {
   return `${Math.round(m)} m`;
 }
 
-export function formatDuration(s: number): string {
-  if (s < 60) return `${Math.round(s)} dtk`;
+export function formatDuration(seconds: number): string {
+  // Round first, so 59.6 s reads "1 mnt" and never "0 mnt 60 dtk".
+  const s = Math.round(seconds);
+  if (s < 60) return `${s} dtk`;
   const totalMin = Math.floor(s / 60);
-  const sec = Math.round(s - totalMin * 60);
+  const sec = s - totalMin * 60;
   if (totalMin < 60) return sec ? `${totalMin} mnt ${sec} dtk` : `${totalMin} mnt`;
   const h = Math.floor(totalMin / 60);
   const min = totalMin - h * 60;
