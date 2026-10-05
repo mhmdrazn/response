@@ -6,6 +6,7 @@ import type { BaseMapId, OverlayLayerId } from "../../lib/map-constants";
 import type { AppMode } from "../../types";
 import type { DatasetKey } from "../data-table-modal";
 import { DataDock } from "../map/data-dock";
+import { LegendDock } from "../map/legend-dock";
 import { MapLayerDock } from "../map/map-layer-dock";
 import { LayoutToggle } from "../floating-navbar";
 import { ModeToggle } from "../mode-toggle";
@@ -102,6 +103,7 @@ export function WindowedLayout({
             scenario={scenario}
             defaultOpen
           />
+          <LegendDock defaultOpen />
         </aside>
 
         <main className="flex min-w-0 flex-1 flex-col overflow-hidden">

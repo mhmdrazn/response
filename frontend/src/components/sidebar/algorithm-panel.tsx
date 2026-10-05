@@ -68,7 +68,7 @@ export function AlgorithmPanel({
   const [open, setOpen] = useState(true);
 
   return (
-    <div className="border-frost bg-pure-white pointer-events-auto flex max-h-full min-h-0 flex-col rounded-lg border">
+    <div className="algo-card border-frost bg-pure-white pointer-events-auto flex max-h-full min-h-0 flex-col rounded-lg border">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -87,13 +87,14 @@ export function AlgorithmPanel({
       </button>
 
       <div
-        className={`flex min-h-0 flex-col transition-[max-height,opacity] duration-[320ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
+        data-open={open}
+        className={`algo-collapse flex min-h-0 flex-col transition-[max-height,opacity] duration-[320ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
           open
             ? "pointer-events-auto max-h-[min(780px,88vh)] opacity-100"
             : "pointer-events-none max-h-0 overflow-hidden opacity-0"
         }`}
       >
-        <div className="scrollbar-hidden flex min-h-0 flex-1 flex-col gap-12 overflow-y-auto px-[14px] pb-[12px]">
+        <div className="algo-scroll scrollbar-hidden flex min-h-0 flex-1 flex-col gap-12 overflow-y-auto px-[14px] pb-[12px]">
           <div
             role="tablist"
             aria-label="Pilih algoritma"

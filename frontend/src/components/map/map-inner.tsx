@@ -232,7 +232,6 @@ export function MapInner({
           </div>
           <div className="pointer-events-none absolute bottom-16 right-16 z-[800] flex flex-col items-end gap-8">
             {overlays.choropleth ? <ChoroplethLegend /> : null}
-            {routes.length === 0 ? <SiLegend inline /> : null}
           </div>
         </>
       ) : null}

@@ -563,6 +563,32 @@ button:not(:disabled):active,
   flex: none;
 }
 
+/* The left column keeps every dock at its natural height (it scrolls as a whole
+   when they do not all fit), and the algorithm card shows its form in full
+   instead of squeezing into a scroll area of its own. */
+.windowed-flat aside > * {
+  flex: none;
+}
+
+.windowed-flat .algo-card {
+  max-height: none;
+}
+
+.windowed-flat .algo-collapse[data-open="true"] {
+  max-height: 1600px;
+}
+
+.windowed-flat .algo-scroll {
+  overflow-y: visible;
+}
+
+/* The legend closes the left column: while open it takes the space that is left,
+   so the column ends flush with the bottom instead of trailing off into blank tint. */
+.windowed-flat aside > .legend-dock[data-open="true"] {
+  flex: 1 0 auto;
+  margin-bottom: 0 !important;
+}
+
 /* --- Soft motion ----------------------------------------------------------
    Small, short, eased: things settle into place instead of snapping. All of it
    is switched off by the prefers-reduced-motion rule above. */
