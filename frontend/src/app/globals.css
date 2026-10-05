@@ -516,8 +516,8 @@ button:not(:disabled):active,
 
 /* --- Windowed dashboard ---------------------------------------------------
    Panels join into one continuous surface: flush edge to edge with square
-   corners, each closed off by a full-strength line, with a narrow band of the
-   column tint between neighbours so the sections read as distinct rows. Controls
+   corners, each closed off by a hairline in the plain divider tint, with a narrow
+   band of the column tint between neighbours so the sections read as distinct rows. Controls
    and tiles nested inside a panel keep their own outlines. Only panels inside the
    side columns are touched, so anything floating over the map keeps its full
    outline and rounding. Scoped to .windowed-flat so
@@ -529,7 +529,7 @@ button:not(:disabled):active,
   ) {
   border-radius: 0;
   border-width: 0 0 1px 0;
-  border-color: color-mix(in srgb, var(--color-frost) 55%, var(--color-smoke));
+  border-color: var(--color-frost);
   margin-bottom: 8px;
 }
 
@@ -539,6 +539,13 @@ button:not(:disabled):active,
     [role="tooltip"]
   ):not(:first-child) {
   border-top-width: 1px;
+}
+
+/* The results column scrolls as a whole in the windowed layout. Its cards are
+   built for the fullscreen overlay, where the route list flexes to fill the
+   space that is left; here that squeezed it to nothing once every card was open. */
+.windowed-results > * {
+  flex: none;
 }
 
 /* --- Soft motion ----------------------------------------------------------

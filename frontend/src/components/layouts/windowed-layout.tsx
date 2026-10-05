@@ -116,7 +116,7 @@ export function WindowedLayout({
         </main>
 
         {hasResult ? (
-          <aside className="soft-enter scrollbar-hidden flex w-[420px] flex-shrink-0 flex-col overflow-y-auto border-l border-frost bg-mist">
+          <aside className="windowed-results soft-enter scrollbar-hidden flex w-[420px] flex-shrink-0 flex-col overflow-y-auto border-l border-frost bg-mist">
             {results}
           </aside>
         ) : null}
