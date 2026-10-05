@@ -1,7 +1,14 @@
 "use client";
 
 import { PanelsTopLeft } from "lucide-react";
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from "react";
 
 import { useAlgorithmConfig } from "../hooks/use-algorithm-config";
 import { useBreakpoint } from "../hooks/use-breakpoint";
@@ -34,7 +41,7 @@ import { ResultsDock } from "./results-dock";
 import { ToastProvider, useToast } from "./toast";
 import type { RunKind } from "../hooks/use-optimization";
 import { formatDateTimeId } from "../lib/format";
-import { readStringSet, writeStringSet } from "../lib/storage";
+import { readJSON, readStringSet, writeJSON, writeStringSet } from "../lib/storage";
 
 const INITIAL_OVERLAYS: Record<OverlayLayerId, boolean> = OVERLAY_LAYERS.reduce(
   (acc, l) => ({ ...acc, [l.id]: l.defaultVisible }),
@@ -61,11 +68,25 @@ const SIDEBAR_BOTTOM_CLEARANCE = "calc(var(--left-stack-h, 220px) + 24px)";
 const PANEL_ANIM = "transition-opacity duration-300 ease-out";
 
 const HIDDEN_ROUTES_STORAGE_KEY = "floodroute:hidden-routes:v1";
+const LAYOUT_STORAGE_KEY = "floodroute:layout:v1";
+
+function subscribeStorage(onChange: () => void): () => void {
+  window.addEventListener("storage", onChange);
+  return () => window.removeEventListener("storage", onChange);
+}
+
+function readSavedLayout(): AppLayout {
+  return readJSON<unknown>(LAYOUT_STORAGE_KEY, null) === "windowed" ? "windowed" : "fullscreen";
+}
 
 export function AppShell() {
   const bp = useBreakpoint();
   const [mode, setMode] = useState<AppMode>("simple");
-  const [layout, setLayout] = useState<AppLayout>("fullscreen");
+  // The saved layout is null on the server and until hydration, so the page never
+  // flashes the wrong one; a choice made this session takes over from then on.
+  const savedLayout = useSyncExternalStore(subscribeStorage, readSavedLayout, () => null);
+  const [chosenLayout, setChosenLayout] = useState<AppLayout | null>(null);
+  const layout = chosenLayout ?? savedLayout;
   const [overlays, setOverlays] = useState<Record<OverlayLayerId, boolean>>(INITIAL_OVERLAYS);
   const [baseMap, setBaseMap] = useState<BaseMapId>("standard");
   const [highlightVehicleId, setHighlightVehicleId] = useState<string | null>(null);
@@ -85,6 +106,11 @@ export function AppShell() {
   const hydratedHidden = useRef(false);
 
   const preChoroplethBaseMap = useRef<BaseMapId>("standard");
+
+  const changeLayout = useCallback((next: AppLayout) => {
+    setChosenLayout(next);
+    writeJSON(LAYOUT_STORAGE_KEY, next);
+  }, []);
 
   useEffect(() => {
     setHiddenRoutes(readStringSet(HIDDEN_ROUTES_STORAGE_KEY));
@@ -446,6 +472,8 @@ export function AppShell() {
     ) : null;
 
   // --- Windowed dashboard layout (desktop only) ---
+  if (layout === null) return <div className="h-screen w-screen bg-mist" />;
+
   if (!isMobile && layout === "windowed") {
     return (
       <ErrorBoundary>
@@ -454,7 +482,7 @@ export function AppShell() {
           <WindowedLayout
             mode={mode}
             onModeChange={setMode}
-            onExitWindowed={() => setLayout("fullscreen")}
+            onExitWindowed={() => changeLayout("fullscreen")}
             scenario={scenario}
             overlays={overlays}
             setOverlay={setOverlay}
@@ -503,7 +531,7 @@ export function AppShell() {
             onModeChange={setMode}
             compact={isMobile}
             layout={layout}
-            onToggleLayout={() => setLayout("windowed")}
+            onToggleLayout={() => changeLayout("windowed")}
             onHidePanels={!isMobile ? () => setPanelsHidden(true) : undefined}
             className={`${PANEL_ANIM} ${
               panelsHidden ? "pointer-events-none opacity-0" : "pointer-events-auto opacity-100"
