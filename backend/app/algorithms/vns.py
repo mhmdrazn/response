@@ -27,12 +27,27 @@ REPAIR_RESERVE_S = 3.0
 REPAIR_MARGIN_S = 60.0
 
 
+# How long one shake-and-polish cycle may polish. Swept 0.5, 1.0 and 2.0 s over
+# three seeds at a 45 s budget: iterations ranged 53 down to 16 while mean Z stayed
+# inside the seed spread (991k-999k), so the shortest tested slice is used.
+# See docs/iterasi-vs-kualitas.md.
+DEFAULT_POLISH_SLICE_S = 0.5
+
+
 @dataclass
 class VNSParams:
-    max_iterations: int = 100
+    # An upper bound, not a target: the time budget decides how many cycles run.
+    max_iterations: int = 1000
     k_max: int = 3
     seed: int | None = None
     time_limit_s: float | None = 45.0
+    # Share of the usable budget kept for one deep polish of the best solution.
+    final_polish_frac: float = 0.25
+    # Seconds one cycle may polish; None uses DEFAULT_POLISH_SLICE_S.
+    polish_slice_s: float | None = None
+    # False restores the earlier behaviour: every polish runs to completion, which
+    # fits only a couple of rounds into the budget.
+    time_sliced_polish: bool = True
 
 
 @dataclass
@@ -369,7 +384,14 @@ class VNS:
         deadline = (
             start + self.p.time_limit_s if self.p.time_limit_s is not None else None
         )
-        search_deadline = deadline - REPAIR_RESERVE_S if deadline is not None else None
+        closing_deadline = deadline - REPAIR_RESERVE_S if deadline is not None else None
+        sliced = self.p.time_sliced_polish and closing_deadline is not None
+        final_s = (
+            self.p.final_polish_frac * (closing_deadline - start) if sliced else 0.0
+        )
+        search_deadline = (
+            closing_deadline - final_s if closing_deadline is not None else None
+        )
 
         routes, capacities = self._greedy_initial(search_deadline)
         ev = evaluate_solution(self.inst, routes, capacities)
@@ -380,43 +402,60 @@ class VNS:
         best_eval = ev
         trace = VNSTrace()
 
-        for it in range(self.p.max_iterations):
-            k = 1
-            iter_score = best_score
+        # One iteration is one shake-and-polish cycle at neighbourhood k. k resets to
+        # 1 on an improvement and otherwise widens, wrapping after k_max, which is
+        # the usual variable-neighbourhood schedule without a round that can only
+        # end when the search stops improving.
+        k = 1
+        slice_s = self.p.polish_slice_s or DEFAULT_POLISH_SLICE_S
+        for _ in range(self.p.max_iterations):
+            shaken = self._shake(best_routes, best_caps, k)
+            polish_deadline = search_deadline
+            if sliced and search_deadline is not None:
+                polish_deadline = min(search_deadline, time.perf_counter() + slice_s)
 
-            while k <= self.p.k_max:
-                shaken = self._shake(best_routes, best_caps, k)
+            cand_score = float("inf")
+            try:
+                # Evaluate shaken first so polish has a real baseline —
+                # float("inf") baseline accepts every feasible candidate
+                # and thrashes with scan restarts.
+                shaken_ev = evaluate_solution(self.inst, shaken, best_caps)
+                polished, cand_score, pol_ev = polish(
+                    self.inst, shaken, best_caps, shaken_ev.score,
+                    max_rounds=2, quick=True, deadline=polish_deadline,
+                    rng=self._rng,
+                )
+            except Exception:
+                polished, pol_ev = None, None
 
-                try:
-                    # Evaluate shaken first so polish has a real baseline —
-                    # float("inf") baseline accepts every feasible candidate
-                    # and thrashes with scan restarts.
-                    shaken_ev = evaluate_solution(self.inst, shaken, best_caps)
-                    polished, pol_score, pol_ev = polish(
-                        self.inst, shaken, best_caps, shaken_ev.score,
-                        max_rounds=2, quick=True, deadline=search_deadline,
-                    )
-                except Exception:
-                    k += 1
-                    continue
+            if polished is not None and cand_score + 1e-9 < best_score:
+                best_score = cand_score
+                best_routes = [list(r) for r in polished]
+                best_eval = pol_ev
+                k = 1
+            else:
+                k = k % self.p.k_max + 1
 
-                if pol_score + 1e-9 < best_score:
-                    best_score = pol_score
-                    best_routes = [list(r) for r in polished]
-                    best_eval = pol_ev
-                    iter_score = pol_score
-                    k = 1
-                else:
-                    k += 1
-
-                if search_deadline is not None and time.perf_counter() >= search_deadline:
-                    break
-
-            trace.iter_best_score.append(float(iter_score))
+            trace.iter_best_score.append(float(min(cand_score, best_score)))
             trace.best_score.append(float(best_score))
 
             if search_deadline is not None and time.perf_counter() >= search_deadline:
                 break
+
+        # Deep final polish of the best solution on everything the cycles left over:
+        # the reserved share plus any time a cycle did not use.
+        if sliced:
+            remaining = closing_deadline - time.perf_counter()
+            if remaining > 1.0:
+                deep_routes, deep_score, deep_eval = polish(
+                    self.inst, best_routes, best_caps, best_score,
+                    max_rounds=10, quick=False, deadline=closing_deadline,
+                    rng=self._rng,
+                )
+                if deep_score + 1e-9 < best_score:
+                    best_routes, best_score, best_eval = deep_routes, deep_score, deep_eval
+                    trace.best_score.append(float(best_score))
+                    trace.iter_best_score.append(float(best_score))
 
         # Always close on a repair: the search may have spent its whole budget,
         # leaving shaking and polish free to strand volume.

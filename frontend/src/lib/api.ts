@@ -143,7 +143,7 @@ export const api = {
 };
 
 export const DEFAULT_ACS_PARAMS: ACSParams = {
-  iterations: 30,
+  iterations: 1000,
   n_ants: 20,
   alpha: 1.0,
   beta: 1.0,
@@ -154,7 +154,7 @@ export const DEFAULT_ACS_PARAMS: ACSParams = {
 };
 
 export const DEFAULT_VNS_PARAMS: VNSParams = {
-  max_iterations: 100,
+  max_iterations: 1000,
   k_max: 3,
   seed: 42,
   time_limit_s: 45,

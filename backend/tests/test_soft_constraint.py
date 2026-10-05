@@ -197,3 +197,15 @@ def test_sliced_polish_does_not_leave_the_back_routes_untouched():
     firsts = {_order(24, random.Random(s))[0] for s in range(40)}
     assert len(firsts) > 12, "sweep must not always begin at the same route"
     assert _order(24, None) == list(range(24))
+
+
+def test_vns_spreads_its_budget_over_many_iterations(s2):
+    # One round used to polish the greedy start to completion (about 18 s per
+    # polish), so a 45 s budget fitted two rounds and the search barely began.
+    inst = _instance(s2)
+    t0 = time.perf_counter()
+    sol = VNS(inst, VNSParams(max_iterations=15, seed=4, time_limit_s=15)).solve()
+    elapsed = time.perf_counter() - t0
+
+    assert len(sol.trace.best_score) >= 12, len(sol.trace.best_score)
+    assert elapsed < 15.5, f"overran the budget: {elapsed:.1f}s"

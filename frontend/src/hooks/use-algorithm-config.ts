@@ -28,7 +28,7 @@ export interface UseAlgorithmConfig {
   buildRunRequest: () => RunRequest;
 }
 
-const STORAGE_KEY = "floodroute:algo-config:v2";
+const STORAGE_KEY = "floodroute:algo-config:v4";
 
 interface StoredConfig {
   algorithm: AlgorithmType;

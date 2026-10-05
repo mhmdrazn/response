@@ -116,9 +116,9 @@ export function AlgorithmPanel({
             algorithm === "acs" ? (
               <div className="grid grid-cols-2 gap-8">
                 <NumInput
-                  label="Iterasi"
+                  label="Iterasi Maks"
                   min={1}
-                  max={500}
+                  max={2000}
                   step={1}
                   value={acsParams.iterations}
                   onChange={(v) => updateACS("iterations", v)}

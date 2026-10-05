@@ -28,15 +28,20 @@ REPAIR_RESERVE_S = 3.0
 REPAIR_MARGIN_S = 60.0
 
 
-# Shortest polish worth starting: below this a sweep reaches only a route or two.
-MIN_POLISH_SLICE_S = 0.25
+# How long one iteration may polish its best ant. Swept 0.3-2.0 s over three seeds
+# at a 45 s budget: iterations ranged 36 down to 14 while mean Z stayed inside the
+# seed spread (886k-909k against +/-3% between seeds), so the shortest slice wins
+# on iteration count at no measurable cost. The deep final polish makes up depth.
+# Below this the ants dominate each iteration; see docs/iterasi-vs-kualitas.md.
+DEFAULT_POLISH_SLICE_S = 0.3
 
 
 @dataclass
 class ACSParams:
-    # Iterations the time budget is spread over. Fewer than this can finish if
-    # the budget runs out first; the leftover goes to the closing deep polish.
-    iterations: int = 30
+    # An upper bound, not a target: the time budget decides how many iterations
+    # run, because each iteration polishes for a fixed slice rather than a share
+    # of the budget divided by this number.
+    iterations: int = 1000
     n_ants: int = 20
     alpha: float = 1.0
     # β cubes 1/d; keep at 1 so SI (∈ [0, 1]) is not steamrolled by distance.
@@ -51,6 +56,8 @@ class ACSParams:
     # Iterations use short, evenly sliced polishes to keep pheromone learning
     # going; this is where the solution gets its depth.
     final_polish_frac: float = 0.25
+    # Seconds one iteration may polish; None uses DEFAULT_POLISH_SLICE_S.
+    polish_slice_s: float | None = None
     # False restores the earlier behaviour: each iteration polishes to completion,
     # which fits only a handful of iterations into the budget.
     time_sliced_polish: bool = True
@@ -342,14 +349,6 @@ class HybridACS:
             iter_best_score = float("inf")
             iter_best_routes: list[list[int]] | None = None
             iter_best_caps: list[int] | None = None
-            # An even share of what is left; time one iteration does not use
-            # flows to the next, and finally to the deep polish.
-            iter_budget = (
-                (search_deadline - iter_start) / (self.p.iterations - it)
-                if sliced and search_deadline is not None
-                else None
-            )
-
             for _ in range(self.p.n_ants):
                 if search_deadline is not None and time.perf_counter() >= search_deadline:
                     break
@@ -375,9 +374,8 @@ class HybridACS:
             # Stratified polish: quick per iter, full every 5 iter.
             # Quick = only 2-opt + relocate (fast). Full adds or-opt + exchange.
             polish_deadline = search_deadline
-            if iter_budget is not None and search_deadline is not None:
-                spent = time.perf_counter() - iter_start
-                slice_s = max(MIN_POLISH_SLICE_S, iter_budget - spent)
+            if sliced and search_deadline is not None:
+                slice_s = self.p.polish_slice_s or DEFAULT_POLISH_SLICE_S
                 polish_deadline = min(search_deadline, time.perf_counter() + slice_s)
             if it % 5 == 0 and it > 0:
                 iter_best_routes, iter_best_score, ev = polish(

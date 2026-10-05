@@ -10,7 +10,7 @@ class _Base(BaseModel):
 
 
 class ACSRequest(_Base):
-    iterations: int = Field(30, ge=1, le=500)
+    iterations: int = Field(1000, ge=1, le=2000)
     n_ants: int = Field(20, ge=1, le=100)
     alpha: float = Field(1.0, ge=0.1, le=5.0)
     beta: float = Field(1.0, ge=0.1, le=10.0)
@@ -22,7 +22,7 @@ class ACSRequest(_Base):
 
 
 class VNSRequest(_Base):
-    max_iterations: int = Field(100, ge=1, le=1000)
+    max_iterations: int = Field(1000, ge=1, le=1000)
     k_max: int = Field(3, ge=1, le=6)
     seed: int | None = None
     time_limit_s: float | None = Field(45.0, ge=1.0, le=180.0)
