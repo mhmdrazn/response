@@ -33,6 +33,16 @@ class _RunContext(_Base):
     # Relative weights for [flood depth, road class, distance to a clinic]; they
     # replace the AHP + entropy mix. Normalised server-side.
     severity_weights: list[float] | None = None
+    # Litres still to pump per flood id, carried over from the previous period.
+    # When given it replaces the scenario's volumes: floods not listed have none left.
+    remaining_volumes: dict[str, float] | None = Field(None, max_length=5000)
+
+    @field_validator("remaining_volumes")
+    @classmethod
+    def _check_remaining(cls, v: dict[str, float] | None) -> dict[str, float] | None:
+        if v is not None and any(x < 0 for x in v.values()):
+            raise ValueError("sisa volume tidak boleh negatif")
+        return v
 
     @field_validator("severity_weights")
     @classmethod
@@ -90,6 +100,9 @@ class RouteOut(_Base):
     visit_count_if: int
     polyline: list[list[float]]  # [[lat, lon], ...] for map polyline
     visits: list[VisitOut]
+    # How long this crew may stay out, and what it pumped, for load comparisons.
+    shift_limit_s: float = 0.0
+    pumped_l: float = 0.0
 
 
 class ConvergencePoint(_Base):
@@ -99,6 +112,59 @@ class ConvergencePoint(_Base):
     # the objective alone, which differs whenever coverage is short.
     best_score: float
     iter_best_score: float
+
+
+UnservedReason = Literal["no_unit", "out_of_range", "far", "priority", "capacity", "unscheduled"]
+
+
+class UnservedPointOut(_Base):
+    flood_id: str
+    name: str
+    si_value: float
+    demand_l: float
+    remaining_l: float
+    reason: UnservedReason
+    detail: str
+    depot_names: list[str]
+    nearest_depot_min: float
+
+
+class SuggestionOut(_Base):
+    kind: Literal["add_unit", "extend_shift"]
+    depot_id: str
+    depot_name: str
+    coverage_before_pct: float
+    coverage_after_pct: float
+    unserved_points_after: int
+    capacity_l: int | None = None
+    extra_minutes: float | None = None
+
+
+class DepotBalanceOut(_Base):
+    depot_id: str
+    depot_name: str
+    vehicles_total: int
+    vehicles_used: int
+    flood_visits: int
+    pumped_l: float
+    longest_route_s: float
+    utilization_pct: float
+
+
+class BalanceOut(_Base):
+    makespan_s: float
+    makespan_vehicle_id: str | None
+    mean_route_s: float
+    route_time_cv: float
+    utilization_mean_pct: float
+    utilization_max_pct: float
+    vehicles_total: int
+    vehicles_used: int
+    pumped_mean_l: float
+    pumped_max_l: float
+    load_cv: float
+    load_gini: float
+    depots: list[DepotBalanceOut]
 
 
 class OptimizationResponse(_Base):
@@ -119,3 +185,6 @@ class OptimizationResponse(_Base):
     computation_time_s: float
     convergence: list[ConvergencePoint]
     n_vehicles: int
+    unserved: list[UnservedPointOut] = Field(default_factory=list)
+    suggestions: list[SuggestionOut] = Field(default_factory=list)
+    balance: BalanceOut | None = None

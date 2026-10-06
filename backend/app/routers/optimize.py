@@ -1,9 +1,11 @@
 
 from __future__ import annotations
 
+import dataclasses
 import logging
 from collections import Counter
 
+import numpy as np
 from fastapi import APIRouter, HTTPException, Query
 
 from app.data.store import store
@@ -13,6 +15,11 @@ from app.algorithms.evaluator import (
     SolutionEval,
     coverage_ratio,
     validate_hard_constraints,
+)
+from app.algorithms.diagnosis import (
+    balance_metrics,
+    diagnose_unserved,
+    suggest_fixes,
 )
 from app.algorithms.osrm import fetch_road_geometries_batch
 from app.algorithms.instance import (
@@ -29,10 +36,14 @@ from app.algorithms.instance import (
 from app.models.optimization import (
     ACSRequest,
     VNSRequest,
+    BalanceOut,
     ConvergencePoint,
+    DepotBalanceOut,
     DepotFleetIn,
     OptimizationResponse,
     RouteOut,
+    SuggestionOut,
+    UnservedPointOut,
     VisitOut,
 )
 from app.severity.index import compute_severity_index
@@ -79,6 +90,7 @@ def _build_ready_instance(
     unserved_penalty: float | None = None,
     fleet: list[DepotFleetIn] | None = None,
     severity_weights: list[float] | None = None,
+    remaining_volumes: dict[str, float] | None = None,
 ) -> Instance:
     try:
         bundle = store.get(scenario)
@@ -106,7 +118,23 @@ def _build_ready_instance(
     )
     if not inst.vehicles:
         raise HTTPException(status_code=422, detail="Armada kosong: minimal satu unit.")
+    if remaining_volumes is not None:
+        _carry_over(inst, remaining_volumes)
     return inst
+
+
+def _carry_over(inst: Instance, remaining: dict[str, float]) -> None:
+    """Make a previous period's leftovers this period's work."""
+    ids = [str(f["id"]) for f in inst.floods]
+    unknown = sorted(set(remaining) - set(ids))
+    if unknown:
+        raise HTTPException(
+            status_code=422, detail=f"Titik genangan tidak dikenal: {', '.join(unknown[:5])}."
+        )
+    volumes = np.array([float(remaining.get(i, 0.0)) for i in ids])
+    if volumes.sum() < 1.0:
+        raise HTTPException(status_code=422, detail="Tidak ada sisa beban untuk periode berikutnya.")
+    inst.volumes = volumes
 
 
 def _node_meta(inst: Instance, idx: int) -> tuple[str, str, str, float, float]:
@@ -213,6 +241,8 @@ def _to_response(
                 visit_count_if=n_if,
                 polyline=polyline,
                 visits=all_visits[i],
+                shift_limit_s=inst.horizon_of(k),
+                pumped_l=sum(v.volume_pumped for v in r_eval.visits if v.node_type == "flood"),
             )
         )
 
@@ -223,6 +253,23 @@ def _to_response(
 
     demand_total = float(inst.volumes.sum())
 
+    unserved = [UnservedPointOut(**dataclasses.asdict(u)) for u in diagnose_unserved(inst, ev)]
+    suggestions = [
+        SuggestionOut(**dataclasses.asdict(s)) for s in suggest_fixes(inst, routes, capacities, ev)
+    ]
+    bal = balance_metrics(inst, ev)
+    busiest = (
+        f"V{bal.makespan_vehicle + 1:02d}-{ev.routes[bal.makespan_vehicle].capacity / 1000:g}K"
+        if bal.makespan_vehicle is not None
+        else None
+    )
+    balance = BalanceOut(
+        **{
+            **dataclasses.asdict(bal),
+            "makespan_vehicle_id": busiest,
+            "depots": [DepotBalanceOut(**dataclasses.asdict(d)) for d in bal.depots],
+        }
+    )
     return OptimizationResponse(
         algorithm=algorithm,  # type: ignore[arg-type]
         routes=routes_out,
@@ -241,6 +288,9 @@ def _to_response(
         computation_time_s=computation_time_s,
         convergence=convergence,
         n_vehicles=len(routes_out),
+        unserved=unserved,
+        suggestions=suggestions,
+        balance=balance,
     )
 
 
@@ -250,7 +300,11 @@ async def run_acs(
 ) -> OptimizationResponse:
     try:
         inst = _build_ready_instance(
-            scenario, request.unserved_penalty, request.fleet, request.severity_weights
+            scenario,
+            request.unserved_penalty,
+            request.fleet,
+            request.severity_weights,
+            request.remaining_volumes,
         )
         params = ACSParams(
             iterations=request.iterations,
@@ -292,7 +346,11 @@ async def run_vns(
 ) -> OptimizationResponse:
     try:
         inst = _build_ready_instance(
-            scenario, request.unserved_penalty, request.fleet, request.severity_weights
+            scenario,
+            request.unserved_penalty,
+            request.fleet,
+            request.severity_weights,
+            request.remaining_volumes,
         )
         params = VNSParams(
             max_iterations=request.max_iterations,
