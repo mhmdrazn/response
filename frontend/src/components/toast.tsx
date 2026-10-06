@@ -93,7 +93,7 @@ function ToastCard({ toast, onDismiss }: { toast: ToastItem; onDismiss: () => vo
       role="status"
       aria-live="polite"
       className="pointer-events-auto flex min-w-[240px] max-w-[380px] items-start gap-[10px] rounded-md border border-frost bg-pure-white px-12 py-[10px]"
-      style={{ borderLeft: `3px solid ${accent}`, animation: "response-tooltip-fade 0.18s ease-out" }}
+      style={{ animation: "response-tooltip-fade 0.18s ease-out" }}
     >
       <span className="inline-flex pt-px" style={{ color: accent }}>
         <Icon size={16} strokeWidth={2.2} />
