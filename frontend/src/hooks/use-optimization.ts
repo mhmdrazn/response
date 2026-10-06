@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { api, DEFAULT_ACS_PARAMS, DEFAULT_VNS_PARAMS, type RunRequest } from "../lib/api";
 import { carryOverVolumes, normalizeResult } from "../lib/periods";
+import type { RunSignature } from "../lib/run-signature";
 import { readJSON, removeKey, writeJSON } from "../lib/storage";
 import type { ComparisonResult, OptimizationResult, RunExtras } from "../types";
 
@@ -28,20 +29,27 @@ export interface UseOptimization {
   error: string | null;
   /** Epoch ms of the last successful run; null before any run. */
   completedAt: number | null;
+  /** The settings the result on screen was computed under; null when unknown (older saves). */
+  signature: RunSignature | null;
   lastRunKind: RunKind | null;
   /** Increments only on a run finished in THIS session (not on restore from
    *  storage) — drives the completion toast without firing on reload. */
   runSignal: number;
-  run: (req: RunRequest, scenario?: string) => Promise<void>;
+  run: (req: RunRequest, scenario?: string, signature?: RunSignature) => Promise<void>;
   /** Plan the next period from what the last one left undone. */
-  runNextPeriod: (req: RunRequest, scenario?: string) => Promise<void>;
+  runNextPeriod: (req: RunRequest, scenario?: string, signature?: RunSignature) => Promise<void>;
   /** Keep rolling forward until everything is pumped or the period limit is reached. */
-  runRemainingPeriods: (req: RunRequest, scenario?: string) => Promise<void>;
+  runRemainingPeriods: (
+    req: RunRequest,
+    scenario?: string,
+    signature?: RunSignature,
+  ) => Promise<void>;
   runComparison: (
     seed?: number,
     scenario?: string,
     timeLimitS?: number,
     extras?: RunExtras,
+    signature?: RunSignature,
   ) => Promise<void>;
   reset: () => void;
   hydrated: boolean;
@@ -61,6 +69,7 @@ interface StoredPayload {
   comparison: ComparisonResult | null;
   completedAt?: number | null;
   lastRunKind?: RunKind | null;
+  signature?: RunSignature | null;
 }
 
 function loadStored(): StoredPayload | null {
@@ -88,6 +97,7 @@ export function useOptimization(): UseOptimization {
   const [error, setError] = useState<string | null>(null);
   const [completedAt, setCompletedAt] = useState<number | null>(null);
   const [lastRunKind, setLastRunKind] = useState<RunKind | null>(null);
+  const [signature, setSignature] = useState<RunSignature | null>(null);
   const [runSignal, setRunSignal] = useState(0);
   const [hydrated, setHydrated] = useState(false);
   const skipNextPersist = useRef(true);
@@ -131,6 +141,7 @@ export function useOptimization(): UseOptimization {
       );
       setCompletedAt(stored.completedAt ?? null);
       setLastRunKind(stored.lastRunKind ?? null);
+      setSignature(stored.signature ?? null);
     }
     setHydrated(true);
   }, []);
@@ -155,8 +166,9 @@ export function useOptimization(): UseOptimization {
       comparison,
       completedAt,
       lastRunKind,
+      signature,
     });
-  }, [periods, activePeriod, comparison, completedAt, lastRunKind, hydrated]);
+  }, [periods, activePeriod, comparison, completedAt, lastRunKind, signature, hydrated]);
 
   const solve = useCallback((req: RunRequest, scenario?: string) => {
     return req.algorithm === "acs"
@@ -181,13 +193,14 @@ export function useOptimization(): UseOptimization {
   }, []);
 
   const run = useCallback(
-    async (req: RunRequest, scenario?: string) => {
+    async (req: RunRequest, scenario?: string, sig?: RunSignature) => {
       beginRun(req);
       setComparison(null);
       try {
         const r = await solve(req, scenario);
         setPeriods([r]);
         setActivePeriod(0);
+        setSignature(sig ?? null);
         setProgress(100);
         setLastRunKind("single");
         setCompletedAt(Date.now());
@@ -207,6 +220,7 @@ export function useOptimization(): UseOptimization {
       base: OptimizationResult[],
       req: RunRequest,
       scenario?: string,
+      sig?: RunSignature,
     ): Promise<OptimizationResult[] | null> => {
       const last = base[base.length - 1];
       const carry = last ? carryOverVolumes(last) : null;
@@ -220,6 +234,7 @@ export function useOptimization(): UseOptimization {
         const all = [...base, next];
         setPeriods(all);
         setActivePeriod(all.length - 1);
+        setSignature(sig ?? null);
         setProgress(100);
         setCompletedAt(Date.now());
         return all;
@@ -234,20 +249,20 @@ export function useOptimization(): UseOptimization {
   );
 
   const runNextPeriod = useCallback(
-    async (req: RunRequest, scenario?: string) => {
+    async (req: RunRequest, scenario?: string, sig?: RunSignature) => {
       if (periodsRef.current.length >= MAX_PERIODS) return;
-      const all = await rollForward(periodsRef.current, req, scenario);
+      const all = await rollForward(periodsRef.current, req, scenario, sig);
       if (all) setRunSignal((s) => s + 1);
     },
     [rollForward],
   );
 
   const runRemainingPeriods = useCallback(
-    async (req: RunRequest, scenario?: string) => {
+    async (req: RunRequest, scenario?: string, sig?: RunSignature) => {
       let current = periodsRef.current;
       let added = 0;
       while (current.length < MAX_PERIODS && carryOverVolumes(current[current.length - 1])) {
-        const all = await rollForward(current, req, scenario);
+        const all = await rollForward(current, req, scenario, sig);
         if (!all) break;
         current = all;
         added += 1;
@@ -258,7 +273,13 @@ export function useOptimization(): UseOptimization {
   );
 
   const runComparison = useCallback(
-    async (seed?: number, scenario?: string, timeLimitS?: number, extras?: RunExtras) => {
+    async (
+      seed?: number,
+      scenario?: string,
+      timeLimitS?: number,
+      extras?: RunExtras,
+      sig?: RunSignature,
+    ) => {
       setIsLoading(true);
       startedAt.current = Date.now();
       const limit = timeLimitS ?? DEFAULT_ACS_PARAMS.time_limit_s ?? 60;
@@ -284,6 +305,7 @@ export function useOptimization(): UseOptimization {
         const comp: ComparisonResult = { acs: acsResult, vns: vnsResult };
         setComparison(comp);
         setPeriods([acsResult]);
+        setSignature(sig ?? null);
         setLastRunKind("compare");
         setCompletedAt(Date.now());
         setRunSignal((n) => n + 1);
@@ -305,6 +327,7 @@ export function useOptimization(): UseOptimization {
     setError(null);
     setCompletedAt(null);
     setLastRunKind(null);
+    setSignature(null);
     clearStored();
   }, []);
 
@@ -320,6 +343,7 @@ export function useOptimization(): UseOptimization {
     stage,
     error,
     completedAt,
+    signature,
     lastRunKind,
     runSignal,
     run,

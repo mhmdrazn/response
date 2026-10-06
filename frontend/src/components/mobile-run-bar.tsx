@@ -1,6 +1,6 @@
 "use client";
 
-import { Play, Settings2 } from "lucide-react";
+import { Play, RefreshCw, Settings2 } from "lucide-react";
 
 import type { AlgorithmType } from "../lib/api";
 import type { OptimizationStage } from "../hooks/use-optimization";
@@ -13,6 +13,8 @@ interface MobileRunBarProps {
   progress: number;
   stage: OptimizationStage;
   onRun: () => void;
+  /** The result on screen predates a settings change. */
+  stale?: boolean;
   onOpenSettings: () => void;
 }
 
@@ -26,6 +28,7 @@ export function MobileRunBar({
   progress,
   stage,
   onRun,
+  stale = false,
   onOpenSettings,
 }: MobileRunBarProps) {
   return (
@@ -55,6 +58,11 @@ export function MobileRunBar({
           <>
             <Spinner />
             Menghitung {elapsedSeconds.toFixed(1)} dtk...
+          </>
+        ) : stale ? (
+          <>
+            <RefreshCw size={14} strokeWidth={2.5} />
+            Jalankan Ulang
           </>
         ) : (
           <>

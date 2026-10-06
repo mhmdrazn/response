@@ -4,6 +4,7 @@ import {
   ChevronDown,
   Cpu,
   Play,
+  RefreshCw,
   RotateCcw,
   Shuffle,
   Waypoints,
@@ -25,6 +26,8 @@ interface AlgorithmPanelProps {
   progress: number;
   stage: OptimizationStage;
   onRun: () => void;
+  /** The result on screen predates a settings change; the run button says so. */
+  stale?: boolean;
   onCompare: () => void;
   onReset: () => void;
   hasResult: boolean;
@@ -49,6 +52,7 @@ export function AlgorithmPanel({
   progress,
   stage,
   onRun,
+  stale = false,
   onCompare,
   onReset,
   hasResult,
@@ -211,6 +215,11 @@ export function AlgorithmPanel({
                 <>
                   <Spinner />
                   Menghitung...
+                </>
+              ) : stale ? (
+                <>
+                  <RefreshCw size={14} strokeWidth={2.5} />
+                  Jalankan Ulang Optimasi
                 </>
               ) : (
                 <>

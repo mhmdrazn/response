@@ -4,6 +4,7 @@ import { PanelsTopLeft } from "lucide-react";
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   useSyncExternalStore,
@@ -21,6 +22,7 @@ import type { BaseMapId, OverlayLayerId } from "../lib/map-constants";
 import { OVERLAY_LAYERS } from "../lib/map-constants";
 import { api } from "../lib/api";
 import { MAX_SHIFT_MIN, MAX_UNITS, settingFor } from "../lib/fleet";
+import { buildSignature, changedGroups, hashDataset } from "../lib/run-signature";
 import type {
   AppLayout,
   AppMode,
@@ -41,6 +43,7 @@ import { ConfigDialog, type ConfigTab } from "./manage/config-dialog";
 import { ImportFloodsDialog } from "./manage/import-floods-dialog";
 import { ManageDock } from "./manage/manage-dock";
 import { AddFloodPanel } from "./sidebar/add-flood-panel";
+import { StaleBanner } from "./sidebar/stale-banner";
 import { ClinicDetailPanel } from "./sidebar/clinic-detail-panel";
 import { DepotDetailPanel } from "./sidebar/depot-detail-panel";
 import { FloodDetailPanel } from "./sidebar/flood-detail-panel";
@@ -196,6 +199,7 @@ export function AppShell() {
     stage,
     error: optError,
     completedAt,
+    signature: resultSignature,
     lastRunKind,
     runSignal,
     run,
@@ -203,6 +207,25 @@ export function AppShell() {
     reset,
   } = useOptimization();
   const algoCfg = useAlgorithmConfig();
+
+  // What a run started now would be computed from. Compared with what the result on
+  // screen was computed from, it says whether that result is out of date.
+  const dataKey = useMemo(() => (data ? hashDataset(data) : null), [data]);
+  const currentSignature =
+    dataKey === null
+      ? null
+      : buildSignature({
+          ...runExtras,
+          acsParams: algoCfg.acsParams,
+          vnsParams: algoCfg.vnsParams,
+          budgetS: algoCfg.budgetS,
+          dataKey,
+        });
+  const staleGroups =
+    result && resultSignature && currentSignature
+      ? changedGroups(resultSignature, currentSignature)
+      : [];
+  const stale = staleGroups.length > 0;
 
   // Prune stale hidden-route ids when solution changes
   useEffect(() => {
@@ -263,7 +286,7 @@ export function AppShell() {
     setFocusedRoute(null);
     setHiddenRoutes(new Set());
     setAnimating(false);
-    run(algoCfg.buildRunRequest(runExtras), scenario);
+    run(algoCfg.buildRunRequest(runExtras), scenario, currentSignature ?? undefined);
     if (isMobile) setMobilePanel("none");
   }
 
@@ -273,8 +296,8 @@ export function AppShell() {
     setHiddenRoutes(new Set());
     setAnimating(false);
     const req = algoCfg.buildRunRequest(runExtras);
-    if (all) runRemainingPeriods(req, scenario);
-    else runNextPeriod(req, scenario);
+    if (all) runRemainingPeriods(req, scenario, currentSignature ?? undefined);
+    else runNextPeriod(req, scenario, currentSignature ?? undefined);
     if (isMobile) setMobilePanel("none");
   }
 
@@ -308,7 +331,13 @@ export function AppShell() {
     setFocusedRoute(null);
     setHiddenRoutes(new Set());
     setAnimating(false);
-    runComparison(undefined, scenario, algoCfg.budgetS, runExtras);
+    runComparison(
+      undefined,
+      scenario,
+      algoCfg.budgetS,
+      runExtras,
+      currentSignature ?? undefined,
+    );
     if (isMobile) setMobilePanel("none");
   }
 
@@ -347,6 +376,7 @@ export function AppShell() {
       budgetS={algoCfg.budgetS}
       onBudgetChange={algoCfg.setBudgetS}
       onRun={handleRun}
+      stale={stale}
       onCompare={handleCompare}
       onReset={() => {
         reset();
@@ -360,6 +390,7 @@ export function AppShell() {
 
   const resultsPanelContent = result ? (
     <>
+      <StaleBanner groups={staleGroups} onRerun={handleRun} isLoading={isLoading} />
       {comparison ? <ComparisonPanel comparison={comparison} /> : null}
       <ResultsDock
         result={result}
@@ -754,6 +785,14 @@ export function AppShell() {
                   detailVisible ? "translate-y-3 opacity-0 [&_*]:pointer-events-none" : "opacity-100"
                 }`}
               >
+                {stale ? (
+                  <StaleBanner
+                    compact
+                    groups={staleGroups}
+                    onRerun={handleRun}
+                    isLoading={isLoading}
+                  />
+                ) : null}
                 {result ? (
                   <ResultPeekBar
                     objectiveZ={result.objective_z}
@@ -769,6 +808,7 @@ export function AppShell() {
                   progress={progress}
                   stage={stage}
                   onRun={handleRun}
+                  stale={stale}
                   onOpenSettings={() => setMobilePanel("algorithm")}
                 />
               </div>
