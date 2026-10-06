@@ -10,10 +10,11 @@ import {
   Waves,
   type LucideIcon,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 
 import { formatDuration, formatMeters, formatNumber } from "../../lib/format-metrics";
 import { buildGoogleMapsLink } from "../../lib/gmaps";
+import { labelCycles } from "../../lib/route-cycles";
 import { FACILITY_COLORS, ROUTE_COLORS } from "../../lib/map-constants";
 import type { MapSelection, NodeType, RouteOut, VisitOut } from "../../types";
 import {
@@ -122,9 +123,11 @@ export function RouteDetailPanel({
   const color = ROUTE_COLORS[route.route_color_index % ROUTE_COLORS.length];
   const floodStops = route.visits.filter((v) => v.node_type === "flood");
   const pumpedL = floodStops.reduce((s, v) => s + v.volume_pumped_l, 0);
-  const distinctFloods = new Set(floodStops.filter((v) => v.volume_pumped_l > 0).map((v) => v.node_id))
-    .size;
+  const distinctFloods = new Set(
+    floodStops.filter((v) => v.volume_pumped_l > 0).map((v) => v.node_id),
+  ).size;
   const maps = buildGoogleMapsLink(route);
+  const cycles = labelCycles(route);
   const share = objectiveZ > 0 ? (route.z_contribution / objectiveZ) * 100 : null;
 
   return (
@@ -139,7 +142,10 @@ export function RouteDetailPanel({
         </DetailMark>
       }
       title={`Kendaraan ${route.vehicle_id}`}
-      badge={{ label: `Tangki ${formatNumber(route.capacity_l)} L`, cls: "bg-periwinkle-wash text-steel" }}
+      badge={{
+        label: `Tangki ${formatNumber(route.capacity_l)} L`,
+        cls: "bg-periwinkle-wash text-steel",
+      }}
       subtitle={route.depot_name || route.depot_id}
       trailing={maps ? <ShareButtons url={maps.url} /> : undefined}
     >
@@ -174,6 +180,7 @@ export function RouteDetailPanel({
             <DetailFact label="Kapasitas tangki" value={`${formatNumber(route.capacity_l)} L`} />
             <DetailFact label="Kunjungan genangan" value={formatNumber(route.visit_count_flood)} />
             <DetailFact label="Pembuangan air" value={formatNumber(route.visit_count_if)} />
+            <DetailFact label="Siklus isi-buang" value={formatNumber(cycles.total)} />
             <DetailFact label="Genangan berbeda" value={formatNumber(distinctFloods)} />
             <DetailFact
               label="Warna di peta"
@@ -210,27 +217,43 @@ export function RouteDetailPanel({
             <LogRows>
               {route.visits.map((v, i) => {
                 const { Icon, color: iconColor } = STOP_ICON[v.node_type];
+                const stop = cycles.stops[i];
                 return (
-                  <li key={`${v.node_id}-${i}`} className="border-b border-frost last:border-b-0">
-                    <button
-                      type="button"
-                      onClick={() => onSelectStop({ kind: v.node_type, id: v.node_id })}
-                      title="Buka detail perhentian ini"
-                      className={`${LOG_GRID} ${LOG_ROW_CLS} w-full cursor-pointer border-0 bg-transparent px-0 text-left transition-colors hover:bg-mist`}
-                    >
-                      <span className="text-right font-medium tabular-nums text-slate">{i + 1}</span>
-                      <Icon size={13} strokeWidth={2.2} color={iconColor} aria-hidden />
-                      <span className="truncate font-bold text-midnight-ink" title={v.node_name}>
-                        {v.node_name}
-                      </span>
-                      <span className="text-right font-bold tabular-nums text-midnight-ink">
-                        {formatDuration(v.arrival_time_s)}
-                      </span>
-                      <span className="text-right font-medium tabular-nums text-steel">
-                        {stopVolume(route, i)}
-                      </span>
-                    </button>
-                  </li>
+                  <Fragment key={`${v.node_id}-${i}`}>
+                    {stop.starts ? (
+                      <li
+                        aria-hidden
+                        className="text-slate flex items-center gap-[8px] pt-[9px] pb-[3px] text-[10px] font-bold tracking-[0.7px] uppercase"
+                      >
+                        {stop.final
+                          ? "Pembuangan akhir"
+                          : `Siklus ${stop.cycle} dari ${cycles.total}`}
+                        <span className="bg-frost h-px flex-1" />
+                      </li>
+                    ) : null}
+                    <li className="border-frost border-b last:border-b-0">
+                      <button
+                        type="button"
+                        onClick={() => onSelectStop({ kind: v.node_type, id: v.node_id })}
+                        title="Buka detail perhentian ini"
+                        className={`${LOG_GRID} ${LOG_ROW_CLS} hover:bg-mist w-full cursor-pointer border-0 bg-transparent px-0 text-left transition-colors`}
+                      >
+                        <span className="text-slate text-right font-medium tabular-nums">
+                          {i + 1}
+                        </span>
+                        <Icon size={13} strokeWidth={2.2} color={iconColor} aria-hidden />
+                        <span className="text-midnight-ink truncate font-bold" title={v.node_name}>
+                          {v.node_name}
+                        </span>
+                        <span className="text-midnight-ink text-right font-bold tabular-nums">
+                          {formatDuration(v.arrival_time_s)}
+                        </span>
+                        <span className="text-steel text-right font-medium tabular-nums">
+                          {stopVolume(route, i)}
+                        </span>
+                      </button>
+                    </li>
+                  </Fragment>
                 );
               })}
             </LogRows>

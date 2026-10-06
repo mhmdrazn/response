@@ -4,6 +4,7 @@ import autoTable, { type RowInput } from "jspdf-autotable";
 import type { OptimizationResult, RouteOut } from "../types";
 import { formatDuration, formatMeters, formatNumber } from "./format-metrics";
 import { ROUTE_COLORS } from "./map-constants";
+import { cycleShort, labelCycles } from "./route-cycles";
 import { downloadXlsx, type Cell, type Sheet } from "./xlsx";
 
 interface ExportContext {
@@ -316,12 +317,14 @@ export function exportReport(result: OptimizationResult, ctx: ExportContext = {}
     y += 3;
 
     const volumes = stopVolumes(route);
+    const cycles = labelCycles(route);
     autoTable(doc, {
       startY: y,
       margin: { left: margin, right: margin },
-      head: [["#", "Lokasi", "Jenis", "Tiba", "Volume", "Isi tangki"]],
+      head: [["#", "Siklus", "Lokasi", "Jenis", "Tiba", "Volume", "Isi tangki"]],
       body: route.visits.map((v, i) => [
         String(i + 1),
+        cycleShort(cycles.stops[i], cycles.total),
         v.node_name,
         NODE_LABEL[v.node_type] ?? v.node_type,
         formatDuration(v.arrival_time_s),
@@ -345,13 +348,14 @@ export function exportReport(result: OptimizationResult, ctx: ExportContext = {}
       headStyles: { fillColor: MIST, textColor: SLATE, fontStyle: "bold", fontSize: 6.5, lineColor: FROST },
       columnStyles: {
         0: { cellWidth: 8, halign: "right", textColor: SLATE },
-        1: { cellWidth: "auto" },
-        2: { cellWidth: 26, textColor: STEEL },
-        3: { cellWidth: 27, halign: "right" },
-        4: { cellWidth: 24, halign: "right" },
-        5: { cellWidth: 24, halign: "right", textColor: STEEL },
+        1: { cellWidth: 15, halign: "right", textColor: SLATE },
+        2: { cellWidth: "auto" },
+        3: { cellWidth: 26, textColor: STEEL },
+        4: { cellWidth: 27, halign: "right" },
+        5: { cellWidth: 24, halign: "right" },
+        6: { cellWidth: 24, halign: "right", textColor: STEEL },
       },
-      didParseCell: alignNumeric([0, 3, 4, 5]),
+      didParseCell: alignNumeric([0, 1, 4, 5, 6]),
       rowPageBreak: "avoid",
     });
     y = doc.lastAutoTable.finalY + 8;
@@ -467,11 +471,14 @@ export function exportExcel(result: OptimizationResult, ctx: ExportContext = {})
   const stopRows: Cell[][] = [];
   for (const r of result.routes) {
     const volumes = stopVolumes(r);
+    const cycles = labelCycles(r);
     r.visits.forEach((v, i) => {
+      const stop = cycles.stops[i];
       stopRows.push([
         r.vehicle_id,
         r.depot_name || r.depot_id,
         i + 1,
+        stop.final ? "Akhir" : stop.cycle,
         NODE_LABEL[v.node_type] ?? v.node_type,
         v.node_name,
         v.node_id,
@@ -490,6 +497,7 @@ export function exportExcel(result: OptimizationResult, ctx: ExportContext = {})
       "Kendaraan",
       "Depo",
       "Urutan",
+      "Siklus",
       "Jenis",
       "Lokasi",
       "ID lokasi",
@@ -498,7 +506,7 @@ export function exportExcel(result: OptimizationResult, ctx: ExportContext = {})
       "Dibuang (L)",
       "Isi tangki (L)",
     ],
-    formats: ["text", "text", "int", "text", "text", "text", "dec1", "int", "int", "int"],
+    formats: ["text", "text", "int", "int", "text", "text", "text", "dec1", "int", "int", "int"],
     filter: true,
     rows: stopRows,
   };
