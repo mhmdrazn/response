@@ -408,6 +408,12 @@ button:not(:disabled):active,
   outline: 1px solid transparent;
 }
 
+/* Placing a flood point: the whole map reads as a target, markers included. */
+.leaflet-container.map-picking,
+.leaflet-container.map-picking .leaflet-interactive {
+  cursor: crosshair;
+}
+
 .leaflet-control-zoom a {
   border-color: var(--color-frost) !important;
   color: var(--color-midnight-ink) !important;

@@ -1,10 +1,10 @@
 "use client";
 
-import { Database, Layers, Palette } from "lucide-react";
+import { Database, Layers, Palette, SlidersHorizontal } from "lucide-react";
 
 import { ControlCluster, IconButton } from "./map-controls";
 
-export type MobileToolId = "layers" | "data" | "legend";
+export type MobileToolId = "layers" | "data" | "manage" | "legend";
 
 interface MobileMapToolsProps {
   onOpen: (tool: MobileToolId) => void;
@@ -25,6 +25,11 @@ export function MobileMapTools({ onOpen }: MobileMapToolsProps) {
       <ControlCluster>
         <IconButton label="Data" onClick={() => onOpen("data")}>
           <Database size={17} strokeWidth={2} />
+        </IconButton>
+      </ControlCluster>
+      <ControlCluster>
+        <IconButton label="Kelola" onClick={() => onOpen("manage")}>
+          <SlidersHorizontal size={17} strokeWidth={2} />
         </IconButton>
       </ControlCluster>
       <ControlCluster>

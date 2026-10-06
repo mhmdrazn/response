@@ -24,11 +24,14 @@ import type {
 import { ChoroplethLayer } from "./choropleth-layer";
 import { ChoroplethLegend } from "./choropleth-legend";
 import { DepotMarkers } from "./depot-markers";
+import { DraftMarker } from "./draft-marker";
 import { FaskesMarkers } from "./faskes-markers";
 import { FloodMarkers } from "./flood-markers";
 import { IfMarkers } from "./if-markers";
 import { LeftPanel } from "./left-panel";
 import { MapControls } from "./map-controls";
+import { PickBanner } from "./pick-banner";
+import { PickLayer } from "./pick-layer";
 import { RouteDecorators } from "./route-decorators";
 import { RoutePolylines } from "./route-polylines";
 import { SiLegend } from "./si-legend";
@@ -66,6 +69,15 @@ export interface MapInnerProps {
   mobileTools?: ReactNode;
   /** Phone only: fade the tool column out, e.g. while a detail sheet covers the map. */
   mobileToolsHidden?: boolean;
+  /** Fullscreen only: a dock stacked under the data dock in the left column. */
+  extraDock?: ReactNode;
+  /** True while the next click on the map should place a new flood point. */
+  picking?: boolean;
+  onPick?: (lat: number, lon: number) => void;
+  onCancelPick?: () => void;
+  /** The point being added, shown as a draggable pin. */
+  draftPoint?: { lat: number; lon: number } | null;
+  onMoveDraft?: (lat: number, lon: number) => void;
 }
 
 function FitBounds({ route }: { route: RouteOut | null }) {
@@ -116,6 +128,12 @@ export function MapInner({
   onSelect,
   mobileTools,
   mobileToolsHidden = false,
+  extraDock,
+  picking = false,
+  onPick,
+  onCancelPick,
+  draftPoint,
+  onMoveDraft,
 }: MapInnerProps) {
   const base = BASE_MAP_LAYERS[baseMap];
   const selectedOf = (kind: MapSelection["kind"]) =>
@@ -180,6 +198,13 @@ export function MapInner({
 
       <FitBounds route={focusedRoute} />
       <ResizeSync />
+      <PickLayer active={picking} onPick={(lat, lon) => onPick?.(lat, lon)} />
+      {draftPoint ? (
+        <DraftMarker lat={draftPoint.lat} lon={draftPoint.lon} onMove={(la, lo) => onMoveDraft?.(la, lo)} />
+      ) : null}
+      {picking ? (
+        <PickBanner onCancel={() => onCancelPick?.()} belowNavbar={variant === "fullscreen"} />
+      ) : null}
 
       {isMobile ? (
         <div
@@ -230,6 +255,7 @@ export function MapInner({
             onReloadData={onReloadData}
             reloadingData={reloadingData}
             scenario={scenario}
+            extraDock={extraDock}
             hidden={hideChrome}
           />
         </>

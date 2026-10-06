@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 
 import type { DatasetKey } from "../data-table-modal";
 import type { BaseMapId, OverlayLayerId } from "../../lib/map-constants";
@@ -21,6 +21,8 @@ interface LeftPanelProps {
   onReloadData?: () => void;
   reloadingData?: boolean;
   scenario?: string;
+  /** Docked under the data dock. */
+  extraDock?: ReactNode;
   /** Hidden state for the hide-all-panels animation. */
   hidden?: boolean;
 }
@@ -38,6 +40,7 @@ export function LeftPanel({
   onReloadData,
   reloadingData,
   scenario,
+  extraDock,
   hidden = false,
 }: LeftPanelProps) {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -86,6 +89,8 @@ export function LeftPanel({
         scenario={scenario}
         defaultOpen
       />
+
+      {extraDock}
     </div>
   );
 }

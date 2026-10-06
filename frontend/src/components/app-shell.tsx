@@ -11,14 +11,23 @@ import {
 } from "react";
 
 import { useAlgorithmConfig } from "../hooks/use-algorithm-config";
+import { useFleetConfig } from "../hooks/use-fleet-config";
 import { useBreakpoint } from "../hooks/use-breakpoint";
 import { useMapData } from "../hooks/use-map-data";
 import { useOptimization } from "../hooks/use-optimization";
 import { usePresence } from "../hooks/use-presence";
+import { usePriority } from "../hooks/use-priority";
 import type { BaseMapId, OverlayLayerId } from "../lib/map-constants";
 import { OVERLAY_LAYERS } from "../lib/map-constants";
 import { api } from "../lib/api";
-import type { AppLayout, AppMode, MapSelection, RouteOut, ScenarioMeta } from "../types";
+import type {
+  AppLayout,
+  AppMode,
+  Depot,
+  MapSelection,
+  RouteOut,
+  ScenarioMeta,
+} from "../types";
 import { AnimatedHeight } from "./animated-height";
 import { ErrorBoundary } from "./error-boundary";
 import { AlgorithmPanel } from "./sidebar/algorithm-panel";
@@ -26,6 +35,10 @@ import { ComparisonPanel } from "./sidebar/comparison-panel";
 import { DataTableModal, type DatasetKey } from "./data-table-modal";
 import { FloatingNavbar } from "./floating-navbar";
 import { WindowedLayout } from "./layouts/windowed-layout";
+import { ConfigDialog, type ConfigTab } from "./manage/config-dialog";
+import { ImportFloodsDialog } from "./manage/import-floods-dialog";
+import { ManageDock } from "./manage/manage-dock";
+import { AddFloodPanel } from "./sidebar/add-flood-panel";
 import { ClinicDetailPanel } from "./sidebar/clinic-detail-panel";
 import { DepotDetailPanel } from "./sidebar/depot-detail-panel";
 import { FloodDetailPanel } from "./sidebar/flood-detail-panel";
@@ -69,6 +82,8 @@ const SIDEBAR_BOTTOM_CLEARANCE = "calc(var(--left-stack-h, 220px) + 24px)";
 // Shared transition for the hide-all-panels animation (smooth in-place fade).
 const PANEL_ANIM = "transition-opacity duration-300 ease-out";
 
+const NO_DEPOTS: Depot[] = [];
+
 const HIDDEN_ROUTES_STORAGE_KEY = "floodroute:hidden-routes:v1";
 const LAYOUT_STORAGE_KEY = "floodroute:layout:v1";
 
@@ -101,6 +116,11 @@ export function AppShell() {
   const [previewDataset, setPreviewDataset] = useState<DatasetKey | null>(null);
   const [scenarios, setScenarios] = useState<ScenarioMeta[]>([]);
   const [scenario, setScenario] = useState<string | undefined>(undefined);
+  const [configTab, setConfigTab] = useState<ConfigTab | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
+  // Adding a flood point: waiting for a map click, then the point awaiting its details.
+  const [picking, setPicking] = useState(false);
+  const [draft, setDraft] = useState<{ lat: number; lon: number } | null>(null);
 
   const [mobilePanel, setMobilePanel] = useState<"none" | "algorithm" | "results" | MobileToolId>(
     "none",
@@ -156,7 +176,10 @@ export function AppShell() {
     };
   }, []);
 
-  const { data, loading, error: dataError, reload } = useMapData(scenario);
+  const priorityCfg = usePriority();
+  const { data, loading, error: dataError, reload } = useMapData(scenario, priorityCfg.weights);
+  const fleetCfg = useFleetConfig(data?.depots ?? NO_DEPOTS);
+  const runExtras = { fleet: fleetCfg.payload, severity_weights: priorityCfg.weights };
   const {
     result,
     comparison,
@@ -233,7 +256,7 @@ export function AppShell() {
     setFocusedRoute(null);
     setHiddenRoutes(new Set());
     setAnimating(false);
-    run(algoCfg.buildRunRequest(), scenario);
+    run(algoCfg.buildRunRequest(runExtras), scenario);
     if (isMobile) setMobilePanel("none");
   }
 
@@ -242,7 +265,7 @@ export function AppShell() {
     setFocusedRoute(null);
     setHiddenRoutes(new Set());
     setAnimating(false);
-    runComparison(undefined, scenario, algoCfg.budgetS);
+    runComparison(undefined, scenario, algoCfg.budgetS, runExtras);
     if (isMobile) setMobilePanel("none");
   }
 
@@ -251,6 +274,7 @@ export function AppShell() {
     setScenario(id); // useMapData refetches on change
     reset(); // optimization results are per-scenario
     setSelection(null);
+    setPicking(false);
     setFocusedRoute(null);
     setHighlightVehicleId(null);
     setHiddenRoutes(new Set());
@@ -358,6 +382,23 @@ export function AppShell() {
           />
         );
       }
+      case "draft": {
+        if (!draft) return null;
+        return (
+          <AddFloodPanel
+            point={draft}
+            floods={data.floods}
+            scenario={scenario}
+            onSaved={(created) => {
+              reload();
+              setDraft(null);
+              setSelection({ kind: "flood", id: created.id });
+            }}
+            onClose={closeDetail}
+            variant={variant}
+          />
+        );
+      }
       case "route": {
         const route = result?.routes.find((r) => r.vehicle_id === shownSelection.id);
         if (!route || !result) return null;
@@ -415,6 +456,57 @@ export function AppShell() {
 
   const detailRow = renderDetail("embedded");
 
+  function startPick() {
+    setMobilePanel("none");
+    setSelection(null);
+    setPicking(true);
+  }
+
+  function handlePick(lat: number, lon: number) {
+    setPicking(false);
+    setDraft({ lat, lon });
+    setSelection({ kind: "draft", id: "draft" });
+  }
+
+  const manageDock = (
+    <ManageDock
+      defaultOpen
+      fleetCustom={fleetCfg.custom}
+      fleetSummary={fleetCfg.summary}
+      priority={priorityCfg.priority}
+      onPickOnMap={startPick}
+      onImportCsv={() => {
+        setMobilePanel("none");
+        setImportOpen(true);
+      }}
+      onOpenConfig={(tab) => {
+        setMobilePanel("none");
+        setConfigTab(tab);
+      }}
+    />
+  );
+
+  const dialogs = (
+    <>
+      <ConfigDialog
+        open={configTab !== null}
+        tab={configTab ?? "fleet"}
+        onClose={() => setConfigTab(null)}
+        depots={data?.depots ?? NO_DEPOTS}
+        fleet={fleetCfg}
+        priority={priorityCfg}
+        scenario={scenario}
+      />
+      <ImportFloodsDialog
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        existing={data?.floods ?? []}
+        scenario={scenario}
+        onImported={reload}
+      />
+    </>
+  );
+
   // Single source for the map element; both layouts pass only what differs.
   const renderMap = (extra: {
     isMobile: boolean;
@@ -446,6 +538,12 @@ export function AppShell() {
           scenario={scenario}
           mobileTools={extra.isMobile ? <MobileMapTools onOpen={setMobilePanel} /> : undefined}
           mobileToolsHidden={detailVisible}
+          extraDock={manageDock}
+          picking={picking}
+          onPick={handlePick}
+          onCancelPick={() => setPicking(false)}
+          draftPoint={selection?.kind === "draft" ? draft : null}
+          onMoveDraft={(lat, lon) => setDraft({ lat, lon })}
           {...extra}
         />
         {floatingDetail ? (
@@ -504,6 +602,7 @@ export function AppShell() {
             onReloadData={reload}
             reloadingData={loading}
             algorithmPanel={algorithmPanelContent}
+            manageDock={manageDock}
             mapCard={renderMap({ isMobile: false, variant: "embedded" })}
             detail={detailRow}
             detailOpen={detailVisible}
@@ -511,6 +610,7 @@ export function AppShell() {
             hasResult={result !== null}
           />
           {dataModal}
+          {dialogs}
         </ToastProvider>
       </ErrorBoundary>
     );
@@ -657,6 +757,28 @@ export function AppShell() {
               </PanelOverlay>
 
               <PanelOverlay
+                open={mobilePanel === "manage"}
+                onClose={() => setMobilePanel("none")}
+                title="Kelola"
+              >
+                <ManageDock
+                  bare
+                  fleetCustom={fleetCfg.custom}
+                  fleetSummary={fleetCfg.summary}
+                  priority={priorityCfg.priority}
+                  onPickOnMap={startPick}
+                  onImportCsv={() => {
+                    setMobilePanel("none");
+                    setImportOpen(true);
+                  }}
+                  onOpenConfig={(tab) => {
+                    setMobilePanel("none");
+                    setConfigTab(tab);
+                  }}
+                />
+              </PanelOverlay>
+
+              <PanelOverlay
                 open={mobilePanel === "legend"}
                 onClose={() => setMobilePanel("none")}
                 title="Legenda"
@@ -677,6 +799,7 @@ export function AppShell() {
         </div>
 
         {dataModal}
+        {dialogs}
       </ToastProvider>
     </ErrorBoundary>
   );

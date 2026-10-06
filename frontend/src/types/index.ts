@@ -55,7 +55,7 @@ export interface Faskes {
 }
 
 /** The map marker whose detail panel is open. */
-export type SelectionKind = "flood" | "depot" | "if" | "faskes" | "route";
+export type SelectionKind = "flood" | "depot" | "if" | "faskes" | "route" | "draft";
 
 export interface MapSelection {
   kind: SelectionKind;
@@ -119,7 +119,27 @@ export interface OptimizationResult {
   n_vehicles: number;
 }
 
-export interface ACSParams {
+/** Tank size and how many vehicles carry it (matches backend TankUnits). */
+export interface TankUnitsIn {
+  capacity_l: number;
+  count: number;
+}
+
+/** The fleet one depot fields for a run (matches backend DepotFleetIn). */
+export interface DepotFleetIn {
+  depot_id: string;
+  units: TankUnitsIn[];
+  operating_minutes?: number | null;
+}
+
+/** What a run may change beyond the algorithm's own parameters. */
+export interface RunExtras {
+  fleet?: DepotFleetIn[] | null;
+  /** Relative weights for [flood depth, road class, distance to a clinic]. */
+  severity_weights?: number[] | null;
+}
+
+export interface ACSParams extends RunExtras {
   iterations: number;
   n_ants: number;
   alpha: number;
@@ -130,7 +150,7 @@ export interface ACSParams {
   time_limit_s?: number | null;
 }
 
-export interface VNSParams {
+export interface VNSParams extends RunExtras {
   max_iterations: number;
   k_max: number;
   seed?: number | null;
@@ -145,6 +165,8 @@ export interface SeverityWeights {
   ew: number[];
   combined: number[];
   consistency_ratio: number;
+  /** "custom": `combined` are user-set weights; "default": the AHP + entropy mix. */
+  mode?: "default" | "custom";
 }
 
 export interface SeverityFloodPoint {

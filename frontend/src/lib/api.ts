@@ -13,6 +13,13 @@ import type {
 
 export type AlgorithmType = "acs" | "vns";
 
+/** What a depot fields when no fleet is configured (from the backend). */
+export interface FleetDefaults {
+  capacities_l: number[];
+  units_per_capacity: number;
+  operating_minutes: number;
+}
+
 export type RunRequest =
   { algorithm: "acs"; params: ACSParams } | { algorithm: "vns"; params: VNSParams };
 
@@ -68,8 +75,19 @@ export const api = {
   getFaskes: (scenario?: string): Promise<Faskes[]> =>
     request<Faskes[]>(s("/api/data/faskes", scenario)),
 
-  getSeverityIndex: (scenario?: string): Promise<SeverityIndexResponse> =>
-    request<SeverityIndexResponse>(s("/api/severity-index", scenario)),
+  /** The index under the default weights, or under user-set `weights` when given. */
+  getSeverityIndex: (
+    scenario?: string,
+    weights?: number[] | null,
+  ): Promise<SeverityIndexResponse> =>
+    weights
+      ? request<SeverityIndexResponse>(s("/api/severity-index", scenario), {
+          method: "POST",
+          body: JSON.stringify({ weights }),
+        })
+      : request<SeverityIndexResponse>(s("/api/severity-index", scenario)),
+
+  getFleetDefaults: (): Promise<FleetDefaults> => request<FleetDefaults>("/api/optimize/fleet-defaults"),
 
   getDataMeta: (scenario?: string): Promise<DataMetaResponse> =>
     request<DataMetaResponse>(s("/api/data/meta", scenario)),

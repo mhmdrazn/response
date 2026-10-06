@@ -26,7 +26,12 @@ export interface UseMapDataResult {
   reload: () => void;
 }
 
-export function useMapData(scenario?: string): UseMapDataResult {
+export function useMapData(
+  scenario?: string,
+  severityWeights?: number[] | null,
+): UseMapDataResult {
+  // A stable primitive, so a new array with the same numbers does not refetch.
+  const weightsKey = severityWeights?.join(",") ?? "";
   const [data, setData] = useState<MapData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +47,9 @@ export function useMapData(scenario?: string): UseMapDataResult {
       api.getDepots(scenario),
       api.getIntermediateFacilities(scenario),
       api.getFaskes(scenario),
-      api.getSeverityIndex(scenario).catch(() => null),
+      api
+        .getSeverityIndex(scenario, weightsKey ? weightsKey.split(",").map(Number) : null)
+        .catch(() => null),
     ])
       .then(([floods, depots, ifs, faskes, severity]) => {
         if (cancelled) return;
@@ -68,7 +75,7 @@ export function useMapData(scenario?: string): UseMapDataResult {
     return () => {
       cancelled = true;
     };
-  }, [reloadKey, scenario]);
+  }, [reloadKey, scenario, weightsKey]);
 
   return {
     data,

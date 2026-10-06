@@ -34,6 +34,8 @@ interface WindowedLayoutProps {
   reloadingData: boolean;
 
   algorithmPanel: ReactNode;
+  /** Docked under the data dock: add points, fleet and priority settings. */
+  manageDock?: ReactNode;
   mapCard: ReactNode;
   /** Detail of the selected map marker: a row under the map, animated open and closed. */
   detail?: ReactNode;
@@ -57,6 +59,7 @@ export function WindowedLayout({
   onReloadData,
   reloadingData,
   algorithmPanel,
+  manageDock,
   mapCard,
   detail,
   detailOpen = false,
@@ -103,6 +106,7 @@ export function WindowedLayout({
             scenario={scenario}
             defaultOpen
           />
+          {manageDock}
           <LegendDock defaultOpen />
         </aside>
 

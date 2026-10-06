@@ -12,7 +12,7 @@ import {
   COMPUTATION_BUDGETS,
   type ComputationBudget,
 } from "../components/sidebar/computation-budget";
-import type { ACSParams, VNSParams } from "../types";
+import type { ACSParams, RunExtras, VNSParams } from "../types";
 
 const DEFAULT_BUDGET_S: ComputationBudget = 45;
 
@@ -25,7 +25,7 @@ export interface UseAlgorithmConfig {
   updateVNS: <K extends keyof VNSParams>(key: K, value: VNSParams[K]) => void;
   budgetS: ComputationBudget;
   setBudgetS: (value: ComputationBudget) => void;
-  buildRunRequest: () => RunRequest;
+  buildRunRequest: (extras?: RunExtras) => RunRequest;
 }
 
 const STORAGE_KEY = "floodroute:algo-config:v4";
@@ -89,10 +89,10 @@ export function useAlgorithmConfig(): UseAlgorithmConfig {
     setVnsParams((p) => ({ ...p, [key]: value }));
   }
 
-  function buildRunRequest(): RunRequest {
+  function buildRunRequest(extras?: RunExtras): RunRequest {
     return algorithm === "acs"
-      ? { algorithm: "acs", params: { ...acsParams, time_limit_s: budgetS } }
-      : { algorithm: "vns", params: { ...vnsParams, time_limit_s: budgetS } };
+      ? { algorithm: "acs", params: { ...acsParams, ...extras, time_limit_s: budgetS } }
+      : { algorithm: "vns", params: { ...vnsParams, ...extras, time_limit_s: budgetS } };
   }
 
   return {

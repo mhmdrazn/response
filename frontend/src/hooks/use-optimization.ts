@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { api, DEFAULT_ACS_PARAMS, DEFAULT_VNS_PARAMS, type RunRequest } from "../lib/api";
 import { readJSON, removeKey, writeJSON } from "../lib/storage";
-import type { ComparisonResult, OptimizationResult } from "../types";
+import type { ComparisonResult, OptimizationResult, RunExtras } from "../types";
 
 export type RunKind = "single" | "compare";
 export type OptimizationStage = "acs" | "vns" | null;
@@ -24,7 +24,12 @@ export interface UseOptimization {
    *  storage) — drives the completion toast without firing on reload. */
   runSignal: number;
   run: (req: RunRequest, scenario?: string) => Promise<void>;
-  runComparison: (seed?: number, scenario?: string, timeLimitS?: number) => Promise<void>;
+  runComparison: (
+    seed?: number,
+    scenario?: string,
+    timeLimitS?: number,
+    extras?: RunExtras,
+  ) => Promise<void>;
   reset: () => void;
   hydrated: boolean;
 }
@@ -146,7 +151,7 @@ export function useOptimization(): UseOptimization {
   }, []);
 
   const runComparison = useCallback(
-    async (seed?: number, scenario?: string, timeLimitS?: number) => {
+    async (seed?: number, scenario?: string, timeLimitS?: number, extras?: RunExtras) => {
     setIsLoading(true);
     startedAt.current = Date.now();
     const limit = timeLimitS ?? DEFAULT_ACS_PARAMS.time_limit_s ?? 60;
@@ -160,12 +165,12 @@ export function useOptimization(): UseOptimization {
     try {
       const s = seed ?? 42;
       const acsResult = await api.runACS(
-        { ...DEFAULT_ACS_PARAMS, seed: s, time_limit_s: limit },
+        { ...DEFAULT_ACS_PARAMS, ...extras, seed: s, time_limit_s: limit },
         scenario,
       );
       setStage("vns");
       const vnsResult = await api.runVNS(
-        { ...DEFAULT_VNS_PARAMS, seed: s, time_limit_s: limit },
+        { ...DEFAULT_VNS_PARAMS, ...extras, seed: s, time_limit_s: limit },
         scenario,
       );
       const comp: ComparisonResult = { acs: acsResult, vns: vnsResult };
