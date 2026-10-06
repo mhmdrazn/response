@@ -104,7 +104,9 @@ class VNS:
                     route_map[vi] = [depot, depot]
                     cap_map[vi] = cap
                     continue
-                route, _ = self._build_greedy_route(depot, cap, volumes_left)
+                route, _ = self._build_greedy_route(
+                    depot, cap, volumes_left, self.inst.horizon_of(vi)
+                )
                 route_map[vi] = route
                 cap_map[vi] = cap
 
@@ -133,6 +135,7 @@ class VNS:
         depot: int,
         cap: int,
         volumes_left: np.ndarray,
+        horizon: float,
     ) -> tuple[list[int], float]:
         route: list[int] = [depot]
         tank = float(cap)  # standby full: force an IF stop before pumping
@@ -141,7 +144,6 @@ class VNS:
         # How far a route may go is set by the deployment horizon, not by a
         # visit count: tying it to n_floods/n_vehicles capped every route at 3
         # visits and left VNS unable to work a heavy scenario at all.
-        horizon = self.inst.route_horizon_s
         t = self.inst.time_matrix
         if_base = self.inst.n_depots + self.inst.n_floods
         max_steps = (self.inst.n_floods + self.inst.n_ifs) * 4 + 5
@@ -261,7 +263,7 @@ class VNS:
             if d >= best_dist:
                 continue
             candidate = route[:-1] + [nearest_if, flood_node, route[-1]]
-            limit = self.inst.route_horizon_s - REPAIR_MARGIN_S
+            limit = self.inst.horizon_of(vi) - REPAIR_MARGIN_S
             if self._route_time(candidate, capacities[vi]) > limit:
                 continue
             best_vi, best_dist, best_route = vi, d, candidate

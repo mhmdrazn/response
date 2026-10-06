@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal
+from typing import Literal, Sequence
 
 import numpy as np
 import pandas as pd
@@ -33,6 +33,7 @@ class SeverityResult:
     si_values: np.ndarray                 # length = len(floods)
     per_point: list[dict[str, float | str]]  # id, si_value, depth, road_class, dist_faskes
     consistency_ratio: float
+    custom: bool = False                  # True when the weights were user-set
 
 
 def _normalize_benefit(col: np.ndarray) -> np.ndarray:
@@ -53,6 +54,7 @@ def compute_severity_index(
     floods: pd.DataFrame,
     faskes: pd.DataFrame,  # unused: dist_faskes_m is pre-computed via OSRM offline, see notebooks/6__Jarak_Faskes_OSRM.ipynb
     combine: Literal["average", "geometric"] = "average",
+    weights: Sequence[float] | None = None,
 ) -> SeverityResult:
     if len(floods) == 0:
         return SeverityResult(
@@ -85,7 +87,11 @@ def compute_severity_index(
     w_ahp = ahp_weights(PAIRWISE)
     w_ew = entropy_weights(decision_matrix + 1e-9)
 
-    if combine == "geometric":
+    if weights is not None:
+        # User-set priorities replace the AHP + entropy mix outright.
+        combined = np.asarray(weights, dtype=float)
+        combined = combined / combined.sum()
+    elif combine == "geometric":
         combined = np.sqrt(w_ahp * w_ew)
         combined = combined / combined.sum()
     else:
@@ -114,4 +120,5 @@ def compute_severity_index(
         si_values=si,
         per_point=per_point,
         consistency_ratio=consistency_ratio(PAIRWISE),
+        custom=weights is not None,
     )

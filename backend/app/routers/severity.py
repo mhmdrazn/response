@@ -7,6 +7,7 @@ from app.data.store import store
 from app.models.severity import (
     SeverityFloodPoint,
     SeverityIndexResponse,
+    SeverityPreviewRequest,
     SeverityWeights,
 )
 from app.severity.index import CRITERIA, compute_severity_index
@@ -14,10 +15,7 @@ from app.severity.index import CRITERIA, compute_severity_index
 router = APIRouter(tags=["severity"])
 
 
-@router.get("/api/severity-index", response_model=SeverityIndexResponse)
-async def get_severity_index(
-    scenario: str | None = Query(default=None),
-) -> SeverityIndexResponse:
+def _respond(scenario: str | None, weights: list[float] | None) -> SeverityIndexResponse:
     try:
         bundle = store.get(scenario)
     except KeyError:
@@ -25,7 +23,7 @@ async def get_severity_index(
     if registry.default_id() == "" and len(bundle.floods) == 0:
         raise HTTPException(status_code=503, detail="Dataset 'floods' belum dimuat.")
 
-    result = compute_severity_index(bundle.floods, bundle.faskes)
+    result = compute_severity_index(bundle.floods, bundle.faskes, weights=weights)
     return SeverityIndexResponse(
         weights=SeverityWeights(
             criteria=CRITERIA,
@@ -33,6 +31,7 @@ async def get_severity_index(
             ew=result.weights_ew.tolist(),
             combined=result.weights_combined.tolist(),
             consistency_ratio=result.consistency_ratio,
+            mode="custom" if result.custom else "default",
         ),
         flood_points=[
             SeverityFloodPoint(
@@ -45,3 +44,19 @@ async def get_severity_index(
             for row in result.per_point
         ],
     )
+
+
+@router.get("/api/severity-index", response_model=SeverityIndexResponse)
+async def get_severity_index(
+    scenario: str | None = Query(default=None),
+) -> SeverityIndexResponse:
+    return _respond(scenario, None)
+
+
+@router.post("/api/severity-index", response_model=SeverityIndexResponse)
+async def preview_severity_index(
+    body: SeverityPreviewRequest,
+    scenario: str | None = Query(default=None),
+) -> SeverityIndexResponse:
+    """The index under user-set priority weights, without changing any stored data."""
+    return _respond(scenario, body.weights)

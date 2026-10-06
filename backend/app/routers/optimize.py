@@ -16,10 +16,13 @@ from app.algorithms.evaluator import (
 )
 from app.algorithms.osrm import fetch_road_geometries_batch
 from app.algorithms.instance import (
+    ROUTE_HORIZON_S,
     SBY_LAT_MAX,
     SBY_LAT_MIN,
     SBY_LON_MAX,
     SBY_LON_MIN,
+    VEHICLE_CAPACITIES_L,
+    DepotFleet,
     Instance,
     build_instance,
 )
@@ -27,6 +30,7 @@ from app.models.optimization import (
     ACSRequest,
     VNSRequest,
     ConvergencePoint,
+    DepotFleetIn,
     OptimizationResponse,
     RouteOut,
     VisitOut,
@@ -38,8 +42,43 @@ _log = logging.getLogger("response.optimize")
 router = APIRouter(prefix="/api/optimize", tags=["optimize"])
 
 
+def _fleet_from_request(
+    fleet: list[DepotFleetIn] | None, depot_ids: set[str]
+) -> dict[str, DepotFleet] | None:
+    """Request fleet -> instance fleet, rejecting depots that do not exist."""
+    if fleet is None:
+        return None
+    out: dict[str, DepotFleet] = {}
+    for entry in fleet:
+        if entry.depot_id not in depot_ids:
+            raise HTTPException(
+                status_code=422, detail=f"Depo '{entry.depot_id}' tidak ditemukan."
+            )
+        merged: dict[int, int] = {}
+        for u in entry.units:
+            merged[u.capacity_l] = merged.get(u.capacity_l, 0) + u.count
+        out[entry.depot_id] = DepotFleet(
+            units=[(cap, n) for cap, n in merged.items() if n > 0],
+            operating_s=entry.operating_minutes * 60.0 if entry.operating_minutes else None,
+        )
+    return out
+
+
+@router.get("/fleet-defaults")
+async def fleet_defaults() -> dict[str, object]:
+    """What a depot fields when no fleet is configured, so the UI starts from the same numbers."""
+    return {
+        "capacities_l": VEHICLE_CAPACITIES_L,
+        "units_per_capacity": 1,
+        "operating_minutes": ROUTE_HORIZON_S / 60.0,
+    }
+
+
 def _build_ready_instance(
-    scenario: str | None, unserved_penalty: float | None = None
+    scenario: str | None,
+    unserved_penalty: float | None = None,
+    fleet: list[DepotFleetIn] | None = None,
+    severity_weights: list[float] | None = None,
 ) -> Instance:
     try:
         bundle = store.get(scenario)
@@ -48,10 +87,15 @@ def _build_ready_instance(
     if len(bundle.floods) == 0 or len(bundle.depots) == 0 or len(bundle.ifs) == 0:
         raise HTTPException(status_code=503, detail="Dataset floods/depo/if belum lengkap.")
 
-    sev = compute_severity_index(bundle.floods, bundle.faskes)
+    sev = compute_severity_index(bundle.floods, bundle.faskes, weights=severity_weights)
     # Matrix/size consistency is validated in ScenarioStore (None -> Manhattan).
-    kwargs = {} if unserved_penalty is None else {"unserved_penalty": unserved_penalty}
-    return build_instance(
+    kwargs: dict[str, object] = (
+        {} if unserved_penalty is None else {"unserved_penalty": unserved_penalty}
+    )
+    fleet_cfg = _fleet_from_request(fleet, {str(i) for i in bundle.depots["id"]})
+    if fleet_cfg is not None:
+        kwargs["fleet"] = fleet_cfg
+    inst = build_instance(
         depots_df=bundle.depots,
         floods_df=bundle.floods,
         ifs_df=bundle.ifs,
@@ -60,6 +104,9 @@ def _build_ready_instance(
         si_values=sev.si_values,
         **kwargs,
     )
+    if not inst.vehicles:
+        raise HTTPException(status_code=422, detail="Armada kosong: minimal satu unit.")
+    return inst
 
 
 def _node_meta(inst: Instance, idx: int) -> tuple[str, str, str, float, float]:
@@ -148,7 +195,7 @@ def _to_response(
         depot_id, _, depot_name, _, _ = _node_meta(inst, r_eval.depot_index)
         n_flood = sum(1 for v in r_eval.visits if v.node_type == "flood")
         n_if = sum(1 for v in r_eval.visits if v.node_type == "if")
-        cap_label = f"{r_eval.capacity // 1000}K" if r_eval.capacity >= 1000 else str(r_eval.capacity)
+        cap_label = f"{r_eval.capacity / 1000:g}K" if r_eval.capacity >= 1000 else str(r_eval.capacity)
         routes_out.append(
             RouteOut(
                 vehicle_id=f"V{k+1:02d}-{cap_label}",
@@ -175,6 +222,7 @@ def _to_response(
     ]
 
     demand_total = float(inst.volumes.sum())
+
     return OptimizationResponse(
         algorithm=algorithm,  # type: ignore[arg-type]
         routes=routes_out,
@@ -201,7 +249,9 @@ async def run_acs(
     request: ACSRequest, scenario: str | None = Query(default=None)
 ) -> OptimizationResponse:
     try:
-        inst = _build_ready_instance(scenario, request.unserved_penalty)
+        inst = _build_ready_instance(
+            scenario, request.unserved_penalty, request.fleet, request.severity_weights
+        )
         params = ACSParams(
             iterations=request.iterations,
             n_ants=request.n_ants,
@@ -241,7 +291,9 @@ async def run_vns(
     request: VNSRequest, scenario: str | None = Query(default=None)
 ) -> OptimizationResponse:
     try:
-        inst = _build_ready_instance(scenario, request.unserved_penalty)
+        inst = _build_ready_instance(
+            scenario, request.unserved_penalty, request.fleet, request.severity_weights
+        )
         params = VNSParams(
             max_iterations=request.max_iterations,
             k_max=request.k_max,

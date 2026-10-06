@@ -66,6 +66,14 @@ SBY_LON_MIN, SBY_LON_MAX = 112.58, 112.87
 
 
 @dataclass
+class DepotFleet:
+    """What one depot fields: tank sizes with unit counts, and how long a crew may stay out."""
+
+    units: list[tuple[int, int]]       # (capacity_l, count)
+    operating_s: float | None = None   # None: use the global route horizon
+
+
+@dataclass
 class Instance:
     # Node metadata
     depots: list[dict[str, Any]]
@@ -99,6 +107,9 @@ class Instance:
 
     # Vehicles: each entry is (depot_node_index, capacity_liters)
     vehicles: list[tuple[int, int]] = field(default_factory=list)
+    # How long each vehicle's crew may stay deployed, aligned with `vehicles`.
+    # Empty means every vehicle uses `route_horizon_s`.
+    vehicle_horizon_s: list[float] = field(default_factory=list)
 
     # Soft-constraint weight for unserved pumping work.
     unserved_penalty: float = UNSERVED_PENALTY
@@ -113,6 +124,12 @@ class Instance:
     # Quick lookup: depot_node_index -> set of flood node indices it may serve
     depot_flood_sets: dict[int, set[int]] = field(default_factory=dict)
     dispatch_limit_s: float = DISPATCH_LIMIT_S
+
+    def horizon_of(self, vehicle: int) -> float:
+        """Seconds the vehicle in slot `vehicle` may stay on its route."""
+        if 0 <= vehicle < len(self.vehicle_horizon_s):
+            return self.vehicle_horizon_s[vehicle]
+        return self.route_horizon_s
 
 
 def _row_to_dict(row: pd.Series) -> dict[str, Any]:
@@ -131,6 +148,7 @@ def build_instance(
     route_horizon_s: float = ROUTE_HORIZON_S,
     horizon_penalty: float = HORIZON_PENALTY,
     dispatch_limit_s: float = DISPATCH_LIMIT_S,
+    fleet: dict[str, DepotFleet] | None = None,
 ) -> Instance:
     depots = [_row_to_dict(r) for _, r in depots_df.iterrows()]
     floods = [_row_to_dict(r) for _, r in floods_df.iterrows()]
@@ -213,11 +231,18 @@ def build_instance(
         for i in range(n_total)
     ]
 
-    # Each depot gets one vehicle per capacity type.
+    # By default each depot fields one vehicle per capacity type. A fleet config
+    # replaces that per depot: its own tank sizes, unit counts and shift length.
     vehicles: list[tuple[int, int]] = []
+    vehicle_horizon_s: list[float] = []
     for di in depot_indices:
-        for cap in VEHICLE_CAPACITIES_L:
-            vehicles.append((di, cap))
+        entry = (fleet or {}).get(str(depots[di].get("id")))
+        units = entry.units if entry else [(cap, 1) for cap in VEHICLE_CAPACITIES_L]
+        shift = entry.operating_s if entry and entry.operating_s else route_horizon_s
+        for cap, count in units:
+            for _ in range(count):
+                vehicles.append((di, int(cap)))
+                vehicle_horizon_s.append(float(shift))
 
     # Dispatch constraint: a depot serves a flood only within the drive-time
     # limit, falling back to the nearest depot when none is in range.
@@ -254,6 +279,7 @@ def build_instance(
         flood_indices=flood_indices,
         if_indices=if_indices,
         vehicles=vehicles,
+        vehicle_horizon_s=vehicle_horizon_s,
         unserved_penalty=float(unserved_penalty),
         route_horizon_s=float(route_horizon_s),
         horizon_penalty=float(horizon_penalty),

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 SBY_LAT_MIN, SBY_LAT_MAX = -7.38, -7.13
 SBY_LON_MIN, SBY_LON_MAX = 112.58, 112.87
@@ -87,20 +87,29 @@ class _CoordMixin:
         return v
 
 
+# Plausible bounds for what a person can enter by hand. Depth is the water over
+# the road in cm; volume is the litres a crew would have to pump away.
+MAX_DEPTH_CM = 300.0
+MAX_VOLUME_L = 2_000_000.0
+
+
 class FloodPointCreate(_CoordMixin, _Base):
     lat: float
     lon: float
     datetime: Optional[str] = None
-    deskripsi: Optional[str] = None
-    ketinggian_cm: Optional[float] = None
+    deskripsi: Optional[str] = Field(None, max_length=200)
+    ketinggian_cm: Optional[float] = Field(None, ge=0, le=MAX_DEPTH_CM)
+    # Overrides the estimate derived from depth and road width.
+    volume_l: Optional[float] = Field(None, ge=0, le=MAX_VOLUME_L)
 
 
 class FloodPointUpdate(_Base):
     lat: Optional[float] = None
     lon: Optional[float] = None
     datetime: Optional[str] = None
-    deskripsi: Optional[str] = None
-    ketinggian_cm: Optional[float] = None
+    deskripsi: Optional[str] = Field(None, max_length=200)
+    ketinggian_cm: Optional[float] = Field(None, ge=0, le=MAX_DEPTH_CM)
+    volume_l: Optional[float] = Field(None, ge=0, le=MAX_VOLUME_L)
 
 
 class DepotCreate(_CoordMixin, _Base):

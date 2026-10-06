@@ -75,9 +75,9 @@ def evaluate_solution(
     route_evals: list[RouteEval] = []
     entry_volumes: list[np.ndarray] = []
 
-    for route, cap in zip(routes, capacities):
+    for k, (route, cap) in enumerate(zip(routes, capacities)):
         entry_volumes.append(volumes_left.copy())
-        route_evals.append(_eval_route(inst, route, cap, volumes_left))
+        route_evals.append(_eval_route(inst, route, cap, volumes_left, inst.horizon_of(k)))
 
     return _aggregate(inst, route_evals, volumes_left, entry_volumes)
 
@@ -112,17 +112,24 @@ def evaluate_incremental(
             volumes_left = prev.remaining_volume
             break
         entry_volumes.append(volumes_left.copy())
-        route_evals.append(_eval_route(inst, routes[k], capacities[k], volumes_left))
+        route_evals.append(
+            _eval_route(inst, routes[k], capacities[k], volumes_left, inst.horizon_of(k))
+        )
 
     return _aggregate(inst, route_evals, volumes_left, entry_volumes)
 
 
 def _eval_route(
-    inst: Instance, route: list[int], cap: int, volumes_left: np.ndarray
+    inst: Instance,
+    route: list[int],
+    cap: int,
+    volumes_left: np.ndarray,
+    horizon_s: float | None = None,
 ) -> RouteEval:
     """Time one route and drain what it pumps out of `volumes_left` in place."""
     if not route or route[0] != route[-1]:
         raise ValueError("route must start and end at the same depot")
+    horizon_s = inst.route_horizon_s if horizon_s is None else horizon_s
     depot_idx = route[0]
     r = RouteEval(depot_index=depot_idx, capacity=cap, node_indices=list(route))
     # Standby state: vehicles idle with a FULL tank, so they must empty at an
@@ -153,7 +160,7 @@ def _eval_route(
             remaining_here = volumes_left[flood_idx]
             # Past the deployment horizon the crew is off duty: the visit
             # earns nothing, so extending a route stops paying off.
-            if clock > inst.route_horizon_s:
+            if clock > horizon_s:
                 remaining_here = 0.0
             if remaining_here <= 0:
                 r.visits.append(
@@ -217,7 +224,9 @@ def _aggregate(
     # litres to pumping seconds puts the penalty in the same severity-seconds
     # unit as Z, so the two terms are directly comparable.
     left = np.maximum(volumes_left, 0.0)
-    overtime = sum(max(0.0, r.total_time - inst.route_horizon_s) for r in route_evals)
+    overtime = sum(
+        max(0.0, r.total_time - inst.horizon_of(k)) for k, r in enumerate(route_evals)
+    )
     penalty = float(
         inst.unserved_penalty * np.sum(inst.si_values * (left / PUMP_RATE_LPS))
         + inst.horizon_penalty * overtime
@@ -303,10 +312,10 @@ def validate_hard_constraints(
                 break
 
         # HC7: Route fits inside one deployment.
-        if r.total_time > inst.route_horizon_s + tol:
+        if r.total_time > inst.horizon_of(k) + tol:
             violations.append(
                 f"HC7 horizon: route {k} lasts {r.total_time / 3600:.1f}h > "
-                f"{inst.route_horizon_s / 3600:.1f}h"
+                f"{inst.horizon_of(k) / 3600:.1f}h"
             )
 
         # HC5: Tank is 0 after visiting an IF.

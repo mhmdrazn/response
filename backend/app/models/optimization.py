@@ -2,14 +2,51 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class _Base(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
 
-class ACSRequest(_Base):
+class TankUnits(_Base):
+    """`count` vehicles with a tank of `capacity_l` litres."""
+
+    capacity_l: int = Field(..., ge=500, le=20000)
+    count: int = Field(..., ge=0, le=10)
+
+
+class DepotFleetIn(_Base):
+    """The fleet one depot fields for a run, overriding the default pair of tanks."""
+
+    depot_id: str
+    units: list[TankUnits] = Field(default_factory=list, max_length=4)
+    # Longest a crew from this depot may stay out on one route; None keeps the
+    # default deployment horizon.
+    operating_minutes: float | None = Field(None, ge=30, le=720)
+
+
+class _RunContext(_Base):
+    """What a run may be asked to change beyond the algorithm's own parameters."""
+
+    fleet: list[DepotFleetIn] | None = Field(None, max_length=200)
+    # Relative weights for [flood depth, road class, distance to a clinic]; they
+    # replace the AHP + entropy mix. Normalised server-side.
+    severity_weights: list[float] | None = None
+
+    @field_validator("severity_weights")
+    @classmethod
+    def _check_weights(cls, v: list[float] | None) -> list[float] | None:
+        if v is None:
+            return v
+        if len(v) != 3:
+            raise ValueError("severity_weights harus berisi 3 bobot")
+        if any(w < 0 for w in v) or sum(v) <= 0:
+            raise ValueError("bobot tidak boleh negatif dan jumlahnya harus lebih dari 0")
+        return v
+
+
+class ACSRequest(_RunContext):
     iterations: int = Field(1000, ge=1, le=2000)
     n_ants: int = Field(20, ge=1, le=100)
     alpha: float = Field(1.0, ge=0.1, le=5.0)
@@ -21,7 +58,7 @@ class ACSRequest(_Base):
     unserved_penalty: float | None = Field(None, ge=0.0, le=10000.0)
 
 
-class VNSRequest(_Base):
+class VNSRequest(_RunContext):
     max_iterations: int = Field(1000, ge=1, le=1000)
     k_max: int = Field(3, ge=1, le=6)
     seed: int | None = None

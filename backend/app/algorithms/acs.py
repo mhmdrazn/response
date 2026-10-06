@@ -152,7 +152,7 @@ class HybridACS:
             t = self.inst.time_matrix
             arrival = clocks[vi] + float(t[cur, nxt])
             home = float(t[nxt, depots[vi]])
-            if arrival + service_s + home > self.inst.route_horizon_s:
+            if arrival + service_s + home > self.inst.horizon_of(vi):
                 return False
             clocks[vi] = arrival + service_s
             routes[vi].append(nxt)
@@ -273,7 +273,7 @@ class HybridACS:
         allowed = self.inst.eligible_depots[slot]
         t = self.inst.time_matrix
         if_base = self.inst.n_depots + self.inst.n_floods
-        horizon = self.inst.route_horizon_s - REPAIR_MARGIN_S
+        margin = REPAIR_MARGIN_S
 
         best_vi, best_added, best_if = -1, float("inf"), -1
         # Only crews from depots in dispatch range may take the work.
@@ -293,7 +293,7 @@ class HybridACS:
                 + float(t[flood, depot])
                 - float(t[prev, depot])
             )
-            if ev.routes[vi].total_time + added > horizon:
+            if ev.routes[vi].total_time + added > self.inst.horizon_of(vi) - margin:
                 continue
             if added < best_added:
                 best_vi, best_added, best_if = vi, added, nif

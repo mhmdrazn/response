@@ -57,9 +57,36 @@ def _row_index(floods: pd.DataFrame, flood_id: str) -> int:
     return int(idxs[0])
 
 
+# A new report within this distance of an existing point is the same puddle.
+DUPLICATE_RADIUS_M = 10.0
+
+
+def _reject_duplicate(floods: pd.DataFrame, lat: float, lon: float) -> None:
+    if len(floods) == 0:
+        return
+    lat_r, lon_r = np.deg2rad(float(lat)), np.deg2rad(float(lon))
+    f_lat = np.deg2rad(floods["lat"].to_numpy(dtype=float))
+    f_lon = np.deg2rad(floods["lon"].to_numpy(dtype=float))
+    # Equirectangular distance is plenty at this scale.
+    dx = (f_lon - lon_r) * np.cos((f_lat + lat_r) / 2.0)
+    dist = 6_371_000.0 * np.sqrt(dx**2 + (f_lat - lat_r) ** 2)
+    nearest = int(np.argmin(dist))
+    if dist[nearest] < DUPLICATE_RADIUS_M:
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                f"Titik ini hanya {dist[nearest]:.0f} m dari genangan "
+                f"'{floods.iloc[nearest]['id']}'. Ubah titik yang ada atau geser lokasinya."
+            ),
+        )
+
+
 def add_flood(sid: str, payload: dict[str, Any]) -> dict[str, Any]:
     b = store.get(sid)
     floods = b.floods
+    payload = {k: v for k, v in payload.items() if v is not None}
+    if "lat" in payload and "lon" in payload:
+        _reject_duplicate(floods, payload["lat"], payload["lon"])
     row: dict[str, Any] = {"id": f"F_{len(floods):04d}", **payload}
 
     lat, lon = payload.get("lat"), payload.get("lon")
@@ -114,7 +141,7 @@ def update_flood(sid: str, flood_id: str, payload: dict[str, Any]) -> dict[str, 
                 mx.replace_node(b.time_matrix, pos, rt, ct),
             )
 
-    if coords_changed or "ketinggian_cm" in updates:
+    if (coords_changed or "ketinggian_cm" in updates) and "volume_l" not in updates:
         if "volume_l" not in floods.columns:
             floods["volume_l"] = np.nan
         floods.at[i, "volume_l"] = _workload_l(
