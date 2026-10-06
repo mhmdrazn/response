@@ -4,12 +4,16 @@ import autoTable, { type RowInput } from "jspdf-autotable";
 import type { OptimizationResult, RouteOut } from "../types";
 import { formatDuration, formatMeters, formatNumber } from "./format-metrics";
 import { ROUTE_COLORS } from "./map-constants";
+import { buildTimeline } from "./periods";
 import { cycleShort, labelCycles } from "./route-cycles";
+import { REASON_LABEL, describeSuggestion } from "./unserved";
 import { downloadXlsx, type Cell, type Sheet } from "./xlsx";
 
 interface ExportContext {
   /** When the plan was computed (ms since epoch); defaults to now. */
   completedAt?: number | null;
+  /** All periods of the plan when it was rolled forward; the report covers `result`. */
+  periods?: OptimizationResult[];
 }
 
 type Rgb = [number, number, number];
@@ -167,6 +171,12 @@ export function exportReport(result: OptimizationResult, ctx: ExportContext = {}
     ["Kunjungan titik buang air", formatNumber(result.total_if_visits)],
     ["Kunjungan ulang genangan", formatNumber(result.total_revisits)],
     ["Kendaraan dikerahkan", formatNumber(result.n_vehicles)],
+    ...(result.balance
+      ? ([
+          ["Rute terpanjang", formatDuration(result.balance.makespan_s)],
+          ["Sebaran beban (Gini)", formatNumber(result.balance.load_gini, 2)],
+        ] as [string, string][])
+      : []),
   ];
   const factRows: RowInput[] = [];
   for (let i = 0; i < facts.length; i += 2) {
@@ -213,6 +223,49 @@ export function exportReport(result: OptimizationResult, ctx: ExportContext = {}
     doc.text("-", margin, y);
     doc.text(lines, margin + 4, y);
     y += lines.length * 3.6 + 1.5;
+  }
+
+  // --- Points left undone -----------------------------------------------------
+  if (result.unserved.length > 0) {
+    y += 2;
+    label("Titik belum tuntas", y);
+    y += 3;
+    autoTable(doc, {
+      startY: y,
+      margin: { left: margin, right: margin },
+      head: [["Titik", "SI", "Sisa (L)", "Alasan"]],
+      body: result.unserved.slice(0, 12).map((u) => [
+        u.name,
+        formatNumber(u.si_value, 2),
+        `${formatNumber(u.remaining_l)} dari ${formatNumber(u.demand_l)}`,
+        REASON_LABEL[u.reason],
+      ]),
+      theme: "plain",
+      styles: {
+        font: "helvetica",
+        fontSize: 7.5,
+        cellPadding: { top: 2, bottom: 2, left: 1.8, right: 1.8 },
+        textColor: INK,
+        lineColor: FROST,
+        lineWidth: { bottom: 0.2, top: 0, left: 0, right: 0 },
+      },
+      headStyles: { fillColor: INK, textColor: [255, 255, 255], fontStyle: "bold", fontSize: 7 },
+      columnStyles: { 1: { halign: "right" }, 2: { halign: "right" } },
+      didParseCell: alignNumeric([1, 2]),
+      rowPageBreak: "avoid",
+    });
+    y = doc.lastAutoTable.finalY + 3;
+    const top = result.suggestions[0];
+    if (top) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7.5);
+      doc.setTextColor(...STEEL);
+      const text = `Saran: ${describeSuggestion(top)}, cakupan ${formatNumber(top.coverage_before_pct, 1)}% menjadi ${formatNumber(top.coverage_after_pct, 1)}% (perkiraan).`;
+      const lines = doc.splitTextToSize(text, cw) as string[];
+      doc.text(lines, margin, y + 3);
+      y += lines.length * 3.6 + 3;
+    }
+    y += 6;
   }
 
   // --- Routes overview ------------------------------------------------------
@@ -415,6 +468,16 @@ export function exportExcel(result: OptimizationResult, ctx: ExportContext = {})
       metric("Kunjungan genangan", { v: result.total_flood_visits, f: "int" }, "kali"),
       metric("Kunjungan titik buang air", { v: result.total_if_visits, f: "int" }, "kali"),
       metric("Kunjungan ulang genangan", { v: result.total_revisits, f: "int" }, "kali"),
+      ...(result.balance
+        ? [
+            section("Keseimbangan beban"),
+            metric("Rute terpanjang (makespan)", { v: result.balance.makespan_s / 60, f: "dec1" }, "menit", result.balance.makespan_vehicle_id ?? ""),
+            metric("Rata-rata durasi rute", { v: result.balance.mean_route_s / 60, f: "dec1" }, "menit"),
+            metric("Pemakaian jam kerja rata-rata", { v: result.balance.utilization_mean_pct, f: "dec1" }, "%", "Lama rute dibanding batas jam operasional"),
+            metric("Kendaraan aktif", result.balance.vehicles_used, `dari ${result.balance.vehicles_total}`),
+            metric("Koefisien Gini beban", { v: result.balance.load_gini, f: "dec2" }, "-", "0 = sama rata, 1 = satu kendaraan memikul semuanya"),
+          ]
+        : []),
       section("Komputasi"),
       metric("Algoritma", algorithm, "-"),
       metric("Iterasi dijalankan", { v: result.convergence.length, f: "int" }, "iterasi"),
@@ -571,11 +634,130 @@ export function exportExcel(result: OptimizationResult, ctx: ExportContext = {})
     rows: result.convergence.map((c): Cell[] => [c.iteration, c.best_score, c.iter_best_score]),
   };
 
-  downloadXlsx(`optimasi-${result.algorithm}-${when.day}.xlsx`, [
-    summary,
-    routes,
-    stops,
-    perFlood,
-    convergence,
-  ]);
+  const unserved: Sheet = {
+    name: "Belum Tuntas",
+    title: "Titik Genangan yang Belum Tuntas",
+    note,
+    header: [
+      "Titik",
+      "ID titik",
+      "SI",
+      "Beban periode (L)",
+      "Sisa (L)",
+      "Sisa (%)",
+      "Alasan",
+      "Penjelasan",
+      "Depo yang menjangkau",
+      "Depo terdekat (menit)",
+    ],
+    formats: ["text", "text", "dec2", "int", "int", "dec1", "text", "text", "text", "dec1"],
+    filter: true,
+    rows: result.unserved.map((u): Cell[] => [
+      u.name,
+      u.flood_id,
+      u.si_value,
+      Math.round(u.demand_l),
+      Math.round(u.remaining_l),
+      u.demand_l > 0 ? (u.remaining_l / u.demand_l) * 100 : null,
+      REASON_LABEL[u.reason],
+      u.detail,
+      u.depot_names.join(", "),
+      u.nearest_depot_min,
+    ]),
+  };
+
+  const suggestions: Sheet = {
+    name: "Saran",
+    title: "Saran untuk Menaikkan Cakupan",
+    note: `${note}. Perkiraan: rencana belum dioptimasi ulang.`,
+    header: ["Saran", "Depo", "Cakupan sekarang (%)", "Cakupan sesudah (%)", "Titik tersisa"],
+    formats: ["text", "text", "dec1", "dec1", "int"],
+    rows: result.suggestions.map((s): Cell[] => [
+      describeSuggestion(s),
+      s.depot_name,
+      s.coverage_before_pct,
+      s.coverage_after_pct,
+      s.unserved_points_after,
+    ]),
+  };
+
+  const balance: Sheet | null = result.balance
+    ? {
+        name: "Keseimbangan",
+        title: "Keseimbangan Beban per Depo",
+        note,
+        header: [
+          "Depo",
+          "Rute aktif",
+          "Total kendaraan",
+          "Kunjungan genangan",
+          "Dipompa (L)",
+          "Rute terlama (menit)",
+          "Pemakaian jam (%)",
+        ],
+        formats: ["text", "int", "int", "int", "int", "dec1", "dec1"],
+        filter: true,
+        rows: result.balance.depots.map((d): Cell[] => [
+          d.depot_name,
+          d.vehicles_used,
+          d.vehicles_total,
+          d.flood_visits,
+          Math.round(d.pumped_l),
+          d.longest_route_s / 60,
+          d.utilization_pct,
+        ]),
+      }
+    : null;
+
+  const timeline = buildTimeline(ctx.periods ?? []);
+  const periodSheet: Sheet | null =
+    timeline.length > 1
+      ? {
+          name: "Periode",
+          title: "Rencana per Periode",
+          note: `${note}. Periode berikutnya dimulai saat kru terakhir periode sebelumnya kembali.`,
+          header: [
+            "Periode",
+            "Mulai (menit)",
+            "Selesai (menit)",
+            "Beban masuk (L)",
+            "Terpompa (L)",
+            "Sisa (L)",
+            "Cakupan periode (%)",
+            "Cakupan kumulatif (%)",
+            "Titik tuntas",
+            "Titik terbuka",
+            "Kendaraan",
+          ],
+          formats: ["int", "dec1", "dec1", "int", "int", "int", "dec1", "dec1", "int", "int", "int"],
+          rows: timeline.map((r): Cell[] => [
+            r.index + 1,
+            r.startS / 60,
+            r.endS / 60,
+            Math.round(r.carriedInL),
+            Math.round(r.pumpedL),
+            Math.round(r.carriedOutL),
+            r.periodCoveragePct,
+            r.cumulativeCoveragePct,
+            r.completedPoints,
+            r.openPoints,
+            r.vehicles,
+          ]),
+        }
+      : null;
+
+  downloadXlsx(
+    `optimasi-${result.algorithm}-${when.day}.xlsx`,
+    [
+      summary,
+      routes,
+      stops,
+      perFlood,
+      ...(result.unserved.length > 0 ? [unserved] : []),
+      ...(result.suggestions.length > 0 ? [suggestions] : []),
+      ...(balance ? [balance] : []),
+      ...(periodSheet ? [periodSheet] : []),
+      convergence,
+    ],
+  );
 }

@@ -5,13 +5,22 @@ import { useState } from "react";
 
 import { exportReport, exportExcel } from "../lib/export-report";
 import { Reveal } from "./reveal";
+import { BalancePanel } from "./sidebar/balance-panel";
 import { ConvergenceChart } from "./sidebar/convergence-chart";
+import { PeriodsPanel } from "./sidebar/periods-panel";
 import { ResultsPanel } from "./sidebar/results-panel";
 import { RouteList } from "./sidebar/route-list";
 import { SeverityPanel } from "./sidebar/severity-panel";
-import type { AppMode, OptimizationResult, RouteOut, SeverityIndexResponse } from "../types";
+import { UnservedPanel } from "./sidebar/unserved-panel";
+import type {
+  AppMode,
+  OptimizationResult,
+  RouteOut,
+  SeverityIndexResponse,
+  Suggestion,
+} from "../types";
 
-type DetailsTab = "routes" | "severity";
+type DetailsTab = "routes" | "periods" | "unserved" | "balance" | "severity";
 
 interface ResultsDockProps {
   result: OptimizationResult;
@@ -25,6 +34,15 @@ interface ResultsDockProps {
   onToggleVehicleVisibility?: (vehicleId: string) => void;
   animating?: boolean;
   onToggleAnimating?: () => void;
+  /** Every period of the plan, and which one the map is showing. */
+  periods: OptimizationResult[];
+  activePeriod: number;
+  onSelectPeriod: (index: number) => void;
+  onNextPeriod: () => void;
+  onRemainingPeriods: () => void;
+  isLoading: boolean;
+  onSelectFlood: (id: string) => void;
+  onApplySuggestion: (s: Suggestion) => string;
 }
 
 export function ResultsDock({
@@ -39,19 +57,31 @@ export function ResultsDock({
   onToggleVehicleVisibility,
   animating = false,
   onToggleAnimating,
+  periods,
+  activePeriod,
+  onSelectPeriod,
+  onNextPeriod,
+  onRemainingPeriods,
+  isLoading,
+  onSelectFlood,
+  onApplySuggestion,
 }: ResultsDockProps) {
   const [tab, setTab] = useState<DetailsTab>("routes");
   const [summaryOpen, setSummaryOpen] = useState(true);
   const [detailsOpen, setDetailsOpen] = useState(true);
   const hasSeverity = severity != null;
-  const activeTab = hasSeverity ? tab : "routes";
+  const activeTab = tab === "severity" && !hasSeverity ? "routes" : tab;
+  const openCount = result.unserved.length;
 
-  const cardCls =
-    "pointer-events-auto flex flex-col rounded-lg border border-frost bg-pure-white";
+  const showUnserved = () => {
+    setDetailsOpen(true);
+    setTab("unserved");
+  };
+
+  const cardCls = "pointer-events-auto flex flex-col rounded-lg border border-frost bg-pure-white";
   const headerBtnCls =
     "font-manrope flex w-full flex-shrink-0 cursor-pointer items-center gap-8 border-0 bg-transparent px-[14px] py-12 text-left";
-  const headerLabelCls =
-    "flex-1 text-[10px] font-bold uppercase tracking-[0.9px] text-slate";
+  const headerLabelCls = "flex-1 text-[10px] font-bold uppercase tracking-[0.9px] text-slate";
 
   return (
     <>
@@ -71,27 +101,35 @@ export function ResultsDock({
             }`}
           />
         </button>
-        <div
-          className={`flex flex-col gap-[14px] transition-[max-height,opacity,padding] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
-            summaryOpen
-              ? "pointer-events-auto max-h-[min(600px,60vh)] overflow-visible px-[14px] pb-[14px] opacity-100"
-              : "pointer-events-none max-h-0 overflow-hidden px-[14px] py-0 opacity-0"
-          }`}
-        >
-          <ResultsPanel result={result} mode={mode} completedAt={completedAt} />
+        <div className="soft-row" data-open={summaryOpen} inert={!summaryOpen}>
+          <div>
+            <div className="flex flex-col gap-[14px] px-[14px] pb-[14px]">
+              <ResultsPanel
+                result={result}
+                mode={mode}
+                completedAt={completedAt}
+                periodNote={
+                  periods.length > 1 ? `Periode ${activePeriod + 1} dari ${periods.length}` : null
+                }
+                onShowUnserved={showUnserved}
+              />
 
-          <div className="flex gap-[6px]">
-            <ExportBtn label="PDF" onClick={() => exportReport(result, { completedAt })} />
-            <ExportBtn label="Excel" onClick={() => exportExcel(result, { completedAt })} />
+              <div className="flex gap-[6px]">
+                <ExportBtn
+                  label="PDF"
+                  onClick={() => exportReport(result, { completedAt, periods })}
+                />
+                <ExportBtn
+                  label="Excel"
+                  onClick={() => exportExcel(result, { completedAt, periods })}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div
-        className={`${cardCls} min-h-0 overflow-hidden transition-[flex] duration-[280ms] ${
-          detailsOpen ? "flex-1" : "flex-none"
-        }`}
-      >
+      <div className={`${cardCls} min-h-0 flex-shrink overflow-hidden`}>
         <div className="flex w-full flex-shrink-0 items-center gap-8 px-[14px] py-12">
           <button
             type="button"
@@ -113,7 +151,11 @@ export function ResultsDock({
                   : "border-frost bg-pure-white text-steel hover:bg-mist"
               }`}
             >
-              {animating ? <Pause size={12} strokeWidth={2.4} /> : <Play size={12} strokeWidth={2.4} />}
+              {animating ? (
+                <Pause size={12} strokeWidth={2.4} />
+              ) : (
+                <Play size={12} strokeWidth={2.4} />
+              )}
               {animating ? "Hentikan" : "Simulasi"}
             </button>
           ) : null}
@@ -134,53 +176,90 @@ export function ResultsDock({
           </button>
         </div>
 
-        <div
-          className={`flex min-h-0 flex-col gap-12 overflow-hidden transition-[opacity,padding,flex,max-height] duration-[280ms] ${
-            detailsOpen
-              ? "pointer-events-auto max-h-none flex-1 px-[14px] pb-[14px] opacity-100"
-              : "pointer-events-none max-h-0 flex-none px-[14px] py-0 opacity-0"
-          }`}
-        >
-          {hasSeverity ? (
-            <div
-              role="tablist"
-              aria-label="Detail hasil"
-              className="flex flex-shrink-0 gap-[4px] rounded-lg bg-periwinkle-wash p-[6px]"
-            >
-              <TabButton
-                label="Rute"
-                active={activeTab === "routes"}
-                onClick={() => setTab("routes")}
-              />
-              <TabButton
-                label="Severity Index"
-                active={activeTab === "severity"}
-                onClick={() => setTab("severity")}
-              />
-            </div>
-          ) : null}
-
-          <div className="scrollbar-hidden flex min-h-0 flex-1 flex-col gap-[14px] overflow-y-auto">
-            {activeTab === "routes" ? (
-              <>
-                <RouteList
-                  routes={result.routes}
-                  highlightId={highlightVehicleId}
-                  onHoverRoute={onHoverRoute}
-                  onFocusRoute={onFocusRoute}
-                  hiddenVehicleIds={hiddenVehicleIds}
-                  onToggleVehicleVisibility={onToggleVehicleVisibility}
+        {/* Opens and closes by height. The card sizes to its content and only shrinks
+            (the list then scrolls) when the column is too short to show it all. */}
+        <div className="soft-row min-h-0 flex-shrink" data-open={detailsOpen} inert={!detailsOpen}>
+          {/* Padding sits one level in, so it folds away with the rest at zero height. */}
+          <div className="flex min-h-0 flex-col">
+            <div className="flex min-h-0 flex-1 flex-col gap-12 px-[14px] pb-[14px]">
+              <div
+                role="tablist"
+                aria-label="Detail hasil"
+                className="scrollbar-hidden bg-periwinkle-wash flex flex-shrink-0 gap-[4px] overflow-x-auto rounded-lg p-[6px]"
+              >
+                <TabButton
+                  label="Rute"
+                  active={activeTab === "routes"}
+                  onClick={() => setTab("routes")}
                 />
-                <Reveal open={mode === "advanced"} gap={14}>
-                  <div className="flex flex-col gap-[14px]">
-                    <div aria-hidden className="h-px bg-frost" />
-                    <ConvergenceChart data={result.convergence} />
-                  </div>
-                </Reveal>
-              </>
-            ) : severity ? (
-              <SeverityPanel severity={severity} embedded />
-            ) : null}
+                <TabButton
+                  label="Periode"
+                  badge={periods.length > 1 ? periods.length : undefined}
+                  active={activeTab === "periods"}
+                  onClick={() => setTab("periods")}
+                />
+                <TabButton
+                  label="Belum tuntas"
+                  badge={openCount > 0 ? openCount : undefined}
+                  active={activeTab === "unserved"}
+                  onClick={() => setTab("unserved")}
+                />
+                <TabButton
+                  label="Beban"
+                  title="Keseimbangan beban antar kendaraan dan depo"
+                  active={activeTab === "balance"}
+                  onClick={() => setTab("balance")}
+                />
+                {hasSeverity ? (
+                  <TabButton
+                    label="Severity"
+                    title="Severity Index"
+                    active={activeTab === "severity"}
+                    onClick={() => setTab("severity")}
+                  />
+                ) : null}
+              </div>
+
+              <div className="scrollbar-hidden flex min-h-0 flex-1 flex-col gap-[14px] overflow-y-auto">
+                {activeTab === "routes" ? (
+                  <>
+                    <RouteList
+                      routes={result.routes}
+                      highlightId={highlightVehicleId}
+                      onHoverRoute={onHoverRoute}
+                      onFocusRoute={onFocusRoute}
+                      hiddenVehicleIds={hiddenVehicleIds}
+                      onToggleVehicleVisibility={onToggleVehicleVisibility}
+                    />
+                    <Reveal open={mode === "advanced"} gap={14}>
+                      <div className="flex flex-col gap-[14px]">
+                        <div aria-hidden className="bg-frost h-px" />
+                        <ConvergenceChart data={result.convergence} />
+                      </div>
+                    </Reveal>
+                  </>
+                ) : activeTab === "periods" ? (
+                  <PeriodsPanel
+                    periods={periods}
+                    activePeriod={activePeriod}
+                    onSelect={onSelectPeriod}
+                    onNext={onNextPeriod}
+                    onRemaining={onRemainingPeriods}
+                    isLoading={isLoading}
+                  />
+                ) : activeTab === "unserved" ? (
+                  <UnservedPanel
+                    result={result}
+                    onSelectFlood={onSelectFlood}
+                    onApplySuggestion={onApplySuggestion}
+                  />
+                ) : activeTab === "balance" ? (
+                  <BalancePanel result={result} />
+                ) : severity ? (
+                  <SeverityPanel severity={severity} embedded />
+                ) : null}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -192,24 +271,34 @@ function TabButton({
   label,
   active,
   onClick,
+  badge,
+  title,
 }: {
   label: string;
   active: boolean;
   onClick: () => void;
+  badge?: number;
+  title?: string;
 }) {
   return (
     <button
       type="button"
       role="tab"
       aria-selected={active}
+      title={title}
       onClick={onClick}
-      className={`flex-1 cursor-pointer whitespace-nowrap rounded-md border-0 px-[10px] py-[5px] text-[12px] font-bold tracking-[-0.12px] transition-[background,color,box-shadow] duration-150 ${
+      className={`inline-flex flex-1 cursor-pointer items-center justify-center gap-[5px] rounded-md border-0 px-[10px] py-[5px] text-[12px] font-bold tracking-[-0.12px] whitespace-nowrap transition-[background,color,box-shadow] duration-150 ${
         active
           ? "bg-active-wash text-active-ink shadow-[0_1px_2px_0_rgb(0_0_0/0.06)]"
-          : "bg-transparent text-steel shadow-none"
+          : "text-steel bg-transparent shadow-none"
       }`}
     >
       {label}
+      {badge !== undefined ? (
+        <span className="bg-midnight-ink rounded-full px-[6px] py-px text-[10px] leading-[1.3] font-bold text-white">
+          {badge}
+        </span>
+      ) : null}
     </button>
   );
 }
@@ -219,7 +308,7 @@ function ExportBtn({ label, onClick }: { label: string; onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex flex-1 cursor-pointer items-center justify-center gap-[5px] rounded-md border border-frost bg-pure-white px-[10px] py-8 text-[11px] font-bold tracking-[-0.11px] text-steel transition-colors hover:bg-mist"
+      className="border-frost bg-pure-white text-steel hover:bg-mist inline-flex flex-1 cursor-pointer items-center justify-center gap-[5px] rounded-md border px-[10px] py-8 text-[11px] font-bold tracking-[-0.11px] transition-colors"
     >
       <FileDown size={12} strokeWidth={2.2} />
       {label}

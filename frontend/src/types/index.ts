@@ -90,6 +90,69 @@ export interface RouteOut {
   visit_count_if: number;
   polyline: [number, number][];
   visits: VisitOut[];
+  /** How long this crew may stay out, and what it pumped. */
+  shift_limit_s: number;
+  pumped_l: number;
+}
+
+export type UnservedReason =
+  | "no_unit"
+  | "out_of_range"
+  | "far"
+  | "priority"
+  | "capacity"
+  | "unscheduled";
+
+/** A flood point with work left after the plan (matches backend UnservedPointOut). */
+export interface UnservedPoint {
+  flood_id: string;
+  name: string;
+  si_value: number;
+  demand_l: number;
+  remaining_l: number;
+  reason: UnservedReason;
+  detail: string;
+  depot_names: string[];
+  nearest_depot_min: number;
+}
+
+/** A what-if that would raise coverage (matches backend SuggestionOut). */
+export interface Suggestion {
+  kind: "add_unit" | "extend_shift";
+  depot_id: string;
+  depot_name: string;
+  coverage_before_pct: number;
+  coverage_after_pct: number;
+  unserved_points_after: number;
+  capacity_l?: number | null;
+  extra_minutes?: number | null;
+}
+
+export interface DepotBalance {
+  depot_id: string;
+  depot_name: string;
+  vehicles_total: number;
+  vehicles_used: number;
+  flood_visits: number;
+  pumped_l: number;
+  longest_route_s: number;
+  utilization_pct: number;
+}
+
+export interface BalanceMetrics {
+  makespan_s: number;
+  makespan_vehicle_id: string | null;
+  mean_route_s: number;
+  route_time_cv: number;
+  utilization_mean_pct: number;
+  utilization_max_pct: number;
+  vehicles_total: number;
+  vehicles_used: number;
+  pumped_mean_l: number;
+  pumped_max_l: number;
+  load_cv: number;
+  load_gini: number;
+  depots: DepotBalance[];
 }
 
 export interface ConvergencePoint {
@@ -117,6 +180,9 @@ export interface OptimizationResult {
   computation_time_s: number;
   convergence: ConvergencePoint[];
   n_vehicles: number;
+  unserved: UnservedPoint[];
+  suggestions: Suggestion[];
+  balance: BalanceMetrics | null;
 }
 
 /** Tank size and how many vehicles carry it (matches backend TankUnits). */
@@ -137,6 +203,8 @@ export interface RunExtras {
   fleet?: DepotFleetIn[] | null;
   /** Relative weights for [flood depth, road class, distance to a clinic]. */
   severity_weights?: number[] | null;
+  /** Litres still to pump per flood id, carried over from the previous period. */
+  remaining_volumes?: Record<string, number> | null;
 }
 
 export interface ACSParams extends RunExtras {

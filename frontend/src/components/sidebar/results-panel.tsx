@@ -11,9 +11,19 @@ interface ResultsPanelProps {
   result: OptimizationResult;
   mode: AppMode;
   completedAt?: number | null;
+  /** "Periode 2 dari 3" when the plan spans several periods. */
+  periodNote?: string | null;
+  /** Jump to the list of points that were not finished. */
+  onShowUnserved?: () => void;
 }
 
-export function ResultsPanel({ result, mode, completedAt }: ResultsPanelProps) {
+export function ResultsPanel({
+  result,
+  mode,
+  completedAt,
+  periodNote = null,
+  onShowUnserved,
+}: ResultsPanelProps) {
   const runAt = completedAt ? formatDateTimeId(new Date(completedAt).toISOString()) : null;
   return (
     <div className="flex flex-col gap-[10px]">
@@ -54,7 +64,13 @@ export function ResultsPanel({ result, mode, completedAt }: ResultsPanelProps) {
         />
       </div>
 
-      <CoverageBar result={result} />
+      {periodNote ? (
+        <div className="rounded-md bg-periwinkle-wash px-[10px] py-[6px] text-[11.5px] font-bold text-steel">
+          {periodNote}
+        </div>
+      ) : null}
+
+      <CoverageBar result={result} onShowUnserved={onShowUnserved} />
 
       <Reveal open={mode === "advanced"} gap={10}>
         <div className="flex gap-8 rounded-md border border-frost bg-mist px-[10px] py-8 text-[11px] font-semibold tracking-[-0.11px] text-steel">
@@ -69,7 +85,13 @@ export function ResultsPanel({ result, mode, completedAt }: ResultsPanelProps) {
   );
 }
 
-function CoverageBar({ result }: { result: OptimizationResult }) {
+function CoverageBar({
+  result,
+  onShowUnserved,
+}: {
+  result: OptimizationResult;
+  onShowUnserved?: () => void;
+}) {
   const pct = Math.max(0, Math.min(100, result.coverage_pct));
   const full = result.unserved_points === 0;
   const accent = full ? "var(--color-si-low)" : pct >= 60 ? "#d97706" : "#ef4444";
@@ -100,6 +122,15 @@ function CoverageBar({ result }: { result: OptimizationResult }) {
               result.unserved_volume_l,
             )} L dilanjutkan ke periode berikutnya.`}
       </div>
+      {!full && onShowUnserved ? (
+        <button
+          type="button"
+          onClick={onShowUnserved}
+          className="font-manrope mt-[2px] cursor-pointer self-start rounded-md border border-frost bg-pure-white px-[10px] py-[5px] text-[11.5px] font-bold text-steel transition-colors hover:bg-mist"
+        >
+          Lihat titik, alasan, dan saran
+        </button>
+      ) : null}
     </div>
   );
 }

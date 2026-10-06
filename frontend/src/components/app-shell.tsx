@@ -20,6 +20,7 @@ import { usePriority } from "../hooks/use-priority";
 import type { BaseMapId, OverlayLayerId } from "../lib/map-constants";
 import { OVERLAY_LAYERS } from "../lib/map-constants";
 import { api } from "../lib/api";
+import { MAX_SHIFT_MIN, MAX_UNITS, settingFor } from "../lib/fleet";
 import type {
   AppLayout,
   AppMode,
@@ -27,6 +28,7 @@ import type {
   MapSelection,
   RouteOut,
   ScenarioMeta,
+  Suggestion,
 } from "../types";
 import { AnimatedHeight } from "./animated-height";
 import { ErrorBoundary } from "./error-boundary";
@@ -182,6 +184,11 @@ export function AppShell() {
   const runExtras = { fleet: fleetCfg.payload, severity_weights: priorityCfg.weights };
   const {
     result,
+    periods,
+    activePeriod,
+    setActivePeriod,
+    runNextPeriod,
+    runRemainingPeriods,
     comparison,
     isLoading,
     elapsedSeconds,
@@ -260,6 +267,42 @@ export function AppShell() {
     if (isMobile) setMobilePanel("none");
   }
 
+  function handleNextPeriod(all: boolean) {
+    dropRouteSelection();
+    setFocusedRoute(null);
+    setHiddenRoutes(new Set());
+    setAnimating(false);
+    const req = algoCfg.buildRunRequest(runExtras);
+    if (all) runRemainingPeriods(req, scenario);
+    else runNextPeriod(req, scenario);
+    if (isMobile) setMobilePanel("none");
+  }
+
+  /** Change the fleet as a suggestion says; the person runs the optimisation again. */
+  function applySuggestion(s: Suggestion): string {
+    const current = settingFor(fleetCfg.settings, s.depot_id, fleetCfg.defaults);
+    let next = current;
+    let said: string;
+    if (s.kind === "add_unit") {
+      const [small, large] = fleetCfg.settings.tanks;
+      const slot = s.capacity_l === small && s.capacity_l !== large ? 0 : 1;
+      const units: [number, number] = [...current.units];
+      units[slot] = Math.min(MAX_UNITS, units[slot] + 1);
+      next = { ...current, units };
+      said = `Ditambahkan 1 unit di ${s.depot_name}.`;
+    } else {
+      const base = current.minutes ?? fleetCfg.defaults.operating_minutes;
+      const minutes = Math.min(MAX_SHIFT_MIN, Math.round(base + (s.extra_minutes ?? 60)));
+      next = { ...current, minutes };
+      said = `Jam operasional ${s.depot_name} menjadi ${(minutes / 60).toFixed(1).replace(".", ",")} jam.`;
+    }
+    fleetCfg.setSettings({
+      ...fleetCfg.settings,
+      depots: { ...fleetCfg.settings.depots, [s.depot_id]: next },
+    });
+    return said;
+  }
+
   function handleCompare() {
     dropRouteSelection();
     setFocusedRoute(null);
@@ -325,11 +368,28 @@ export function AppShell() {
         severity={data?.severity ?? null}
         highlightVehicleId={highlightVehicleId}
         onHoverRoute={setHighlightVehicleId}
-        onFocusRoute={setFocusedRoute}
+        onFocusRoute={(route) => {
+          // Picking a route in the list frames it on the map and opens its detail, as a click on the map does.
+          setFocusedRoute(route);
+          setSelection({ kind: "route", id: route.vehicle_id });
+        }}
         hiddenVehicleIds={hiddenRoutes}
         onToggleVehicleVisibility={toggleRouteVisibility}
         animating={animating}
         onToggleAnimating={() => setAnimating((v) => !v)}
+        periods={periods}
+        activePeriod={activePeriod}
+        onSelectPeriod={(i) => {
+          setActivePeriod(i);
+          setFocusedRoute(null);
+          setHighlightVehicleId(null);
+          setHiddenRoutes(new Set());
+        }}
+        onNextPeriod={() => handleNextPeriod(false)}
+        onRemainingPeriods={() => handleNextPeriod(true)}
+        isLoading={isLoading}
+        onSelectFlood={(id) => setSelection({ kind: "flood", id })}
+        onApplySuggestion={applySuggestion}
       />
     </>
   ) : null;
