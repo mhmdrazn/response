@@ -1,13 +1,13 @@
-osm_id,type,lat,lon,name,addr:city
-449150188,way,-7.231831,112.785459,Pemadam Kebakaran Kecamatan Bulak,
-449809850,way,-7.2952763,112.8017295,Pos Pembantu Pemadam Kebakaran Kota Surabaya,
-451291149,way,-7.3220843,112.7137537,Dinas Kebakaran Pos Jambangan,
-451504869,way,-7.3367072,112.7540708,Dinas Kebakaran UPTD 3 Surabaya,
-451981973,way,-7.2430631,112.7597289,Dinas Kebakaran UPTD II Surabaya Utara Tambak Rejo,
-452387333,way,-7.3035729,112.6329056,Posko Pemadam Kebakaran,
-452582470,way,-7.3142808,112.6958416,Pemadam Kebakaran Surabaya IV,
-457996476,way,-7.3404451,112.6660218,Pos Pembantu Pemadam Kebakaran,
-459270806,way,-7.2522766,112.6531946,Dinas Pemadam Kebakaran Kandangan,
-460507505,way,-7.2402928,112.62541,Dinas Pemadam Kebakaran UPTD Surabaya V Pos Pakal,
-467117596,way,-7.3221482,112.7699985,Dinas Pemadam Kebakaran Pos Kali Rungkut,Jalan Raya Rungkut Nomor 35
-487570882,way,-7.2450044,112.7363594,Dinas Kebakaran Kota Surabaya,
+osm_id,type,lat,lon,name,address,id
+449150188,way,-7.231616315153376, 112.78542700033663,Pos Pemadam Kebakaran Bulak,"Jl. Kyai Tambak Deres No.252, Bulak, Kec. Bulak, Surabaya",D_449150188
+449809850,way,-7.2952940515543965, 112.80164124810776,Dinas Pemadam Kebakaran Pos Keputih,"Jl. Keputih Tegal Timur II No.26, Keputih, Kec. Sukolilo, Surabaya",D_449809850
+451291149,way,-7.322130932810979, 112.71367986804984,Dinas Pemadam Kebakaran Pos Jambangan,"Jl. Jambangan Sawah No.2, Jambangan, Kec. Jambangan, Surabaya",D_451291149
+451504869,way,-7.336773524768115, 112.75403267331724,Dinas Pemadam Kebakaran UPTD III Surabaya,"Jl. Rungkut Industri XIV No.8, Kutisari, Kec. Tenggilis Mejoyo, Surabaya",D_451504869
+451981973,way,-7.242994207510075, 112.75964491106842,Dinas Pemadam Kebakaran UPTD II,"Jl. Kenjeran No.120, Tambakrejo, Kec. Simokerto, Surabaya",D_451981973
+452387333,way,-7.303829122810813, 112.63405945785945,Dinas Pemadam Kebakaran Pos Lakarsantri,"Jl. Lakarsantri No.26, Lakarsantri, Kec. Lakarsantri, Surabaya",D_452387333
+452582470,way,-7.314159543954375, 112.69584722300063,Dinas Pemadam Kebakaran Surabaya UPTD IV,"Jl. Raya Menganti No.247, Wiyung, Kec. Wiyung, Surabaya",D_452582470
+457996476,way,-7.340455252813482, 112.66616246110088,Dinas Pemadam Kebakaran Pos Warugunung,"Jl. Mastrip IX No.182, Warugunung, Kec. Karangpilang, Surabaya",D_457996476
+459270806,way,-7.252182562974282, 112.6527897715125,Dinas Pemadam Kebakaran Pos Kandangan,"Jl. Raya Kandangan No.18, Kandangan, Kec. Benowo, Surabaya",D_459270806
+460507505,way,-7.240419141545584, 112.68592317347965,Dinas Pemadam Kebakaran UPTD Surabaya V,"Jl. Margomulyo Industri Raya, Greges, Kec. Asem Rowo, Surabaya",D_460507505
+467117596,way,-7.322182243928715, 112.76998090882994,Dinas Pemadam Kebakaran Pos Kali Rungkut,"Jl. Raya Kalirungkut No.35, Kali Rungkut, Kec. Rungkut, Surabaya",D_467117596
+487570882,way,-7.2451191317412915, 112.73639474401253,Dinas Pemadam Kebakaran Kota Surabaya,"Jl. Pasar Turi No.21, Bubutan, Kec. Bubutan, Surabaya",D_487570882

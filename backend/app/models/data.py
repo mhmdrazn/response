@@ -36,7 +36,7 @@ class Depot(_Base):
     lat: float
     lon: float
     name: Optional[str] = None
-    city: Optional[str] = None
+    address: Optional[str] = None
     type: Optional[str] = None
 
 
@@ -117,7 +117,7 @@ class DepotCreate(_CoordMixin, _Base):
     lat: float
     lon: float
     name: Optional[str] = None
-    city: Optional[str] = None
+    address: Optional[str] = None
     type: Optional[str] = None
 
 
@@ -126,7 +126,7 @@ class DepotUpdate(_Base):
     lat: Optional[float] = None
     lon: Optional[float] = None
     name: Optional[str] = None
-    city: Optional[str] = None
+    address: Optional[str] = None
     type: Optional[str] = None
 
 

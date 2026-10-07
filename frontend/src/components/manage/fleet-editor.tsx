@@ -162,7 +162,8 @@ export function FleetEditor({ depots, value, defaults, problems, onChange }: Fle
                         <div className="min-w-0">
                           <div
                             className="max-w-[120px] truncate text-[12.5px] sm:max-w-[230px] font-bold text-midnight-ink"
-                            title={d.name ?? d.id}
+                            title={d.address ? `${d.name ?? d.id}
+${d.address}` : (d.name ?? d.id)}
                           >
                             {d.name ?? d.id}
                           </div>

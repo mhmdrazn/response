@@ -40,7 +40,7 @@ const DATASET_CONFIG: Record<DatasetKey, { title: string; columns: ColumnDef[]; 
         { key: "lat", label: "Latitude", type: "number", width: 110 },
         { key: "lon", label: "Longitude", type: "number", width: 110 },
         { key: "name", label: "Nama", type: "text", width: 180 },
-        { key: "city", label: "Kota", type: "text", width: 120 },
+        { key: "address", label: "Alamat", type: "text", width: 260 },
         { key: "type", label: "Tipe", type: "text", width: 100 },
       ],
     },

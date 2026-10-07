@@ -26,7 +26,7 @@ export interface Depot {
   lat: number;
   lon: number;
   name: string | null;
-  city: string | null;
+  address: string | null;
   type: string | null;
 }
 

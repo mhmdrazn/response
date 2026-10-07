@@ -58,7 +58,7 @@ export function DepotMarkers({ depots, selectedId, onSelect }: DepotMarkersProps
           eventHandlers={{ click: () => onSelect?.(d.id) }}
         >
           <Tooltip direction="top" offset={[0, -14]} opacity={1}>
-            <PopupShell title={d.name ?? `Depo ${d.id}`} subtitle={d.city ?? "Kota Surabaya"}>
+            <PopupShell title={d.name ?? `Depo ${d.id}`} subtitle={d.address ?? "Alamat belum tercatat"}>
               <PopupRow label="ID" value={d.id} />
               <PopupRow label="Koordinat" value={`${fmtCoord(d.lat)}, ${fmtCoord(d.lon)}`} />
               <ClickHint />

@@ -74,7 +74,7 @@ export function DepotDetailPanel({
       }
       title={depot.name ?? `Depo ${depot.id}`}
       badge={status}
-      subtitle={depot.city ?? "Kota Surabaya"}
+      subtitle={depot.address?.trim() || "Alamat belum tercatat"}
     >
       <DetailStats>
         <DetailStat
@@ -110,7 +110,7 @@ export function DepotDetailPanel({
         <DetailSection title="Lokasi">
           <DetailFacts>
             <DetailFact label="ID" value={depot.id} />
-            <DetailFact label="Kota" value={depot.city ?? "Kota Surabaya"} />
+            <DetailFact label="Alamat" value={depot.address?.trim() || "-"} />
             <DetailFact label="Tipe" value={depot.type ?? "-"} />
             <DetailFact
               label="Genangan terdekat"

@@ -63,7 +63,10 @@ def load_floods(path: Path) -> pd.DataFrame:
 
 
 def load_depots(path: Path) -> pd.DataFrame:
-    df = pd.read_csv(path).rename(columns={"addr:city": "city"})
+    df = pd.read_csv(path)
+    # Older files called the column `city` (or `addr:city`); it holds the address now.
+    if "address" not in df.columns:
+        df = df.rename(columns={"addr:city": "address", "city": "address"})
     df["lat"] = pd.to_numeric(df["lat"], errors="coerce")
     df["lon"] = pd.to_numeric(df["lon"], errors="coerce")
     df = df.dropna(subset=["lat", "lon"]).reset_index(drop=True)
