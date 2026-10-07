@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+import errno
 import logging
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.config import CORS_ORIGIN_REGEX, CORS_ORIGINS
 from app.data.store import store
@@ -74,6 +76,28 @@ app.add_middleware(
     allow_headers=["*"],
     expose_headers=["*"],
 )
+
+# Edits write the dataset files. Where the filesystem is read-only (a serverless
+# deployment such as Vercel) the write fails; say so plainly instead of answering
+# with an opaque 500, so the interface can tell the person what to do.
+_UNWRITABLE = {errno.EROFS, errno.EACCES, errno.EPERM}
+
+
+@app.exception_handler(OSError)
+async def _unwritable_storage(_: Request, exc: OSError) -> JSONResponse:
+    if exc.errno in _UNWRITABLE:
+        _log.warning("Dataset write refused: %s", exc)
+        return JSONResponse(
+            status_code=503,
+            content={
+                "detail": (
+                    "Data tidak bisa disimpan di lingkungan ini karena penyimpanannya hanya-baca "
+                    "(umumnya deployment serverless). Ubah data lewat server lokal."
+                )
+            },
+        )
+    raise exc
+
 
 app.include_router(data_router.router)
 app.include_router(severity_router.router)

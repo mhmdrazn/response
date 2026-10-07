@@ -47,3 +47,19 @@ def test_floods_carry_volume_and_its_factors(client):
         assert f["volume_l"] is not None
         rebuilt = f["road_width_m"] * f["ponding_length_m"] * f["effective_depth_cm"] / 100 * 1000
         assert abs(rebuilt - f["volume_l"]) < 1.0, f["id"]
+
+
+def test_a_read_only_filesystem_is_a_clear_503_not_a_bare_500(client, monkeypatch):
+    import errno
+
+    from app.routers import data as data_router
+
+    def refuse(*_args, **_kwargs):
+        raise OSError(errno.EROFS, "Read-only file system")
+
+    monkeypatch.setattr(data_router, "_persist", refuse)
+    depot_id = client.get("/api/data/depo").json()[0]["id"]
+    r = client.put(f"/api/data/depo/{depot_id}", json={"name": "Uji"})
+
+    assert r.status_code == 503
+    assert "hanya-baca" in r.json()["detail"]

@@ -40,12 +40,16 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     ...init,
   });
   if (!res.ok) {
-    let detail = "";
+    // A body can be read once, so take it as text and only then try it as JSON;
+    // reading it as JSON first and falling back to text threw "body stream already
+    // read" and hid the server's real message.
+    const raw = await res.text().catch(() => "");
+    let detail = raw;
     try {
-      const body = await res.json();
+      const body = JSON.parse(raw);
       detail = typeof body?.detail === "string" ? body.detail : JSON.stringify(body);
     } catch {
-      detail = await res.text();
+      /* not JSON: keep the text as it is */
     }
     throw new ApiError(res.status, detail || `Request failed: ${res.status}`);
   }
