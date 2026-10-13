@@ -93,7 +93,7 @@ mendahulukan titik berkeparahan tinggi.*
 ### 3.1 Gambaran
 
 ```
-Frontend (Next.js 16, React 19, Tailwind 4, Leaflet)  <-- HTTP/JSON -->  Backend (FastAPI, Python 3.12, NumPy, pandas)
+Frontend (Next.js 16, React 19, Tailwind 4, MapLibre)  <-- HTTP/JSON -->  Backend (FastAPI, Python 3.12, NumPy, pandas)
         port 3000                                                           port 8000
                                                                  Data statis: CSV + matriks .npy (tanpa database)
 ```
@@ -111,7 +111,7 @@ Frontend (Next.js 16, React 19, Tailwind 4, Leaflet)  <-- HTTP/JSON -->  Backend
 | Lapisan | Teknologi |
 |---|---|
 | Backend | Python 3.12, FastAPI, Uvicorn, NumPy, pandas, httpx, Pydantic v2, pytest |
-| Frontend | Next.js 16.2 (App Router), React 19.2, TypeScript (strict), Tailwind CSS v4, Leaflet 1.9 + react-leaflet 5, Recharts 3, lucide-react |
+| Frontend | Next.js 16.2 (App Router), React 19.2, TypeScript (strict), Tailwind CSS v4, MapLibre GL 5.24 di atas tile vektor Protomaps (data OSM wilayah Surabaya, di-host sendiri, dengan mode 3D), Recharts 3, lucide-react |
 | Ekspor | jsPDF + jspdf-autotable (PDF); penulis XLSX sendiri berbasis `fflate` (tanpa pustaka spreadsheet) |
 | Rute dan jarak | OSRM (server publik) untuk matriks jarak/waktu dan geometri rute; cadangan jarak Manhattan |
 | Data peta | OpenStreetMap (Overpass) untuk depo, IF, faskes, jaringan jalan; PetaBencana.id untuk genangan |

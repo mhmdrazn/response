@@ -10,7 +10,7 @@ Thesis project — Information Systems, Institut Teknologi Sepuluh Nopember (ITS
 
 | Layer | Tech |
 |-------|------|
-| Frontend | Next.js 15 (App Router) + TypeScript + Tailwind v4 + react-leaflet + Recharts |
+| Frontend | Next.js 15 (App Router) + TypeScript + Tailwind v4 + MapLibre GL (Protomaps tiles) + Recharts |
 | Backend  | FastAPI + Python 3.12 + NumPy + pandas + scikit-learn |
 | Data     | Static CSV + NumPy `.npy` (no database) |
 

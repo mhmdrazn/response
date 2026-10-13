@@ -153,7 +153,7 @@ Number rendered at stat size (Manrope 500 at 32-48px, #061b31, tight letter-spac
 ### Map Marker Popup
 **Role:** Information shown when clicking a flood point, depot, or IF marker
 
-White background, 8px radius, max-width 280px. Title in heading-sm weight. Body in body-sm. SI value shown as a colored pill matching the severity palette. Popup uses hairline border only (override Leaflet's default drop shadow) — elevated components elsewhere may use `--shadow-sm`.
+White background, 8px radius, max-width 280px. Title in heading-sm weight. Body in body-sm. SI value shown as a colored pill matching the severity palette. Popup uses hairline border only (override MapLibre's default drop shadow) — elevated components elsewhere may use `--shadow-sm`.
 
 ### Results Table
 **Role:** Per-vehicle breakdown of route results
@@ -189,7 +189,7 @@ White background, 1px #e5edf5 bottom border. Left: app name "FloodRoute" in Manr
 - Do not introduce accent colors outside the defined palettes
 - Do not use semibold or bold weights for headings -- weight 300 at display size is the typographic identity
 - Do not fill large areas with #533afd -- the indigo appears in small functional doses
-- Do not override Leaflet's map tile styling or add custom map backgrounds -- use the standard OSM tiles
+- Do not restyle the basemap ad hoc -- its palettes (Standar, Terang, Gelap) live in `lib/basemap-style.ts` and are the only cartographic colours outside the tokens
 - Do not center text in the sidebar -- all sidebar text is left-aligned
 - Do not use sohne-var, Inter, or any font other than Manrope
 

@@ -13,7 +13,7 @@ Read these before making any changes:
 ## Project Architecture
 
 ```
-Frontend: Next.js 15 (App Router) + Tailwind CSS v4 + Leaflet
+Frontend: Next.js 15 (App Router) + Tailwind CSS v4 + MapLibre GL
 Backend:  FastAPI (Python 3.12) + NumPy
 Data:     Static CSV/npy files, no database
 ```
@@ -101,7 +101,7 @@ export async function runOptimization(
 
 ### Map Components
 
-Use `react-leaflet` components. Keep Leaflet imports dynamic (no SSR):
+The map is MapLibre GL over self-hosted Protomaps vector tiles of Surabaya (`frontend/public/tiles/`, built by `backend/scripts/build_basemap_tiles.py`; styles in `lib/basemap-style.ts`). Overlays get the map from `useMapContext()` in `components/map/map-context.tsx`. Points, lines and areas are GeoJSON layers prefixed `app-` (stacked by `beforeIdFor` in `map-layers.ts`) that re-add themselves on `styleVersion`; DOM markers (`HtmlMarker`) are only for the draggable draft pin, because they drift against the canvas. Camera tilt and 3D buildings are run by `use-three-d.ts`. Keep the map module dynamic (no SSR):
 
 ```tsx
 // components/map/map-container.tsx

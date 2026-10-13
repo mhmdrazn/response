@@ -16,7 +16,7 @@
 ┌─────────────────────────────┐      ┌──────────────────────────────┐
 │  Frontend (Next.js)         │      │  Backend (FastAPI / Python)   │
 │                             │      │                              │
-│  - Interactive map (Leaflet)│ HTTP │  - /api/data/*  (static data)│
+│  - Map (MapLibre)           │ HTTP │  - /api/data/*  (static data)│
 │  - Parameter controls       │◄────►│  - /api/optimize/acs         │
 │  - Route visualization      │      │  - /api/optimize/vns         │
 │  - Metrics & charts         │      │  - /api/severity-index       │
@@ -35,7 +35,7 @@
                                      └─────────────────┘
 ```
 
-**Frontend:** Next.js (App Router) + Tailwind CSS + Leaflet via react-leaflet. No database. No auth.
+**Frontend:** Next.js (App Router) + Tailwind CSS + MapLibre GL over self-hosted Protomaps vector tiles (OSM data, Surabaya only). No database. No auth.
 
 **Backend:** FastAPI (Python). Algorithms run server-side. Data loaded from static files at startup. No database.
 
@@ -55,7 +55,7 @@ The application is a single-page app with a sidebar + map layout.
 ├────────────────┬─────────────────────────────────────────────┤
 │                │                                             │
 │   Sidebar      │              Map Area                       │
-│   (380px)      │              (Leaflet)                      │
+│   (380px)      │              (MapLibre)                     │
 │                │                                             │
 │  ┌──────────┐  │  - Flood point markers (color by SI)        │
 │  │ Controls │  │  - Depot markers                            │
@@ -223,7 +223,7 @@ All data is static (historical). No real-time ingestion.
 |-------|-----------|
 | Frontend framework | Next.js 15 (App Router) |
 | Styling | Tailwind CSS v4 |
-| Map | Leaflet + react-leaflet |
+| Map | MapLibre GL + Protomaps vector tiles (self-hosted) |
 | Charts | Recharts |
 | Icons | Lucide React |
 | Backend framework | FastAPI |

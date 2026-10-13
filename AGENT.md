@@ -79,7 +79,7 @@ floodroute-surabaya/
 - **State management:** React state (`useState`, `useReducer`) for local state. No Redux or Zustand -- the app is simple enough.
 - **API calls:** Use a thin wrapper around `fetch` in `lib/api.ts`. No axios. Handle loading/error states explicitly.
 - **Types:** Define shared types in `types/` directory. API response types mirror Pydantic schemas from backend.
-- **Map:** Use `react-leaflet` components. Keep map logic in `components/map/`. Leaflet CSS imported once in layout.
+- **Map:** MapLibre GL (`maplibre-gl`) over self-hosted Protomaps vector tiles in `public/tiles/`. Keep map logic in `components/map/`; the basemap styles live in `lib/basemap-style.ts`. MapLibre CSS imported once in layout.
 - **Charts:** Use Recharts for convergence chart and comparison charts.
 - **No localStorage or sessionStorage.** All state lives in React. Data comes from backend API.
 
@@ -204,8 +204,8 @@ No other env vars needed. No API keys. No secrets.
 ### Adding a new map layer
 
 1. Create component in `frontend/src/components/map/`
-2. Use `react-leaflet` components (`Marker`, `Polyline`, `CircleMarker`, etc.)
-3. Import and render inside the main `MapContainer` component
+2. Get the map with `useMapContext()`: points, lines and areas add a GeoJSON source and layers (id prefix `app-`, placed with `beforeIdFor`) in an effect that depends on `styleVersion`, so they come back after a basemap switch; see `facility-layer.tsx` for points with icons and hover tooltips
+3. Import and render inside `MapInner` (`map-inner.tsx`)
 4. Style markers/lines following DESIGN.md color tokens
 
 ### Modifying algorithm parameters
