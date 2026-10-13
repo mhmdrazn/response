@@ -10,7 +10,7 @@
     {
       "name": "response-backend",
       "runtimeExecutable": "cmd",
-      "runtimeArgs": ["/c", "cd backend && uvicorn app.main:app --reload --port 8000"],
+      "runtimeArgs": ["/c", "cd backend && .venv\\Scripts\\python -m uvicorn app.main:app --reload --port 8000"],
       "port": 8000
     }
   ]
