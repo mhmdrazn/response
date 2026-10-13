@@ -30,11 +30,11 @@ These colors are used exclusively on the map for flood point markers. They form 
 
 | SI Range | Color | Token | Meaning |
 |----------|-------|-------|---------|
-| 0.0 -- 0.2 | `#22c55e` | `--si-low` | Low severity |
-| 0.2 -- 0.4 | `#84cc16` | `--si-moderate` | Moderate severity |
-| 0.4 -- 0.6 | `#eab308` | `--si-elevated` | Elevated severity |
-| 0.6 -- 0.8 | `#f97316` | `--si-high` | High severity |
-| 0.8 -- 1.0 | `#ef4444` | `--si-critical` | Critical severity |
+| 0.0 -- 0.2 | `#eab308` | `--si-low` | Low severity |
+| 0.2 -- 0.4 | `#fb923c` | `--si-moderate` | Moderate severity |
+| 0.4 -- 0.6 | `#ea580c` | `--si-elevated` | Elevated severity |
+| 0.6 -- 0.8 | `#dc2626` | `--si-high` | High severity |
+| 0.8 -- 1.0 | `#7f1d1d` | `--si-critical` | Critical severity |
 
 ### Vehicle Route Colors (Map Only)
 

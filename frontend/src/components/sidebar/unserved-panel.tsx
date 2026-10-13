@@ -40,7 +40,7 @@ export function UnservedPanel({ result, onSelectFlood, onApplySuggestion }: Unse
   if (open.length === 0) {
     return (
       <div className="flex items-center gap-[8px] rounded-md border border-frost bg-mist px-[12px] py-[12px] text-[12.5px] font-semibold text-steel">
-        <CheckCircle2 size={16} strokeWidth={2.2} color="var(--color-si-low)" />
+        <CheckCircle2 size={16} strokeWidth={2.2} color="var(--color-success)" />
         Semua titik genangan tuntas pada rencana ini.
       </div>
     );

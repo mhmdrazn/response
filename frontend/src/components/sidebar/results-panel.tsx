@@ -28,7 +28,7 @@ export function ResultsPanel({
   return (
     <div className="flex flex-col gap-[10px]">
       {runAt ? (
-        <div className="flex items-center gap-[6px] text-[11px] font-semibold text-si-low">
+        <div className="flex items-center gap-[6px] text-[11px] font-semibold text-success">
           <CheckCircle2 size={13} strokeWidth={2.2} />
           <span className="text-steel">Dijalankan: {runAt}</span>
         </div>
@@ -94,7 +94,7 @@ function CoverageBar({
 }) {
   const pct = Math.max(0, Math.min(100, result.coverage_pct));
   const full = result.unserved_points === 0;
-  const accent = full ? "var(--color-si-low)" : pct >= 60 ? "#d97706" : "#ef4444";
+  const accent = full ? "var(--color-success)" : pct >= 60 ? "#d97706" : "#ef4444";
 
   return (
     <div className="flex flex-col gap-[6px] rounded-md border border-frost bg-pure-white p-[10px]">

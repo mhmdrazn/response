@@ -88,7 +88,7 @@ export function SeverityPanel({ severity, embedded = false }: SeverityPanelProps
             <span>Consistency Ratio:</span>
             <span
               className={`font-bold ${
-                w.consistency_ratio <= 0.1 ? "text-si-low" : "text-si-critical"
+                w.consistency_ratio <= 0.1 ? "text-success" : "text-si-critical"
               }`}
             >
               {w.consistency_ratio.toFixed(4)}

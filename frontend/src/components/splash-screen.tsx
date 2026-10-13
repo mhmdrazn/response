@@ -99,7 +99,7 @@ function RoutingAnimation() {
           cx="150"
           cy="80"
           r="9"
-          fill="#ef4444"
+          fill="#7f1d1d"
           stroke="var(--color-pure-white)"
           strokeWidth="2"
         />
@@ -108,7 +108,7 @@ function RoutingAnimation() {
           cx="230"
           cy="140"
           r="9"
-          fill="#f97316"
+          fill="#dc2626"
           stroke="var(--color-pure-white)"
           strokeWidth="2"
         />
@@ -117,7 +117,7 @@ function RoutingAnimation() {
           cx="310"
           cy="60"
           r="9"
-          fill="#eab308"
+          fill="#ea580c"
           stroke="var(--color-pure-white)"
           strokeWidth="2"
         />
@@ -126,7 +126,7 @@ function RoutingAnimation() {
           cx="380"
           cy="130"
           r="9"
-          fill="#84cc16"
+          fill="#fb923c"
           stroke="var(--color-pure-white)"
           strokeWidth="2"
         />
@@ -135,7 +135,7 @@ function RoutingAnimation() {
           cx="430"
           cy="195"
           r="9"
-          fill="#22c55e"
+          fill="#eab308"
           stroke="var(--color-pure-white)"
           strokeWidth="2"
         />

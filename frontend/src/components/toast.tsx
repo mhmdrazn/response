@@ -114,7 +114,7 @@ function ToastCard({ toast, onDismiss }: { toast: ToastItem; onDismiss: () => vo
 }
 
 function toastAccent(v: ToastVariant): string {
-  if (v === "success") return "var(--color-si-low)";
+  if (v === "success") return "var(--color-success)";
   if (v === "error") return "var(--color-indigo-ink)";
   return "var(--color-route-7)";
 }

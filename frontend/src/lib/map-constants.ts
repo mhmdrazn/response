@@ -10,26 +10,28 @@ export interface SiBucket {
   labelEn: string;
 }
 
+// Severity runs yellow to deep red. No green: a flood point is never "safe", and
+// green read as all-clear on the map.
 export const SI_PALETTE: SiBucket[] = [
-  { max: 0.2, hex: "#22c55e", cssVar: "--color-si-low", labelId: "Rendah", labelEn: "Low" },
+  { max: 0.2, hex: "#eab308", cssVar: "--color-si-low", labelId: "Rendah", labelEn: "Low" },
   {
     max: 0.4,
-    hex: "#84cc16",
+    hex: "#fb923c",
     cssVar: "--color-si-moderate",
     labelId: "Sedang",
     labelEn: "Moderate",
   },
   {
     max: 0.6,
-    hex: "#eab308",
+    hex: "#ea580c",
     cssVar: "--color-si-elevated",
     labelId: "Waspada",
     labelEn: "Elevated",
   },
-  { max: 0.8, hex: "#f97316", cssVar: "--color-si-high", labelId: "Tinggi", labelEn: "High" },
+  { max: 0.8, hex: "#dc2626", cssVar: "--color-si-high", labelId: "Tinggi", labelEn: "High" },
   {
     max: 1.0,
-    hex: "#ef4444",
+    hex: "#7f1d1d",
     cssVar: "--color-si-critical",
     labelId: "Kritis",
     labelEn: "Critical",
