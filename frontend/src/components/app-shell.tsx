@@ -533,13 +533,13 @@ export function AppShell() {
   };
 
   // Bottom of the map. Fullscreen fills the gap between the left dock stack and
-  // the results column (or the severity legend when there are none). The
+  // the results column, or to the right edge when there are none. The
   // windowed layout does not overlay the map at all: its panel is a row under it.
   const detailPanelInset = (extra: { isMobile: boolean }) => {
     if (extra.isMobile) return { left: 12, right: 12, bottom: 12 };
     return {
       left: panelW + 32,
-      right: result ? resultPanelW + 32 : 150,
+      right: result ? resultPanelW + 32 : 16,
       bottom: 16,
     };
   };
@@ -655,7 +655,7 @@ export function AppShell() {
         ) : null}
       </>
     ) : (
-      <MapLoading title="Memuat data peta" error={loading ? null : dataError} />
+      <MapLoading error={loading ? null : dataError} />
     );
   };
 
@@ -732,7 +732,9 @@ export function AppShell() {
             compact={isMobile}
             onHidePanels={!isMobile ? () => setPanelsHidden(true) : undefined}
             className={`${PANEL_ANIM} ${
-              panelsHidden ? "pointer-events-none opacity-0" : "pointer-events-auto opacity-100"
+              panelsHidden
+                ? "pointer-events-none opacity-0 [&_*]:pointer-events-none"
+                : "pointer-events-auto opacity-100"
             }`}
           />
           {!isMobile ? (
@@ -754,7 +756,9 @@ export function AppShell() {
               >
                 <div
                   className={`flex max-h-full min-h-0 flex-col gap-[10px] ${
-                    panelsHidden ? "pointer-events-none" : "pointer-events-auto"
+                    panelsHidden
+                      ? "pointer-events-none [&_*]:pointer-events-none"
+                      : "pointer-events-auto"
                   }`}
                 >
                   {algorithmPanelContent}
@@ -763,7 +767,7 @@ export function AppShell() {
 
               {result ? (
                 <div
-                  className={`soft-enter absolute top-16 right-16 bottom-16 z-[900] flex flex-col gap-[10px] overflow-hidden ${PANEL_ANIM} ${
+                  className={`soft-enter pointer-events-none absolute top-16 right-16 bottom-16 z-[900] flex flex-col gap-[10px] overflow-hidden ${PANEL_ANIM} ${
                     panelsHidden ? "opacity-0 [&_*]:pointer-events-none" : "opacity-100"
                   }`}
                   style={{ width: resultPanelW }}

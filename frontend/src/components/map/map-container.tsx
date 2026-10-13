@@ -7,7 +7,7 @@ import { MapLoading } from "./map-loading";
 
 const MapInner = dynamic(() => import("./map-inner").then((m) => m.MapInner), {
   ssr: false,
-  loading: () => <MapLoading title="Menyiapkan peta" />,
+  loading: () => <MapLoading />,
 });
 
 export function MapCanvas(props: MapInnerProps) {

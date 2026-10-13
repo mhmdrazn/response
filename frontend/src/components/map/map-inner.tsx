@@ -221,7 +221,7 @@ export function MapInner({
             map ? "pointer-events-none opacity-0" : "opacity-100"
           }`}
         >
-          <MapLoading title="Menyiapkan peta" />
+          <MapLoading />
         </div>
       ) : null}
       {ctx ? (
@@ -318,7 +318,7 @@ export function MapInner({
               {/* Map buttons: top left of the map, as in the dashboard map, just right of the left panels. */}
               <div
                 style={{ left: controlsLeft }}
-                className={`absolute top-[84px] z-[1000] transition-[left,opacity] duration-300 ease-out ${
+                className={`pointer-events-none absolute top-[84px] z-[1000] transition-[left,opacity] duration-300 ease-out ${
                   hideChrome ? "opacity-0 [&_*]:pointer-events-none" : "opacity-100"
                 }`}
               >
