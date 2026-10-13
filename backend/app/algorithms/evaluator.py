@@ -34,6 +34,8 @@ class RouteEval:
     z_contribution: float = 0.0
     n_flood_visits: int = 0
     n_if_visits: int = 0
+    # Flood slot of every pumping visit, in order; counts visits per flood for P2.
+    pumped_floods: list[int] = field(default_factory=list)
 
 
 @dataclass
@@ -47,7 +49,8 @@ class SolutionEval:
     remaining_volume: np.ndarray      # per flood, aligned to flood_indices
     unserved_volume: float = 0.0      # liters of pumping work left undone
     overtime_s: float = 0.0           # seconds routes run past the horizon
-    penalty: float = 0.0              # cost of undone work plus overtime
+    excess_visits: int = 0            # P2: pumping visits beyond ceil(V_j / Q_max)
+    penalty: float = 0.0              # cost of undone work, overtime and excess visits
     score: float = 0.0                # objective_z + penalty; what solvers rank on
     # Volumes still unpumped when each route starts. Routes are timed
     # independently and only couple through this state, so an unchanged entry
@@ -184,6 +187,7 @@ def _eval_route(
             r.total_time += SERVICE_SETUP_S + pump_time
             r.z_contribution += float(inst.si_values[flood_idx]) * arrival
             r.n_flood_visits += 1
+            r.pumped_floods.append(flood_idx)
         elif ntype == "if":
             drain = float(inst.if_drain_s[cur - inst.n_depots - inst.n_floods])
             clock += drain
@@ -227,9 +231,11 @@ def _aggregate(
     overtime = sum(
         max(0.0, r.total_time - inst.horizon_of(k)) for k, r in enumerate(route_evals)
     )
+    excess = excess_visits(inst, route_evals)
     penalty = float(
         inst.unserved_penalty * np.sum(inst.si_values * (left / PUMP_RATE_LPS))
         + inst.horizon_penalty * overtime
+        + inst.revisit_penalty * excess
     )
 
     return SolutionEval(
@@ -242,10 +248,26 @@ def _aggregate(
         remaining_volume=volumes_left,
         unserved_volume=float(left.sum()),
         overtime_s=float(overtime),
+        excess_visits=excess,
         entry_volumes=entry_volumes,
         penalty=penalty,
         score=z_total + penalty,
     )
+
+
+def excess_visits(inst: Instance, route_evals: list[RouteEval]) -> int:
+    """P2 = sum_j max(0, n_j - ceil(V_j / Q_max)), n_j the pumping visits to flood j.
+
+    Only visits that pump count: a stop that arrives to a drained point or a full
+    tank pumps nothing, and prune_idle_stops removes those anyway.
+    """
+    if inst.n_floods == 0:
+        return 0
+    counts = np.zeros(inst.n_floods, dtype=int)
+    for r in route_evals:
+        if r.pumped_floods:
+            counts += np.bincount(r.pumped_floods, minlength=inst.n_floods)
+    return int(np.maximum(counts - inst.min_visits(), 0).sum())
 
 
 def all_floods_served(remaining: np.ndarray, tol: float = 1.0) -> bool:

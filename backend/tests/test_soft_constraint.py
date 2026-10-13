@@ -3,13 +3,17 @@ import time
 import numpy as np
 
 from app.algorithms.acs import ACSParams, HybridACS
-from app.algorithms.evaluator import coverage_ratio, evaluate_solution
-from app.algorithms.instance import build_instance
+from app.algorithms.evaluator import (
+    coverage_ratio,
+    evaluate_incremental,
+    evaluate_solution,
+)
+from app.algorithms.instance import REVISIT_PENALTY, build_instance
 from app.algorithms.vns import VNS, VNSParams
 from app.severity.index import compute_severity_index
 
 
-def _instance(b, volume_scale=1.0, unserved_penalty=500.0):
+def _instance(b, volume_scale=1.0, unserved_penalty=500.0, revisit_penalty=REVISIT_PENALTY):
     """Scenario instance, optionally with its workload scaled.
 
     Scaling happens after the build because floods.csv now carries a calibrated
@@ -24,6 +28,7 @@ def _instance(b, volume_scale=1.0, unserved_penalty=500.0):
         time_matrix=b.time_matrix,
         si_values=sev.si_values,
         unserved_penalty=unserved_penalty,
+        revisit_penalty=revisit_penalty,
     )
     if volume_scale != 1.0:
         inst.volumes = inst.volumes * volume_scale
@@ -211,3 +216,101 @@ def test_vns_spreads_its_budget_over_many_iterations(s2):
     # 8 and 14 in one session), so this only guards the old failure of about two.
     assert len(sol.trace.best_score) >= 6, len(sol.trace.best_score)
     assert elapsed < 15.5, f"overran the budget: {elapsed:.1f}s"
+
+
+def _split_visit_route(inst):
+    """One 3000 L route that pumps the same flood twice, with an outlet between.
+
+    The flood is given 4000 L, so the 5000 L tank (Q_max) could empty it in one
+    visit: ceil(4000 / 5000) = 1, and the second visit is one excess visit.
+    """
+    flood = inst.flood_indices[0]
+    slot = flood - inst.n_depots
+    depot = next(iter(inst.eligible_depots[slot]))
+    outlet = inst.if_indices[0]
+    inst.volumes[slot] = 4000.0
+    route = [depot, outlet, flood, outlet, flood, depot]
+    return route, slot
+
+
+def test_revisit_penalty_is_off_by_default(s2):
+    assert REVISIT_PENALTY == 0.0
+    inst = _instance(s2)
+    route, _ = _split_visit_route(inst)
+    ev = evaluate_solution(inst, [route], [3000])
+
+    assert ev.excess_visits == 1, "the split visit is still counted"
+    assert inst.revisit_penalty == 0.0
+    plain = _instance(s2, revisit_penalty=0.0)
+    _split_visit_route(plain)
+    assert ev.penalty == evaluate_solution(plain, [route], [3000]).penalty
+
+
+def test_excess_visits_counts_beyond_the_minimum(s2):
+    inst = _instance(s2)
+    route, slot = _split_visit_route(inst)
+    ev = evaluate_solution(inst, [route], [3000])
+
+    pumping = [v for v in ev.routes[0].visits if v.node_type == "flood" and v.volume_pumped > 0]
+    assert len(pumping) == 2
+    assert inst.min_visits()[slot] == 1
+    assert ev.excess_visits == 1
+
+    # One visit with the big tank empties it: nothing in excess.
+    single = [route[0], route[1], route[2], route[0]]
+    assert evaluate_solution(inst, [single], [5000]).excess_visits == 0
+
+
+def test_idle_stops_are_not_counted_as_visits(s2):
+    inst = _instance(s2)
+    route, _ = _split_visit_route(inst)
+    # The second stop arrives with a full 5000 L tank already holding the whole
+    # 4000 L, so the flood is drained and the stop pumps nothing.
+    full_tank = [route[0], route[1], route[2], route[2], route[0]]
+    ev = evaluate_solution(inst, [full_tank], [5000])
+    assert ev.excess_visits == 0
+
+
+def test_revisit_penalty_is_added_to_the_score(s2):
+    weight = 1500.0
+    off = _instance(s2, revisit_penalty=0.0)
+    on = _instance(s2, revisit_penalty=weight)
+    route, _ = _split_visit_route(off)
+    _split_visit_route(on)
+
+    ev_off = evaluate_solution(off, [route], [3000])
+    ev_on = evaluate_solution(on, [route], [3000])
+
+    assert ev_on.excess_visits == ev_off.excess_visits == 1
+    assert ev_on.objective_z == ev_off.objective_z, "P2 never touches Z"
+    assert ev_on.penalty - ev_off.penalty == weight * 1
+    assert ev_on.score == ev_on.objective_z + ev_on.penalty
+
+
+def test_incremental_evaluation_carries_the_revisit_penalty(s2):
+    inst = _instance(s2, revisit_penalty=800.0)
+    solver = HybridACS(inst, ACSParams(iterations=2, n_ants=2, seed=1, time_limit_s=5))
+    routes, caps = solver._construct_one_ant()
+    base = evaluate_solution(inst, routes, caps)
+
+    # Reverse a stretch of each route in turn; the incremental pass must agree.
+    for k, r in enumerate(routes):
+        if len(r) <= 4:
+            continue
+        trial = [list(x) for x in routes]
+        trial[k][1:-1] = reversed(trial[k][1:-1])
+        full = evaluate_solution(inst, trial, caps)
+        inc = evaluate_incremental(inst, trial, caps, base, k)
+        assert inc.excess_visits == full.excess_visits
+        assert inc.penalty == full.penalty
+        assert inc.score == full.score
+
+
+def test_revisit_penalty_never_raises_excess_visits(s2):
+    p = ACSParams(iterations=6, n_ants=6, seed=11, time_limit_s=15)
+    off = _instance(s2, revisit_penalty=0.0)
+    on = _instance(s2, revisit_penalty=5000.0)
+
+    excess_off = HybridACS(off, p).solve().evaluation.excess_visits
+    excess_on = HybridACS(on, p).solve().evaluation.excess_visits
+    assert excess_on <= excess_off + 2

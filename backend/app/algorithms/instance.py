@@ -61,6 +61,12 @@ HORIZON_PENALTY = 1e6
 # trade-off, not as a default.
 UNSERVED_PENALTY = 500.0
 
+# Weight on excess visits, P2 = sum_j max(0, n_j - ceil(V_j / Q_max)): pumping
+# visits to flood j beyond the fewest that could empty it with the largest tank.
+# Each one is another setup and another trip, so it prices fragmented service.
+# Off by default; set it to study how much the solvers split a point's work.
+REVISIT_PENALTY = 0.0
+
 SBY_LAT_MIN, SBY_LAT_MAX = -7.38, -7.13
 SBY_LON_MIN, SBY_LON_MAX = 112.58, 112.87
 
@@ -119,11 +125,23 @@ class Instance:
     route_horizon_s: float = ROUTE_HORIZON_S
     horizon_penalty: float = HORIZON_PENALTY
 
+    # Soft-constraint weight per excess visit (see REVISIT_PENALTY).
+    revisit_penalty: float = REVISIT_PENALTY
+
     # Dispatch constraint: depots allowed to serve each flood, by flood slot
     eligible_depots: list[frozenset[int]] = field(default_factory=list)
     # Quick lookup: depot_node_index -> set of flood node indices it may serve
     depot_flood_sets: dict[int, set[int]] = field(default_factory=dict)
     dispatch_limit_s: float = DISPATCH_LIMIT_S
+
+    @property
+    def max_capacity(self) -> int:
+        """Largest tank in the fleet, Q_max."""
+        return max((cap for _, cap in self.vehicles), default=max(VEHICLE_CAPACITIES_L))
+
+    def min_visits(self) -> np.ndarray:
+        """Fewest pumping visits each flood needs: ceil(V_j / Q_max)."""
+        return np.ceil(np.maximum(self.volumes, 0.0) / self.max_capacity)
 
     def horizon_of(self, vehicle: int) -> float:
         """Seconds the vehicle in slot `vehicle` may stay on its route."""
@@ -149,6 +167,7 @@ def build_instance(
     horizon_penalty: float = HORIZON_PENALTY,
     dispatch_limit_s: float = DISPATCH_LIMIT_S,
     fleet: dict[str, DepotFleet] | None = None,
+    revisit_penalty: float = REVISIT_PENALTY,
 ) -> Instance:
     depots = [_row_to_dict(r) for _, r in depots_df.iterrows()]
     floods = [_row_to_dict(r) for _, r in floods_df.iterrows()]
@@ -283,6 +302,7 @@ def build_instance(
         unserved_penalty=float(unserved_penalty),
         route_horizon_s=float(route_horizon_s),
         horizon_penalty=float(horizon_penalty),
+        revisit_penalty=float(revisit_penalty),
         eligible_depots=eligible_depots,
         depot_flood_sets=depot_flood_sets,
         dispatch_limit_s=float(dispatch_limit_s),
