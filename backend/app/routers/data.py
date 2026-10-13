@@ -7,7 +7,7 @@ from typing import Any
 import pandas as pd
 from fastapi import APIRouter, HTTPException, Query
 
-from app.config import SHARED_FILES, scenario_floods_path
+from app.config import SHARED_FILES, readable_path, scenario_floods_path, writable_path
 from app.data import registry, scenario_edit
 from app.data.store import store
 from app.preprocessing import workload
@@ -41,6 +41,7 @@ def _sid(scenario: str | None) -> str:
 
 
 def _dataset_path(sid: str, name: str) -> Path:
+    """The dataset's file as deployed; see readable_path/writable_path for edits."""
     return scenario_floods_path(sid) if name == "floods" else SHARED_FILES[name]
 
 
@@ -55,7 +56,8 @@ def _df(sid: str, name: str) -> pd.DataFrame:
 
 
 def _persist(sid: str, name: str, df: pd.DataFrame) -> None:
-    df.to_csv(_dataset_path(sid, name), index=False)
+    # On a read-only deployment this lands in /tmp, which the store reads first.
+    df.to_csv(writable_path(_dataset_path(sid, name)), index=False)
     if name == "floods":
         store.invalidate(sid)
     else:
@@ -99,7 +101,7 @@ async def get_data_meta(scenario: str | None = ScenarioQuery) -> dict[str, dict[
     }
     meta: dict[str, dict[str, object]] = {}
     for name in ("floods", "depo", "if", "faskes"):
-        path = _dataset_path(sid, name)
+        path = readable_path(_dataset_path(sid, name))
         updated = (
             datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc).isoformat()
             if path.exists()

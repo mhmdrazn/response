@@ -63,3 +63,44 @@ def test_a_read_only_filesystem_is_a_clear_503_not_a_bare_500(client, monkeypatc
 
     assert r.status_code == 503
     assert "hanya-baca" in r.json()["detail"]
+
+
+def test_depot_edit_on_a_read_only_deployment_is_saved_under_tmp(client, monkeypatch, tmp_path):
+    # On Vercel the deployed CSVs are read-only and only /tmp can be written, so
+    # an edit goes to a mirror there and reads pick it up from that copy.
+    from app import config
+    from app.data.store import store
+
+    original = config.SHARED_FILES["depo"]
+    before = original.read_bytes()
+    monkeypatch.setattr(config, "WRITABLE_ROOT", tmp_path)
+    store.invalidate_shared()
+    try:
+        depot_id = client.get("/api/data/depo").json()[0]["id"]
+        r = client.put(f"/api/data/depo/{depot_id}", json={"name": "Pos Uji Vercel"})
+
+        assert r.status_code == 200, r.text
+        assert r.json()["name"] == "Pos Uji Vercel"
+        saved = tmp_path / original.relative_to(config.DATA_ROOT)
+        assert saved.exists(), "the edit should land in the writable mirror"
+        assert original.read_bytes() == before, "the deployed file must stay untouched"
+
+        names = {d["id"]: d["name"] for d in client.get("/api/data/depo").json()}
+        assert names[depot_id] == "Pos Uji Vercel", "reads must prefer the saved copy"
+    finally:
+        monkeypatch.undo()
+        store.invalidate_shared()
+
+
+def test_writable_root_falls_back_to_tmp_when_the_data_folder_is_read_only(monkeypatch):
+    import tempfile
+
+    from app import config
+
+    monkeypatch.delenv("WRITABLE_ROOT", raising=False)
+    monkeypatch.setenv("VERCEL", "1")
+    assert config._writable_root() == config.Path(tempfile.gettempdir()) / "response-data"
+
+    monkeypatch.delenv("VERCEL", raising=False)
+    monkeypatch.setattr(config.os, "access", lambda *_a, **_k: False)
+    assert config._writable_root() == config.Path(tempfile.gettempdir()) / "response-data"

@@ -7,6 +7,7 @@ locations. Override any value with an environment variable of the same name.
 from __future__ import annotations
 
 import os
+import tempfile
 from pathlib import Path
 
 _APP_DIR = Path(__file__).resolve().parent  # backend/app
@@ -32,6 +33,46 @@ SHARED_FILES = {
     "if": SHARED_DIR / "if.csv",
     "faskes": SHARED_DIR / "faskes.csv",
 }
+
+
+# Where edits to the datasets are saved. Locally that is DATA_ROOT itself. On a
+# serverless host (Vercel) the deployed files are read-only and only /tmp is
+# writable, so edits go to a mirror of the layout there and reads prefer that
+# copy. /tmp lives as long as the instance, so such edits are not permanent.
+def _writable_root() -> Path:
+    env = os.getenv("WRITABLE_ROOT")
+    if env:
+        return Path(env)
+    if os.getenv("VERCEL") or not os.access(DATA_ROOT, os.W_OK):
+        return Path(tempfile.gettempdir()) / "response-data"
+    return DATA_ROOT
+
+
+WRITABLE_ROOT = _writable_root()
+
+
+def _mirror(path: Path) -> Path | None:
+    if WRITABLE_ROOT == DATA_ROOT:
+        return None
+    try:
+        return WRITABLE_ROOT / path.relative_to(DATA_ROOT)
+    except ValueError:
+        return None
+
+
+def writable_path(path: Path) -> Path:
+    """Where to save a dataset file: in place, or its mirror under WRITABLE_ROOT."""
+    target = _mirror(path)
+    if target is None:
+        return path
+    target.parent.mkdir(parents=True, exist_ok=True)
+    return target
+
+
+def readable_path(path: Path) -> Path:
+    """The current copy of a dataset file: the saved edit if there is one."""
+    saved = _mirror(path)
+    return saved if saved is not None and saved.exists() else path
 
 
 def scenario_dir(scenario_id: str) -> Path:

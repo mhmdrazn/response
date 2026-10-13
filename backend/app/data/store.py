@@ -13,7 +13,7 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
-from app.config import SHARED_FILES, scenario_floods_path, scenario_matrix_paths
+from app.config import SHARED_FILES, readable_path, scenario_floods_path, scenario_matrix_paths
 from app.data import loaders, registry
 
 _log = logging.getLogger("response.data")
@@ -38,9 +38,9 @@ class ScenarioStore:
     def _shared_data(self) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         if self._shared is None:
             self._shared = (
-                loaders.load_depots(SHARED_FILES["depo"]),
-                loaders.load_ifs(SHARED_FILES["if"]),
-                loaders.load_faskes(SHARED_FILES["faskes"]),
+                loaders.load_depots(readable_path(SHARED_FILES["depo"])),
+                loaders.load_ifs(readable_path(SHARED_FILES["if"])),
+                loaders.load_faskes(readable_path(SHARED_FILES["faskes"])),
             )
         return self._shared
 
@@ -51,7 +51,7 @@ class ScenarioStore:
             return cached
 
         depots, ifs, faskes = self._shared_data()
-        floods = loaders.load_floods(scenario_floods_path(sid))
+        floods = loaders.load_floods(readable_path(scenario_floods_path(sid)))
         n_expected = len(depots) + len(floods) + len(ifs)
         dist, time = self._load_matrices(sid, n_expected)
 
@@ -62,7 +62,7 @@ class ScenarioStore:
     def _load_matrices(
         self, sid: str, n_expected: int
     ) -> tuple[np.ndarray | None, np.ndarray | None]:
-        dpath, tpath = scenario_matrix_paths(sid)
+        dpath, tpath = (readable_path(p) for p in scenario_matrix_paths(sid))
         if not dpath.exists() or not tpath.exists():
             return None, None
         dist = np.load(dpath)
