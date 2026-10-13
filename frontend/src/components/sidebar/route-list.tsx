@@ -274,35 +274,6 @@ function RouteCard({
             <Kv label="Waktu" value={formatDuration(r.total_time_s)} />
             <Kv label="Skor" value={formatNumber(r.z_contribution, 0)} />
           </div>
-          <div className="mt-[4px] text-[11px] font-bold uppercase tracking-[0.7px] text-slate">
-            Urutan Kunjungan
-          </div>
-          <ol className="m-0 flex list-none flex-col gap-[2px] p-0">
-            {r.visits.map((v, i) => (
-              <li
-                key={i}
-                className={`flex items-center gap-[6px] py-[3px] text-[12.5px] ${
-                  i < r.visits.length - 1 ? "border-b border-dashed border-frost" : ""
-                }`}
-              >
-                <VisitDot type={v.node_type} />
-                <span
-                  title={v.node_name}
-                  className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-bold text-midnight-ink"
-                >
-                  {v.node_name}
-                </span>
-                {v.node_type === "flood" ? (
-                  <span className="flex-shrink-0 text-[11px] font-medium text-steel">
-                    {formatLiters(v.volume_pumped_l)}
-                  </span>
-                ) : null}
-                <span className="flex-shrink-0 text-[11px] font-semibold text-slate tabular-nums">
-                  {formatDuration(v.arrival_time_s)}
-                </span>
-              </li>
-            ))}
-          </ol>
         </div>
       ) : null}
     </div>
@@ -315,20 +286,5 @@ function Kv({ label, value }: { label: string; value: string }) {
       <span className="text-[10.5px] font-bold uppercase tracking-[0.6px] text-slate">{label}</span>
       <span className="text-[13.5px] font-bold text-midnight-ink tabular-nums">{value}</span>
     </div>
-  );
-}
-
-function VisitDot({ type }: { type: "depot" | "flood" | "if" }) {
-  const map: Record<string, string> = {
-    depot: "#f59e0b",
-    flood: "#ef4444",
-    if: "#0284c7",
-  };
-  return (
-    <span
-      aria-hidden
-      className="h-[6px] w-[6px] flex-shrink-0 rounded-full"
-      style={{ background: map[type] }}
-    />
   );
 }

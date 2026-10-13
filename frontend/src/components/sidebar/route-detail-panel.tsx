@@ -1,22 +1,13 @@
 "use client";
 
-import {
-  Check,
-  Copy,
-  Droplets,
-  Navigation,
-  Truck,
-  Warehouse,
-  Waves,
-  type LucideIcon,
-} from "lucide-react";
-import { Fragment, useEffect, useState } from "react";
+import { Check, Copy, Truck } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { formatDuration, formatMeters, formatNumber } from "../../lib/format-metrics";
 import { buildGoogleMapsLink } from "../../lib/gmaps";
 import { labelCycles } from "../../lib/route-cycles";
-import { FACILITY_COLORS, ROUTE_COLORS } from "../../lib/map-constants";
-import type { MapSelection, NodeType, RouteOut, VisitOut } from "../../types";
+import { ROUTE_COLORS } from "../../lib/map-constants";
+import type { MapSelection, RouteOut } from "../../types";
 import {
   DetailColumns,
   DetailFact,
@@ -27,11 +18,9 @@ import {
   DetailShell,
   DetailStat,
   DetailStats,
-  LOG_ROW_CLS,
-  LogHead,
-  LogList,
-  LogRows,
 } from "./detail-parts";
+import { RouteTimeline } from "./route-timeline";
+import { GoogleMapsIcon } from "../google-maps-icon";
 
 interface RouteDetailPanelProps {
   route: RouteOut;
@@ -42,8 +31,6 @@ interface RouteDetailPanelProps {
   onClose: () => void;
   variant?: "fullscreen" | "embedded";
 }
-
-const LOG_GRID = "grid grid-cols-[22px_14px_minmax(0,1fr)_84px_92px] items-center gap-x-[8px]";
 
 function ShareButtons({ url }: { url: string }) {
   const [copied, setCopied] = useState(false);
@@ -76,7 +63,7 @@ function ShareButtons({ url }: { url: string }) {
         aria-label="Buka rute di Google Maps"
         className={`${btn} min-w-[28px] px-[7px] no-underline @min-[560px]:px-[10px]`}
       >
-        <Navigation size={13} strokeWidth={2.2} aria-hidden />
+        <GoogleMapsIcon size={14} />
         <span className="hidden @min-[560px]:inline">Google Maps</span>
       </a>
       <button
@@ -94,23 +81,6 @@ function ShareButtons({ url }: { url: string }) {
       </button>
     </div>
   );
-}
-
-const STOP_ICON: Record<NodeType, { Icon: LucideIcon; color: string }> = {
-  depot: { Icon: Warehouse, color: FACILITY_COLORS.depot },
-  flood: { Icon: Waves, color: "var(--color-steel)" },
-  if: { Icon: Droplets, color: FACILITY_COLORS.if },
-};
-
-/** Litres moved at a stop: pumped at a flood, poured out at an outlet. */
-function stopVolume(route: RouteOut, index: number): string {
-  const v: VisitOut = route.visits[index];
-  if (v.node_type === "flood") return `+${formatNumber(v.volume_pumped_l)} L`;
-  if (v.node_type === "if") {
-    const poured = index > 0 ? route.visits[index - 1].tank_load_after_l : route.capacity_l;
-    return `−${formatNumber(poured)} L`;
-  }
-  return "-";
 }
 
 export function RouteDetailPanel({
@@ -206,58 +176,7 @@ export function RouteDetailPanel({
         </DetailSection>
 
         <DetailSection title="Urutan kunjungan" fill>
-          <LogList>
-            <LogHead grid={LOG_GRID}>
-              <span className="text-right">#</span>
-              <span aria-hidden />
-              <span>Perhentian</span>
-              <span className="text-right">Tiba</span>
-              <span className="text-right">Volume</span>
-            </LogHead>
-            <LogRows>
-              {route.visits.map((v, i) => {
-                const { Icon, color: iconColor } = STOP_ICON[v.node_type];
-                const stop = cycles.stops[i];
-                return (
-                  <Fragment key={`${v.node_id}-${i}`}>
-                    {stop.starts ? (
-                      <li
-                        aria-hidden
-                        className="text-slate flex items-center gap-[8px] pt-[9px] pb-[3px] text-[10px] font-bold tracking-[0.7px] uppercase"
-                      >
-                        {stop.final
-                          ? "Pembuangan akhir"
-                          : `Siklus ${stop.cycle} dari ${cycles.total}`}
-                        <span className="bg-frost h-px flex-1" />
-                      </li>
-                    ) : null}
-                    <li className="border-frost border-b last:border-b-0">
-                      <button
-                        type="button"
-                        onClick={() => onSelectStop({ kind: v.node_type, id: v.node_id })}
-                        title="Buka detail perhentian ini"
-                        className={`${LOG_GRID} ${LOG_ROW_CLS} hover:bg-mist w-full cursor-pointer border-0 bg-transparent px-0 text-left transition-colors`}
-                      >
-                        <span className="text-slate text-right font-medium tabular-nums">
-                          {i + 1}
-                        </span>
-                        <Icon size={13} strokeWidth={2.2} color={iconColor} aria-hidden />
-                        <span className="text-midnight-ink truncate font-bold" title={v.node_name}>
-                          {v.node_name}
-                        </span>
-                        <span className="text-midnight-ink text-right font-bold tabular-nums">
-                          {formatDuration(v.arrival_time_s)}
-                        </span>
-                        <span className="text-steel text-right font-medium tabular-nums">
-                          {stopVolume(route, i)}
-                        </span>
-                      </button>
-                    </li>
-                  </Fragment>
-                );
-              })}
-            </LogRows>
-          </LogList>
+          <RouteTimeline route={route} color={color} cycles={cycles} onSelectStop={onSelectStop} />
         </DetailSection>
       </DetailColumns>
     </DetailShell>
