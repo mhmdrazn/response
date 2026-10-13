@@ -221,7 +221,6 @@ button:not(:disabled):active,
 }
 
 @keyframes response-pulse {
-
   0%,
   100% {
     transform: scale(1);
@@ -300,26 +299,7 @@ button:not(:disabled):active,
   animation: response-fade-up 0.7s ease-out 1.8s forwards;
 }
 
-/* --- Leaflet: remove shadow on popups + tooltips (see DESIGN.md) --- */
-.leaflet-popup-content-wrapper,
-.leaflet-popup-tip {
-  box-shadow: none !important;
-  border: 1px solid var(--color-frost);
-  border-radius: var(--radius-lg);
-  background: var(--color-pure-white);
-}
-
-.leaflet-popup-content-wrapper {
-  padding: 0;
-}
-
-.leaflet-popup-content {
-  font-family: var(--font-manrope);
-  color: var(--color-midnight-ink);
-  margin: 12px 14px;
-  line-height: 1.4;
-}
-
+/* --- Map (MapLibre): tooltips, markers, controls. No shadows (see DESIGN.md) --- */
 @keyframes response-tooltip-fade {
   from {
     opacity: 0;
@@ -330,8 +310,9 @@ button:not(:disabled):active,
   }
 }
 
-.leaflet-tooltip {
-  box-shadow: none !important;
+.map-tooltip,
+.map-hover-tooltip {
+  position: absolute;
   background: var(--color-pure-white);
   border: 1px solid var(--color-frost);
   border-radius: var(--radius-lg);
@@ -344,15 +325,86 @@ button:not(:disabled):active,
   max-width: 280px;
   min-width: 180px;
   width: max-content;
+  pointer-events: none;
+  text-align: left;
+  line-height: 1.4;
 }
 
-/* Leaflet already toggles tooltip opacity 1<->0 around add/remove (with a
-   200ms delayed removal) when the map has fade animation enabled -- it just
-   never shipped a transition rule for tooltips (only popups). Adding one here
-   makes that existing open/close opacity swap animate instead of jumping,
-   giving a real fade-in AND fade-out. */
-.leaflet-fade-anim .leaflet-tooltip {
-  transition: opacity 0.2s linear;
+/* Marker tooltip: hidden until its marker is hovered, then fades up into place. */
+.map-tooltip {
+  left: 50%;
+  bottom: calc(50% + var(--tip-offset, 14px));
+  opacity: 0;
+  transform: translate(-50%, 4px);
+  transition:
+    opacity 0.15s linear,
+    transform 0.15s ease-out;
+}
+
+.map-tooltip:empty {
+  display: none;
+}
+
+.map-marker:hover .map-tooltip {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* Route and kecamatan tooltip: follows the pointer. */
+.map-hover-tooltip {
+  z-index: 5;
+  transform: translate(-50%, calc(-100% - 14px));
+  animation: response-tooltip-fade 0.15s ease-out;
+}
+
+/* DOM markers (the draft pin): only a draggable one takes the pointer. */
+.map-marker {
+  pointer-events: none;
+}
+
+.map-marker-draggable {
+  pointer-events: auto;
+  cursor: grab;
+}
+
+.map-marker:hover {
+  z-index: 30 !important;
+}
+
+.maplibregl-map {
+  font-family: var(--font-manrope);
+}
+
+.maplibregl-canvas:focus,
+.maplibregl-map:focus {
+  outline: none;
+}
+
+/* Placing a flood point: the whole map reads as a target. */
+.maplibregl-map.map-picking .maplibregl-canvas-container.maplibregl-interactive,
+.maplibregl-map.map-picking .maplibregl-canvas {
+  cursor: crosshair;
+}
+
+.maplibregl-ctrl-group,
+.maplibregl-ctrl-attrib,
+.maplibregl-ctrl.maplibregl-ctrl-attrib.maplibregl-compact {
+  box-shadow: none !important;
+}
+
+.maplibregl-ctrl-attrib {
+  font-family: var(--font-manrope);
+  font-size: 11px;
+  color: var(--color-steel);
+}
+
+.maplibregl-ctrl-attrib a {
+  color: var(--color-steel);
+}
+
+.maplibregl-ctrl.maplibregl-ctrl-attrib.maplibregl-compact {
+  border: 1px solid var(--color-frost);
+  background: var(--color-pure-white);
 }
 
 /* Recharts hover tooltip (convergence + comparison charts) -- recharts mounts
@@ -369,104 +421,6 @@ button:not(:disabled):active,
 
   to {
     transform: rotate(360deg);
-  }
-}
-
-.leaflet-tooltip-top:before {
-  border-top-color: var(--color-frost) !important;
-}
-
-.leaflet-tooltip-bottom:before {
-  border-bottom-color: var(--color-frost) !important;
-}
-
-.leaflet-tooltip-left:before {
-  border-left-color: var(--color-frost) !important;
-}
-
-.leaflet-tooltip-right:before {
-  border-right-color: var(--color-frost) !important;
-}
-
-.leaflet-container {
-  font-family: var(--font-manrope);
-  background: var(--color-mist);
-}
-
-/* Clicking a route or marker focuses it, and the browser draws its focus ring as a
-   black box around the shape's bounding rectangle. Selection is shown by the
-   shape itself (thicker route, halo on markers), so the ring only gets in the way. */
-.leaflet-interactive:focus,
-.leaflet-marker-icon:focus,
-.leaflet-container:focus {
-  outline: none;
-}
-
-/* Chrome leaves hairline gaps between map tiles at fractional zoom or display
-   scaling. A transparent outline widens each tile by a subpixel and closes them. */
-.leaflet-tile {
-  outline: 1px solid transparent;
-}
-
-/* Placing a flood point: the whole map reads as a target, markers included. */
-.leaflet-container.map-picking,
-.leaflet-container.map-picking .leaflet-interactive {
-  cursor: crosshair;
-}
-
-.leaflet-control-zoom a {
-  border-color: var(--color-frost) !important;
-  color: var(--color-midnight-ink) !important;
-  box-shadow: none !important;
-}
-
-.leaflet-bar {
-  border: 1px solid var(--color-frost) !important;
-  box-shadow: none !important;
-}
-
-/* --- Flood marker & emergency pulse --- */
-.flood-marker {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-}
-
-.flood-marker-dot {
-  border-radius: 9999px;
-  border: 2px solid #ffffff;
-  pointer-events: auto;
-  cursor: pointer;
-}
-
-.flood-marker-pulse {
-  position: absolute;
-  border-radius: 9999px;
-  z-index: 1;
-  pointer-events: none;
-  opacity: 0;
-  animation: flood-emergency-pulse 1.6s cubic-bezier(0.16, 0.6, 0.6, 1) infinite;
-}
-
-.flood-marker-pulse.secondary {
-  animation-delay: 0.8s;
-}
-
-@keyframes flood-emergency-pulse {
-  0% {
-    transform: scale(0.35);
-    opacity: 0.85;
-  }
-
-  60% {
-    opacity: 0;
-  }
-
-  100% {
-    transform: scale(1.9);
-    opacity: 0;
   }
 }
 
@@ -654,22 +608,8 @@ button:not(:disabled):active,
   animation: soft-pop 300ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
 }
 
-@keyframes flood-dot-select {
-  from {
-    transform: scale(1);
-  }
-
-  to {
-    transform: scale(1.25);
-  }
-}
-
 /* The marker icon is rebuilt when it is selected, so a transition has nothing to
    move from; a forwards animation carries the dot to its larger size instead. */
-.flood-dot-selected {
-  animation: flood-dot-select 260ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-}
-
 .soft-grow-x {
   transform-origin: left center;
   animation: soft-grow-x 700ms cubic-bezier(0.2, 0.8, 0.2, 1) 120ms backwards;
@@ -708,5 +648,40 @@ button:not(:disabled):active,
   [role="option"],
   [role="radio"] {
     transition-duration: 180ms;
+  }
+}
+
+/* --- Map loading screen: an indeterminate bar slides across its track --- */
+.map-loading-bar {
+  width: 40%;
+  animation: map-loading-slide 1.3s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+@keyframes map-loading-slide {
+  from {
+    left: -40%;
+  }
+
+  to {
+    left: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-loading-bar {
+    left: 0;
+    width: 100%;
+    animation: map-loading-breathe 1.6s ease-in-out infinite;
+  }
+
+  @keyframes map-loading-breathe {
+    0%,
+    100% {
+      opacity: 0.4;
+    }
+
+    50% {
+      opacity: 1;
+    }
   }
 }

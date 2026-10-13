@@ -1,38 +1,63 @@
 "use client";
 
-import { useMap } from "react-leaflet";
+import { Crosshair, LayoutDashboard, Maximize2, Minus, Plus } from "lucide-react";
 
-import { DEFAULT_ZOOM, SURABAYA_CENTER } from "../../lib/map-constants";
+import { useMapContext } from "./map-context";
 
 interface MapControlsProps {
-  /** "vertical" stacks the compass above the zoom pair, for the phone's right edge. */
+  /** "vertical" stacks the clusters in a column, for a map's right edge. */
   orientation?: "horizontal" | "vertical";
 }
 
+/**
+ * The map's own buttons: 3D view, the switch between full map and dashboard, back
+ * to the centre of Surabaya, and zoom.
+ */
 export function MapControls({ orientation = "horizontal" }: MapControlsProps) {
-  const map = useMap();
+  const { threeD, layout, onToggleLayout } = useMapContext();
   const vertical = orientation === "vertical";
+  const toWindowed = layout !== "windowed";
 
   return (
     <div
       className={`pointer-events-none flex items-start gap-8 ${vertical ? "flex-col" : "flex-row"}`}
     >
-      <ControlCluster>
+      <ControlCluster vertical={vertical}>
         <IconButton
-          label="Kembali ke pusat Surabaya"
-          onClick={() => map.setView(SURABAYA_CENTER, DEFAULT_ZOOM)}
+          label={threeD.active ? "Tampilan 2D" : "Tampilan 3D"}
+          pressed={threeD.active}
+          onClick={threeD.toggle}
         >
-          <CompassIcon />
+          <span className="text-[13px] font-bold tracking-[-0.3px]">3D</span>
+        </IconButton>
+        {onToggleLayout ? (
+          <>
+            <Divider vertical={vertical} />
+            <IconButton
+              label={toWindowed ? "Tampilan berjendela (dashboard)" : "Tampilan peta penuh"}
+              onClick={onToggleLayout}
+            >
+              {toWindowed ? (
+                <LayoutDashboard size={17} strokeWidth={2} />
+              ) : (
+                <Maximize2 size={17} strokeWidth={2} />
+              )}
+            </IconButton>
+          </>
+        ) : null}
+        <Divider vertical={vertical} />
+        <IconButton label="Kembali ke pusat Surabaya" onClick={threeD.recenter}>
+          <Crosshair size={18} strokeWidth={2} />
         </IconButton>
       </ControlCluster>
 
       <ControlCluster vertical={vertical}>
-        <IconButton label="Perbesar" onClick={() => map.zoomIn()}>
-          <PlusIcon />
+        <IconButton label="Perbesar" onClick={() => threeD.zoomBy(1)}>
+          <Plus size={17} strokeWidth={2} />
         </IconButton>
         <Divider vertical={vertical} />
-        <IconButton label="Perkecil" onClick={() => map.zoomOut()}>
-          <MinusIcon />
+        <IconButton label="Perkecil" onClick={() => threeD.zoomBy(-1)}>
+          <Minus size={17} strokeWidth={2} />
         </IconButton>
       </ControlCluster>
     </div>
@@ -48,7 +73,7 @@ export function ControlCluster({
 }) {
   return (
     <div
-      className={`pointer-events-auto flex overflow-hidden rounded-lg border border-frost bg-pure-white ${
+      className={`border-frost bg-pure-white pointer-events-auto flex overflow-hidden rounded-[12px] border ${
         vertical ? "flex-col" : "flex-row"
       }`}
     >
@@ -60,19 +85,27 @@ export function ControlCluster({
 export function IconButton({
   label,
   onClick,
+  pressed,
   children,
 }: {
   label: string;
   onClick: () => void;
+  /** Set for toggles; a pressed toggle reads in the accent colour. */
+  pressed?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <button
       type="button"
       aria-label={label}
+      aria-pressed={pressed}
       title={label}
       onClick={onClick}
-      className="flex h-[36px] w-[36px] cursor-pointer items-center justify-center border-0 bg-pure-white text-steel transition-colors hover:bg-frost"
+      className={`flex h-[40px] w-[40px] cursor-pointer items-center justify-center border-0 transition-colors ${
+        pressed
+          ? "bg-periwinkle-wash text-indigo-ink hover:bg-frost"
+          : "bg-pure-white text-midnight-ink hover:bg-mist"
+      }`}
     >
       {children}
     </button>
@@ -83,43 +116,7 @@ function Divider({ vertical = false }: { vertical?: boolean }) {
   return (
     <div
       aria-hidden
-      className={vertical ? "h-px self-stretch bg-frost" : "w-px self-stretch bg-frost"}
+      className={vertical ? "bg-frost mx-8 h-px self-stretch" : "bg-frost my-8 w-px self-stretch"}
     />
-  );
-}
-
-function CompassIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.6" />
-      <path d="M 12 4 L 15 12 L 12 20 L 9 12 Z" fill="currentColor" opacity="0.9" />
-      <text
-        x="12"
-        y="7.2"
-        fontSize="4.2"
-        fontFamily="var(--font-manrope)"
-        fontWeight="700"
-        textAnchor="middle"
-        fill="#ffffff"
-      >
-        N
-      </text>
-    </svg>
-  );
-}
-
-function PlusIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function MinusIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M5 12h14" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
-    </svg>
   );
 }

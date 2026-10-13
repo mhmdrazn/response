@@ -5,7 +5,6 @@ import { useEffect, useRef, type ReactNode } from "react";
 import type { DatasetKey } from "../data-table-modal";
 import type { BaseMapId, OverlayLayerId } from "../../lib/map-constants";
 import { DataDock } from "./data-dock";
-import { MapControls } from "./map-controls";
 import { MapLayerDock } from "./map-layer-dock";
 
 interface LeftPanelProps {
@@ -68,8 +67,6 @@ export function LeftPanel({
         hidden ? "opacity-0 [&_*]:pointer-events-none" : "opacity-100"
       }`}
     >
-      <MapControls />
-
       <MapLayerDock
         overlays={overlays}
         setOverlay={setOverlay}

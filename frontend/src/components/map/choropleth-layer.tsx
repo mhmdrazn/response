@@ -1,8 +1,7 @@
 "use client";
 
-import type { Layer, PathOptions } from "leaflet";
+import type { GeoJSONSource } from "maplibre-gl";
 import { useEffect, useMemo, useState } from "react";
-import { GeoJSON } from "react-leaflet";
 
 import {
   aggregateSiByKecamatan,
@@ -11,6 +10,10 @@ import {
 } from "../../lib/choropleth";
 import { siColor, siLabel } from "../../lib/map-constants";
 import type { FloodPoint } from "../../types";
+import { HoverTooltip, hitsLayers, useLayerHover } from "./hover-tooltip";
+import { POINT_HIT_LAYERS, useMapContext } from "./map-context";
+import { beforeIdFor } from "./map-layers";
+import { ROUTE_HIT_LAYER } from "./route-polylines";
 
 interface ChoroplethLayerProps {
   floods: FloodPoint[];
@@ -27,26 +30,12 @@ const GEOJSON_URL = "/data/surabaya-kecamatan.geojson";
 const EMPTY_FILL = "#e5e5e5";
 const BORDER = "#525252";
 
-function featureStyle(stat: KecamatanStat | undefined): PathOptions {
-  if (!stat || stat.count === 0) {
-    return {
-      color: BORDER,
-      weight: 0.8,
-      opacity: 0.35,
-      fillColor: EMPTY_FILL,
-      fillOpacity: 0.15,
-      dashArray: "3 3",
-    };
-  }
-  // Fill by relative total severity load, not the mean.
-  return {
-    color: BORDER,
-    weight: 1,
-    opacity: 0.45,
-    fillColor: siColor(stat.loadNorm),
-    fillOpacity: 0.55,
-  };
-}
+const SOURCE = "app-choropleth";
+const FILL = "app-choropleth-fill";
+const LINE = "app-choropleth-line";
+const LINE_EMPTY = "app-choropleth-line-empty";
+
+const EMPTY_STAT: KecamatanStat = { count: 0, meanSi: 0, maxSi: 0, totalLoad: 0, loadNorm: 0 };
 
 function tooltipHtml(name: string, stat: KecamatanStat): string {
   const rows =
@@ -94,6 +83,7 @@ function escapeHtml(s: string): string {
 }
 
 export function ChoroplethLayer({ floods }: ChoroplethLayerProps) {
+  const { map, styleVersion } = useMapContext();
   const [collection, setCollection] = useState<KecamatanCollection | null>(null);
 
   useEffect(() => {
@@ -116,40 +106,101 @@ export function ChoroplethLayer({ floods }: ChoroplethLayerProps) {
     [collection, floods],
   );
 
-  // react-leaflet's GeoJSON snapshots data/style on mount; a signature key
-  // remounts it when the underlying aggregation changes.
-  const signature = useMemo(() => {
-    if (!stats) return "empty";
-    let s = "";
-    for (const [code, st] of stats) s += `${code}:${st.count}:${st.loadNorm.toFixed(3)};`;
-    return s;
-  }, [stats]);
+  // Fill by relative total severity load, not the mean; kecamatan without
+  // flood observations get a faint neutral fill and a dashed border.
+  const data = useMemo<GeoJSON.FeatureCollection | null>(() => {
+    if (!collection || !stats) return null;
+    return {
+      type: "FeatureCollection",
+      features: collection.features.map((f, i) => {
+        const props = f.properties as { kecamatan: string; code: string };
+        const stat = stats.get(props.code);
+        const empty = !stat || stat.count === 0;
+        return {
+          ...(f as GeoJSON.Feature),
+          id: i,
+          properties: {
+            ...props,
+            empty,
+            fill: empty ? EMPTY_FILL : siColor(stat.loadNorm),
+            fillOpacity: empty ? 0.15 : 0.55,
+          },
+        };
+      }),
+    };
+  }, [collection, stats]);
 
-  if (!collection || !stats) return null;
+  useEffect(() => {
+    if (!data) return;
+    const src = map.getSource(SOURCE) as GeoJSONSource | undefined;
+    if (src) src.setData(data);
+    else map.addSource(SOURCE, { type: "geojson", data });
+    // Under the routes and the basemap labels, over the ground.
+    const before = beforeIdFor(map, "app-choropleth");
+    if (!map.getLayer(FILL)) {
+      map.addLayer(
+        {
+          id: FILL,
+          type: "fill",
+          source: SOURCE,
+          paint: { "fill-color": ["get", "fill"], "fill-opacity": ["get", "fillOpacity"] },
+        },
+        before,
+      );
+    }
+    if (!map.getLayer(LINE)) {
+      map.addLayer(
+        {
+          id: LINE,
+          type: "line",
+          source: SOURCE,
+          filter: ["!", ["get", "empty"]],
+          paint: { "line-color": BORDER, "line-width": 1, "line-opacity": 0.45 },
+        },
+        before,
+      );
+    }
+    if (!map.getLayer(LINE_EMPTY)) {
+      map.addLayer(
+        {
+          id: LINE_EMPTY,
+          type: "line",
+          source: SOURCE,
+          filter: ["get", "empty"],
+          paint: {
+            "line-color": BORDER,
+            "line-width": 0.8,
+            "line-opacity": 0.35,
+            "line-dasharray": [3, 3],
+          },
+        },
+        before,
+      );
+    }
+  }, [map, styleVersion, data]);
+
+  useEffect(
+    () => () => {
+      if (!map.style) return;
+      for (const id of [LINE_EMPTY, LINE, FILL]) if (map.getLayer(id)) map.removeLayer(id);
+      if (map.getSource(SOURCE)) map.removeSource(SOURCE);
+    },
+    [map],
+  );
+
+  const hover = useLayerHover(FILL, data !== null);
+  if (!hover || !stats) return null;
+  // A route or point under the pointer shows its own tooltip; don't stack two.
+  if (hitsLayers(map, hover.x, hover.y, [ROUTE_HIT_LAYER, ...POINT_HIT_LAYERS])) return null;
+  const props = hover.feature.properties as { kecamatan: string; code: string };
 
   return (
-    <GeoJSON
-      key={signature}
-      data={collection}
-      style={(feature) => {
-        const code = (feature?.properties as { code?: string } | undefined)?.code;
-        return featureStyle(code ? stats.get(code) : undefined);
-      }}
-      onEachFeature={(feature, layer: Layer) => {
-        const props = feature.properties as { kecamatan: string; code: string };
-        const stat = stats.get(props.code) ?? {
-          count: 0,
-          meanSi: 0,
-          maxSi: 0,
-          totalLoad: 0,
-          loadNorm: 0,
-        };
-        layer.bindTooltip(tooltipHtml(props.kecamatan, stat), {
-          sticky: true,
-          direction: "top",
-          opacity: 1,
-        });
-      }}
-    />
+    <HoverTooltip x={hover.x} y={hover.y}>
+      <div
+        dangerouslySetInnerHTML={{
+          __html: tooltipHtml(props.kecamatan, stats.get(props.code) ?? EMPTY_STAT),
+        }}
+      />
+    </HoverTooltip>
   );
 }

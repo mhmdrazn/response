@@ -3,14 +3,11 @@
 import dynamic from "next/dynamic";
 
 import type { MapInnerProps } from "./map-inner";
+import { MapLoading } from "./map-loading";
 
 const MapInner = dynamic(() => import("./map-inner").then((m) => m.MapInner), {
   ssr: false,
-  loading: () => (
-    <div className="flex h-full w-full items-center justify-center bg-mist">
-      <div className="text-body-sm font-semibold text-steel">Memuat peta...</div>
-    </div>
-  ),
+  loading: () => <MapLoading title="Menyiapkan peta" />,
 });
 
 export function MapCanvas(props: MapInnerProps) {

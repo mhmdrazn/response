@@ -1,6 +1,5 @@
-import type { LatLngExpression } from "leaflet";
-
-export const SURABAYA_CENTER: LatLngExpression = [-7.2575, 112.7521];
+/** [lon, lat], the order MapLibre takes. */
+export const SURABAYA_CENTER: [number, number] = [112.7521, -7.2575];
 export const DEFAULT_ZOOM = 12;
 
 export interface SiBucket {
@@ -104,39 +103,11 @@ export const ROUTE_COLORS: string[] = [
   "#ff938f",
 ];
 
+/** Basemaps the layer picker offers; their MapLibre styles are in basemap-style.ts. */
 export const BASE_MAP_LAYERS = {
-  standard: {
-    id: "standard",
-    label: "Standar",
-    urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-    attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-  },
-  positron: {
-    id: "positron",
-    // Esri light-gray canvas: keyless, neutral backdrop ideal for the
-    // choropleth. Replaces CARTO Positron, which now serves an
-    // "API KEY REQUIRED" watermark tile for anonymous use.
-    label: "Terang",
-    urlTemplate:
-      "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",
-    attribution: "Tiles &copy; Esri &mdash; Esri, HERE, Garmin, &copy; OpenStreetMap contributors",
-  },
-  darkmatter: {
-    id: "darkmatter",
-    label: "Gelap",
-    urlTemplate:
-      "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
-    attribution: "Tiles &copy; Esri &mdash; Esri, HERE, Garmin, &copy; OpenStreetMap contributors",
-  },
-  satellite: {
-    id: "satellite",
-    label: "Satelit",
-    urlTemplate:
-      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-    attribution:
-      "Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community",
-  },
+  standard: { id: "standard", label: "Standar" },
+  positron: { id: "positron", label: "Terang" },
+  satellite: { id: "satellite", label: "Satelit" },
 } as const;
 
 export type BaseMapId = keyof typeof BASE_MAP_LAYERS;

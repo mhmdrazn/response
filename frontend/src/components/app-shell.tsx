@@ -14,11 +14,12 @@ import {
 import { useAlgorithmConfig } from "../hooks/use-algorithm-config";
 import { useFleetConfig } from "../hooks/use-fleet-config";
 import { useBreakpoint } from "../hooks/use-breakpoint";
+import { usePersistentState } from "../hooks/use-persistent-state";
 import { useMapData } from "../hooks/use-map-data";
 import { useOptimization } from "../hooks/use-optimization";
 import { usePresence } from "../hooks/use-presence";
 import { usePriority } from "../hooks/use-priority";
-import type { BaseMapId, OverlayLayerId } from "../lib/map-constants";
+import { BASE_MAP_LAYERS, type BaseMapId, type OverlayLayerId } from "../lib/map-constants";
 import { OVERLAY_LAYERS } from "../lib/map-constants";
 import { api } from "../lib/api";
 import { MAX_SHIFT_MIN, MAX_UNITS, settingFor } from "../lib/fleet";
@@ -53,6 +54,7 @@ import { ChoroplethLegend } from "./map/choropleth-legend";
 import { MapCanvas } from "./map/map-container";
 import { DataDock } from "./map/data-dock";
 import { MapLayerDock } from "./map/map-layer-dock";
+import { MapLoading } from "./map/map-loading";
 import { MapLegend } from "./map/map-legend";
 import { MobileMapTools, type MobileToolId } from "./map/mobile-map-tools";
 import { MobileRunBar } from "./mobile-run-bar";
@@ -91,6 +93,7 @@ const NO_DEPOTS: Depot[] = [];
 
 const HIDDEN_ROUTES_STORAGE_KEY = "floodroute:hidden-routes:v1";
 const LAYOUT_STORAGE_KEY = "floodroute:layout:v1";
+const BASEMAP_STORAGE_KEY = "floodroute:basemap:v1";
 
 function subscribeStorage(onChange: () => void): () => void {
   window.addEventListener("storage", onChange);
@@ -110,7 +113,10 @@ export function AppShell() {
   const [chosenLayout, setChosenLayout] = useState<AppLayout | null>(null);
   const layout = chosenLayout ?? savedLayout;
   const [overlays, setOverlays] = useState<Record<OverlayLayerId, boolean>>(INITIAL_OVERLAYS);
-  const [baseMap, setBaseMap] = useState<BaseMapId>("standard");
+  // The basemap last used comes back on the next visit.
+  const [savedBaseMap, setBaseMap] = usePersistentState<string>(BASEMAP_STORAGE_KEY, "standard");
+  const baseMap: BaseMapId =
+    savedBaseMap in BASE_MAP_LAYERS ? (savedBaseMap as BaseMapId) : "standard";
   const [highlightVehicleId, setHighlightVehicleId] = useState<string | null>(null);
   const [focusedRoute, setFocusedRoute] = useState<RouteOut | null>(null);
   const [selection, setSelection] = useState<MapSelection | null>(null);
@@ -249,7 +255,7 @@ export function AppShell() {
     if (id === "choropleth") {
       if (visible) {
         setBaseMap((prev) => {
-          preChoroplethBaseMap.current = prev;
+          preChoroplethBaseMap.current = prev in BASE_MAP_LAYERS ? (prev as BaseMapId) : "standard";
           return "positron";
         });
       } else {
@@ -278,8 +284,7 @@ export function AppShell() {
   const resultPanelW = RESULT_PANEL_WIDTH[bp];
 
   // A route selection points into one plan, so a new run or a reset drops it.
-  const dropRouteSelection = () =>
-    setSelection((prev) => (prev?.kind === "route" ? null : prev));
+  const dropRouteSelection = () => setSelection((prev) => (prev?.kind === "route" ? null : prev));
 
   function handleRun() {
     dropRouteSelection();
@@ -331,13 +336,7 @@ export function AppShell() {
     setFocusedRoute(null);
     setHiddenRoutes(new Set());
     setAnimating(false);
-    runComparison(
-      undefined,
-      scenario,
-      algoCfg.budgetS,
-      runExtras,
-      currentSignature ?? undefined,
-    );
+    runComparison(undefined, scenario, algoCfg.budgetS, runExtras, currentSignature ?? undefined);
     if (isMobile) setMobilePanel("none");
   }
 
@@ -635,14 +634,19 @@ export function AppShell() {
           onCancelPick={() => setPicking(false)}
           draftPoint={selection?.kind === "draft" ? draft : null}
           onMoveDraft={(lat, lon) => setDraft({ lat, lon })}
+          layout={extra.variant === "embedded" ? "windowed" : "fullscreen"}
+          controlsLeft={panelsHidden ? 16 : panelW + 26}
+          onToggleLayout={
+            extra.isMobile
+              ? undefined
+              : () => changeLayout(extra.variant === "embedded" ? "fullscreen" : "windowed")
+          }
           {...extra}
         />
         {floatingDetail ? (
           <div
             className={`pointer-events-none absolute z-[950] flex justify-center transition-[opacity,transform] duration-300 ease-out ${
-              panelsHidden || !detailVisible
-                ? "opacity-0 [&_*]:pointer-events-none"
-                : "opacity-100"
+              panelsHidden || !detailVisible ? "opacity-0 [&_*]:pointer-events-none" : "opacity-100"
             } ${detailVisible ? "translate-y-0" : "translate-y-3"}`}
             style={detailPanelInset(extra)}
           >
@@ -651,7 +655,7 @@ export function AppShell() {
         ) : null}
       </>
     ) : (
-      <MapStatusPlaceholder loading={loading} error={dataError} />
+      <MapLoading title="Memuat data peta" error={loading ? null : dataError} />
     );
   };
 
@@ -667,7 +671,7 @@ export function AppShell() {
     ) : null;
 
   // --- Windowed dashboard layout (desktop only) ---
-  if (layout === null) return <div className="h-screen w-screen bg-mist" />;
+  if (layout === null) return <div className="bg-mist h-screen w-screen" />;
 
   if (!isMobile && layout === "windowed") {
     return (
@@ -677,7 +681,6 @@ export function AppShell() {
           <WindowedLayout
             mode={mode}
             onModeChange={setMode}
-            onExitWindowed={() => changeLayout("fullscreen")}
             scenario={scenario}
             overlays={overlays}
             setOverlay={setOverlay}
@@ -711,7 +714,7 @@ export function AppShell() {
     <ErrorBoundary>
       <ToastProvider>
         <RunNotifier signal={runSignal} completedAt={completedAt} kind={lastRunKind} />
-        <div className="relative h-screen w-screen overflow-hidden bg-mist">
+        <div className="bg-mist relative h-screen w-screen overflow-hidden">
           <div className="absolute inset-0">
             {renderMap({
               isMobile,
@@ -727,8 +730,6 @@ export function AppShell() {
             mode={mode}
             onModeChange={setMode}
             compact={isMobile}
-            layout={layout}
-            onToggleLayout={() => changeLayout("windowed")}
             onHidePanels={!isMobile ? () => setPanelsHidden(true) : undefined}
             className={`${PANEL_ANIM} ${
               panelsHidden ? "pointer-events-none opacity-0" : "pointer-events-auto opacity-100"
@@ -746,7 +747,7 @@ export function AppShell() {
           {!isMobile ? (
             <>
               <div
-                className={`absolute left-16 top-[84px] z-[900] flex min-h-[200px] flex-col gap-[10px] overflow-hidden ${PANEL_ANIM} ${
+                className={`absolute top-[84px] left-16 z-[900] flex min-h-[200px] flex-col gap-[10px] overflow-hidden ${PANEL_ANIM} ${
                   panelsHidden ? "pointer-events-none opacity-0" : "pointer-events-none opacity-100"
                 }`}
                 style={{ bottom: SIDEBAR_BOTTOM_CLEARANCE, width: panelW }}
@@ -762,7 +763,7 @@ export function AppShell() {
 
               {result ? (
                 <div
-                  className={`soft-enter absolute bottom-16 right-16 top-16 z-[900] flex flex-col gap-[10px] overflow-hidden ${PANEL_ANIM} ${
+                  className={`soft-enter absolute top-16 right-16 bottom-16 z-[900] flex flex-col gap-[10px] overflow-hidden ${PANEL_ANIM} ${
                     panelsHidden ? "opacity-0 [&_*]:pointer-events-none" : "opacity-100"
                   }`}
                   style={{ width: resultPanelW }}
@@ -781,8 +782,10 @@ export function AppShell() {
                   and the legend live behind the square buttons on the right, and the
                   stack steps aside while a detail sheet is open so nothing overlaps. */}
               <div
-                className={`pointer-events-none absolute bottom-16 left-16 right-16 z-[950] flex flex-col gap-8 transition-[opacity,transform] duration-300 ease-out ${
-                  detailVisible ? "translate-y-3 opacity-0 [&_*]:pointer-events-none" : "opacity-100"
+                className={`pointer-events-none absolute right-16 bottom-16 left-16 z-[950] flex flex-col gap-8 transition-[opacity,transform] duration-300 ease-out ${
+                  detailVisible
+                    ? "translate-y-3 opacity-0 [&_*]:pointer-events-none"
+                    : "opacity-100"
                 }`}
               >
                 {stale ? (
@@ -946,7 +949,7 @@ function ShowPanelsButton({
       type="button"
       onClick={onClick}
       title="Tampilkan panel"
-      className={`absolute left-16 top-16 z-[1000] inline-flex cursor-pointer items-center gap-[6px] rounded-lg border border-frost bg-pure-white px-[12px] py-8 text-[12px] font-bold tracking-[-0.1px] text-midnight-ink hover:bg-frost ${className}`.trim()}
+      className={`border-frost bg-pure-white text-midnight-ink hover:bg-frost absolute top-16 left-16 z-[1000] inline-flex cursor-pointer items-center gap-[6px] rounded-lg border px-[12px] py-8 text-[12px] font-bold tracking-[-0.1px] ${className}`.trim()}
     >
       <PanelsTopLeft size={15} strokeWidth={2} />
       Tampilkan Panel
@@ -959,33 +962,12 @@ function ResultPeekBar({ objectiveZ, onOpen }: { objectiveZ: number; onOpen: () 
     <button
       type="button"
       onClick={onOpen}
-      className="font-manrope pointer-events-auto flex w-full cursor-pointer items-center justify-between rounded-lg border border-frost bg-pure-white px-[14px] py-[10px] transition-colors hover:border-smoke hover:bg-mist"
+      className="font-manrope border-frost bg-pure-white hover:border-smoke hover:bg-mist pointer-events-auto flex w-full cursor-pointer items-center justify-between rounded-lg border px-[14px] py-[10px] transition-colors"
     >
-      <span className="text-[11px] font-semibold text-slate">Hasil Optimasi</span>
-      <span className="text-[12px] font-bold text-midnight-ink tabular-nums">
+      <span className="text-slate text-[11px] font-semibold">Hasil Optimasi</span>
+      <span className="text-midnight-ink text-[12px] font-bold tabular-nums">
         Z = {objectiveZ.toFixed(1)} · Lihat Detail →
       </span>
     </button>
-  );
-}
-
-function MapStatusPlaceholder({ loading, error }: { loading: boolean; error: string | null }) {
-  return (
-    <div className="flex h-full w-full items-center justify-center">
-      <div className="max-w-md px-6 text-center">
-        <p className="text-[20px] font-bold tracking-[-0.2px] text-midnight-ink">
-          {loading ? "Memuat data peta..." : error ? "Gagal memuat data" : "Menunggu data"}
-        </p>
-        {error ? (
-          <p className="mt-2 text-[13px] font-medium leading-[1.5] text-steel">
-            {error}
-            <br />
-            <span className="text-slate">
-              Pastikan backend berjalan di <code>http://localhost:8000</code>.
-            </span>
-          </p>
-        ) : null}
-      </div>
-    </div>
   );
 }

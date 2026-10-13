@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { type ReactNode, useState } from "react";
 
+import { basemapCredit, basemapSwatch, type BasemapSwatch } from "../../lib/basemap-style";
 import { BASE_MAP_LAYERS, type BaseMapId, type OverlayLayerId } from "../../lib/map-constants";
 
 interface MapLayerDockProps {
@@ -24,38 +25,14 @@ interface MapLayerDockProps {
   bare?: boolean;
 }
 
-interface BaseMapOption {
-  id: BaseMapId;
-  label: string;
-  tilePreview: string;
-}
+const BASE_MAP_IDS: BaseMapId[] = ["standard", "positron", "satellite"];
 
-const TILE_Z = 12;
-const TILE_X = 3330;
-const TILE_Y = 2130;
-
-const BASE_MAP_OPTIONS: BaseMapOption[] = [
-  {
-    id: "standard",
-    label: BASE_MAP_LAYERS.standard.label,
-    tilePreview: `https://tile.openstreetmap.org/${TILE_Z}/${TILE_X}/${TILE_Y}.png`,
-  },
-  {
-    id: "positron",
-    label: BASE_MAP_LAYERS.positron.label,
-    tilePreview: `https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/${TILE_Z}/${TILE_Y}/${TILE_X}`,
-  },
-  {
-    id: "darkmatter",
-    label: BASE_MAP_LAYERS.darkmatter.label,
-    tilePreview: `https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/${TILE_Z}/${TILE_Y}/${TILE_X}`,
-  },
-  {
-    id: "satellite",
-    label: BASE_MAP_LAYERS.satellite.label,
-    tilePreview: `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${TILE_Z}/${TILE_Y}/${TILE_X}`,
-  },
-];
+// Raster basemaps have no palette to draw, so their preview is one real tile over Surabaya.
+const RASTER_PREVIEW: Partial<Record<BaseMapId, string>> = {
+  standard: "https://tile.openstreetmap.org/12/3330/2130.png",
+  satellite:
+    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/12/2130/3330",
+};
 
 interface OverlayOption {
   id: OverlayLayerId;
@@ -85,7 +62,7 @@ export function MapLayerDock({
   return (
     <div
       className={`pointer-events-auto flex flex-col ${
-        bare ? "" : "rounded-lg border border-frost bg-pure-white"
+        bare ? "" : "border-frost bg-pure-white rounded-lg border"
       }`}
     >
       {bare ? null : (
@@ -96,7 +73,7 @@ export function MapLayerDock({
           className="font-manrope flex w-full cursor-pointer items-center gap-[6px] border-0 bg-transparent px-[10px] py-8 text-left"
         >
           <Layers size={14} strokeWidth={2} color="var(--color-slate)" />
-          <span className="flex-1 text-[11px] font-bold tracking-normal text-midnight-ink">
+          <span className="text-midnight-ink flex-1 text-[11px] font-bold tracking-normal">
             Lapisan Peta
           </span>
           <ChevronDown
@@ -108,27 +85,36 @@ export function MapLayerDock({
       )}
 
       <div
-        className={bare ? "scrollbar-hidden flex flex-col gap-[10px]" : `scrollbar-hidden flex flex-col gap-[10px] transition-[max-height,opacity,padding] duration-[280ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
-          open
-            ? "pointer-events-auto max-h-[min(420px,60vh)] overflow-auto border-t border-frost px-12 pb-12 pt-[10px] opacity-100"
-            : "pointer-events-none max-h-0 overflow-hidden border-t border-transparent px-12 py-0 opacity-0"
-        }`}
+        className={
+          bare
+            ? "scrollbar-hidden flex flex-col gap-[10px]"
+            : `scrollbar-hidden flex flex-col gap-[10px] transition-[max-height,opacity,padding] duration-[280ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                open
+                  ? "border-frost pointer-events-auto max-h-[min(420px,60vh)] overflow-auto border-t px-12 pt-[10px] pb-12 opacity-100"
+                  : "pointer-events-none max-h-0 overflow-hidden border-t border-transparent px-12 py-0 opacity-0"
+              }`
+        }
       >
         <PanelSection label="Peta Dasar" noWrap>
           <div className="flex w-full gap-[6px]">
-            {BASE_MAP_OPTIONS.map(({ id, label, tilePreview }) => (
+            {BASE_MAP_IDS.map((id) => (
               <BaseMapTile
                 key={id}
-                label={label}
-                previewUrl={tilePreview}
+                label={BASE_MAP_LAYERS[id].label}
+                swatch={basemapSwatch(id)}
+                previewUrl={RASTER_PREVIEW[id]}
                 active={baseMap === id}
                 onClick={() => setBaseMap(id)}
               />
             ))}
           </div>
         </PanelSection>
+        {/* The map itself carries no attribution control, so the credit lives here. */}
+        <p className="text-slate m-0 -mt-[4px] pl-[2px] text-[10px] leading-[1.35] font-medium">
+          {basemapCredit(baseMap)}
+        </p>
 
-        <div aria-hidden className="h-px bg-frost" />
+        <div aria-hidden className="bg-frost h-px" />
 
         <PanelSection label="Lapisan Data">
           {OVERLAY_OPTIONS.map(({ id, label, Icon, activeColor }) => (
@@ -150,12 +136,14 @@ export function MapLayerDock({
 
 function BaseMapTile({
   label,
+  swatch,
   previewUrl,
   active,
   onClick,
 }: {
   label: string;
-  previewUrl: string;
+  swatch: BasemapSwatch | null;
+  previewUrl?: string;
   active: boolean;
   onClick: () => void;
 }) {
@@ -164,23 +152,48 @@ function BaseMapTile({
       type="button"
       aria-pressed={active}
       onClick={onClick}
-      className={`flex min-w-0 flex-1 cursor-pointer flex-col items-center gap-[4px] overflow-hidden rounded-md border-2 bg-pure-white p-0 transition-colors ${
-        "border-frost"
-      }`}
+      className={`bg-pure-white flex min-w-0 flex-1 cursor-pointer flex-col items-center gap-[4px] overflow-hidden rounded-md border-2 p-0 transition-colors ${"border-frost"}`}
     >
-      <img
-        src={previewUrl}
-        alt={label}
-        className="block h-[36px] w-full rounded-t-[3px] object-cover object-center"
-      />
+      {swatch ? (
+        <SwatchPreview swatch={swatch} />
+      ) : (
+        <img
+          src={previewUrl}
+          alt={label}
+          className="block h-[36px] w-full rounded-t-[3px] object-cover object-center"
+        />
+      )}
       <span
         className={`pb-[4px] text-[9.5px] leading-none tracking-[-0.05px] ${
-          active ? "font-bold text-midnight-ink" : "font-semibold text-steel"
+          active ? "text-midnight-ink font-bold" : "text-steel font-semibold"
         }`}
       >
         {label}
       </span>
     </button>
+  );
+}
+
+/** A thumbnail drawn in the basemap's own colours: land, a park, a river, two roads. */
+function SwatchPreview({ swatch: c }: { swatch: BasemapSwatch }) {
+  return (
+    <svg
+      aria-hidden
+      viewBox="0 0 80 36"
+      preserveAspectRatio="xMidYMid slice"
+      className="block h-[36px] w-full rounded-t-[3px]"
+    >
+      <rect width="80" height="36" fill={c.land} />
+      <path d="M48 0h32v14c-8 2-14-2-22 1-4 1-7-4-10-15z" fill={c.green} />
+      <path
+        d="M-2 27c12-6 20 2 32-3s18-14 30-12 16 6 22 4"
+        fill="none"
+        stroke={c.water}
+        strokeWidth="5"
+      />
+      <path d="M-2 10L82 20M28 -2L36 38" stroke={c.roadCase} strokeWidth="4.2" />
+      <path d="M-2 10L82 20M28 -2L36 38" stroke={c.road} strokeWidth="2.6" />
+    </svg>
   );
 }
 
@@ -195,7 +208,7 @@ function PanelSection({
 }) {
   return (
     <div className="flex flex-col gap-[6px]">
-      <div className="pl-[2px] text-[10px] font-bold uppercase tracking-normal text-slate">
+      <div className="text-slate pl-[2px] text-[10px] font-bold tracking-normal uppercase">
         {label}
       </div>
       <div className={`flex gap-[5px] ${noWrap ? "flex-nowrap" : "flex-wrap"}`}>{children}</div>
@@ -221,7 +234,7 @@ function Pill({
       type="button"
       aria-pressed={active}
       onClick={onClick}
-      className={`inline-flex cursor-pointer items-center gap-[6px] whitespace-nowrap rounded-md border py-[5px] pl-8 pr-[10px] text-[12px] font-semibold tracking-[-0.1px] transition-colors ${
+      className={`inline-flex cursor-pointer items-center gap-[6px] rounded-md border py-[5px] pr-[10px] pl-8 text-[12px] font-semibold tracking-[-0.1px] whitespace-nowrap transition-colors ${
         active
           ? "border-transparent text-white"
           : "border-frost bg-pure-white text-steel hover:bg-frost hover:text-midnight-ink"
