@@ -621,34 +621,33 @@ button:not(:disabled):active,
   animation: soft-fade 320ms ease 60ms backwards;
 }
 
-/* Detail panels: switching from one to another cross-fades (see CrossFade). */
-.detail-enter {
-  animation: detail-enter 300ms cubic-bezier(0.2, 0.8, 0.2, 1) 40ms backwards;
+/* Detail panels: switching from one to another fades the old one out where it is,
+   then the new one in (see useFadeThrough). The outgoing panel is never re-created,
+   so nothing inside it restarts mid-fade. */
+.detail-swap {
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
+  animation: detail-in 260ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
 }
 
-.detail-leave {
+.detail-swap-out {
+  opacity: 0;
+  transform: translateY(-4px);
   pointer-events: none;
-  animation: detail-leave 220ms ease forwards;
 }
 
-@keyframes detail-enter {
+@keyframes detail-in {
   from {
     opacity: 0;
-    transform: translateY(8px);
-  }
-}
-
-@keyframes detail-leave {
-  to {
-    opacity: 0;
-    transform: translateY(-6px);
+    transform: translateY(6px);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .detail-enter,
-  .detail-leave {
-    animation-duration: 1ms;
+  .detail-swap {
+    transition: none;
+    animation: none;
   }
 }
 

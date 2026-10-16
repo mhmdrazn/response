@@ -41,7 +41,9 @@ export function maxPitch(zoom: number): number {
 }
 
 const BUILDING_FADE_MS = 450;
-const TILT_MS = 900;
+const TILT_ON_MS = 900;
+/** Back to 2D zooms out several levels as well, so it takes its time. */
+const TILT_OFF_MS = 1700;
 /** Turning 3D on zooms in at least this far, where the buildings stand out. */
 const ZOOM_3D = 15.6;
 /** Most the tilt moves per frame when it catches up after an interrupted tilt. */
@@ -101,7 +103,7 @@ export function useThreeD(map: MapLibreMap | null, styleVersion: number): ThreeD
       } else {
         map.setPaintProperty(BUILDINGS_LAYER_ID, "fill-extrusion-opacity", 0);
         fadeTimer.current = window.setTimeout(() => {
-          if (!activeRef.current && map.getLayer(BUILDINGS_LAYER_ID)) {
+          if (!activeRef.current && map.style && map.getLayer(BUILDINGS_LAYER_ID)) {
             map.setLayoutProperty(BUILDINGS_LAYER_ID, "visibility", "none");
           }
         }, BUILDING_FADE_MS);
@@ -192,7 +194,7 @@ export function useThreeD(map: MapLibreMap | null, styleVersion: number): ThreeD
   // Eases the camera for the 3D button. Clicking again mid-way starts a new ease
   // from wherever the camera is, so quick clicks reverse smoothly.
   const animateTilt = useCallback(
-    (to: { pitch: number; zoom?: number }, done?: () => void) => {
+    (to: { pitch: number; zoom?: number }, duration: number, done?: () => void) => {
       if (!map) return;
       const gen = ++tiltGen.current;
       tilting.current = true;
@@ -203,7 +205,7 @@ export function useThreeD(map: MapLibreMap | null, styleVersion: number): ThreeD
       };
       // easeTo first ends any earlier ease; that one's moveend fires before the
       // listener below exists, and its own listener sees a stale generation.
-      map.easeTo({ ...to, duration: TILT_MS, easing: easeInOutCubic });
+      map.easeTo({ ...to, duration, easing: easeInOutCubic });
       if (map.isEasing()) map.once("moveend", finish);
       else finish(); // reduced motion: the move already happened
     },
@@ -219,7 +221,7 @@ export function useThreeD(map: MapLibreMap | null, styleVersion: number): ThreeD
       // Kept until the ease ends, so a quick on-off-on still returns to the start.
       const back = zoomBefore3D.current;
       const zoom = back != null && back < map.getZoom() ? back : undefined;
-      animateTilt({ pitch: 0, ...(zoom != null ? { zoom } : {}) }, () => {
+      animateTilt({ pitch: 0, ...(zoom != null ? { zoom } : {}) }, TILT_OFF_MS, () => {
         zoomBefore3D.current = null;
         // Turned off where auto tilt wouldn't tilt anyway: back to auto right away.
         if (map.getZoom() < AUTO_3D_START) mode.current = "auto";
@@ -232,7 +234,7 @@ export function useThreeD(map: MapLibreMap | null, styleVersion: number): ThreeD
       const from = map.getZoom();
       const zoom = Math.max(from, ZOOM_3D);
       if (zoomBefore3D.current == null) zoomBefore3D.current = from;
-      animateTilt({ pitch: maxPitch(zoom), zoom });
+      animateTilt({ pitch: maxPitch(zoom), zoom }, TILT_ON_MS);
     }
   }, [map, show, animateTilt]);
 

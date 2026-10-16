@@ -1,5 +1,6 @@
 "use client";
 
+import type { Map as MapLibreMap } from "maplibre-gl";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import {
@@ -62,7 +63,7 @@ export function FacilityLayer<T extends FacilityItem>({
   const size = FACILITY_ICON_SIZE[kind];
   const fx = useRef({ opacity: 1, scale: 1 });
   const lastSignature = useRef<string | null>(null);
-  const cancelSwap = useRef<(() => void) | null>(null);
+  const cancelSwap = useRef<((map?: MapLibreMap) => void) | null>(null);
 
   const data = useMemo<GeoJSON.FeatureCollection<GeoJSON.Point>>(
     () => ({
@@ -103,7 +104,7 @@ export function FacilityLayer<T extends FacilityItem>({
         if (lastSignature.current !== signature) {
           // A different set of facilities: fade the old out, pop the new in.
           lastSignature.current = signature;
-          cancelSwap.current?.();
+          cancelSwap.current?.(map);
           cancelSwap.current = animateSwap(
             (opacity, scale) => {
               fx.current = { opacity, scale };
@@ -189,7 +190,7 @@ export function FacilityLayer<T extends FacilityItem>({
 
   useEffect(
     () => () => {
-      cancelSwap.current?.();
+      cancelSwap.current?.(map);
       removeOverlay(map, [badge, icon, halo], source);
     },
     [map, icon, halo, badge, source],

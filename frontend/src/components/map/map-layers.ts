@@ -57,7 +57,8 @@ const easeOutBack = (t: number) => {
  * Swaps one set of points for another: the old ones fade out, then the new ones
  * fade in while growing from small, slightly past full size and back.
  * `apply(opacity, scale)` paints a frame; `swap()` puts the new data in place.
- * Returns a cancel function.
+ * Returns a cancel function, which by default jumps to the end (new data in place,
+ * full size). On a map that is already gone it only stops the animation.
  */
 export function animateSwap(
   apply: (opacity: number, scale: number) => void,
@@ -83,8 +84,10 @@ export function animateSwap(
     frame = requestAnimationFrame(step);
   };
   frame = requestAnimationFrame(step);
-  return () => {
+  return (map?: MapLibreMap) => {
     cancelAnimationFrame(frame);
+    // A layout change removes the map before its layers' cleanups run.
+    if (map && !map.style) return;
     if (!swapped) swap();
     apply(1, 1);
   };

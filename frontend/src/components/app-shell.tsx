@@ -19,6 +19,7 @@ import { useBreakpoint } from "../hooks/use-breakpoint";
 import { usePersistentState } from "../hooks/use-persistent-state";
 import { useMapData } from "../hooks/use-map-data";
 import { useOptimization } from "../hooks/use-optimization";
+import { useFadeThrough } from "../hooks/use-fade-through";
 import { usePresence } from "../hooks/use-presence";
 import { usePriority } from "../hooks/use-priority";
 import { BASE_MAP_LAYERS, type BaseMapId, type OverlayLayerId } from "../lib/map-constants";
@@ -39,7 +40,6 @@ import type {
 } from "../types";
 import { AnimatedHeight } from "./animated-height";
 import { ConfirmDialog } from "./confirm-dialog";
-import { CrossFade } from "./cross-fade";
 import { ErrorBoundary } from "./error-boundary";
 import { AlgorithmPanel } from "./sidebar/algorithm-panel";
 import { DataTableModal, type DatasetKey } from "./data-table-modal";
@@ -99,6 +99,12 @@ const SIDEBAR_BOTTOM_CLEARANCE = "calc(var(--left-stack-h, 220px) + 24px)";
 
 // Shared transition for the hide-all-panels animation (smooth in-place fade).
 const PANEL_ANIM = "transition-opacity duration-300 ease-out";
+/** How long the outgoing detail panel takes to fade before the next one comes in. */
+const DETAIL_SWAP_OUT_MS = 160;
+
+function selectionKey(s: MapSelection): string {
+  return `${s.kind}:${s.id}`;
+}
 
 const NO_DEPOTS: Depot[] = [];
 const NO_IFS: IntermediateFacility[] = [];
@@ -134,7 +140,13 @@ export function AppShell() {
   const [focusedRoute, setFocusedRoute] = useState<RouteOut | null>(null);
   const [selection, setSelection] = useState<MapSelection | null>(null);
   // Lets the detail panel animate out before it unmounts.
-  const { shown: shownSelection, visible: detailVisible } = usePresence(selection);
+  const { shown: presentSelection, visible: detailVisible } = usePresence(selection);
+  // Switching from one detail to another fades the old out, then the new in.
+  const { shown: shownSelection, leaving: detailLeaving } = useFadeThrough(
+    presentSelection,
+    selectionKey,
+    DETAIL_SWAP_OUT_MS,
+  );
   const [animating, setAnimating] = useState(false);
   const [panelsHidden, setPanelsHidden] = useState(false);
   const [previewDataset, setPreviewDataset] = useState<DatasetKey | null>(null);
@@ -602,13 +614,19 @@ export function AppShell() {
     }
   };
 
-  // Swapping one detail for another eases the height and cross-fades the panels.
+  // Swapping one detail for another: the old one fades out in place, then the
+  // new one fades in while the height eases to its size.
   const renderDetail = (variant: "fullscreen" | "embedded"): ReactNode => {
     const panel = renderDetailPanel(variant);
     if (!panel || !shownSelection) return null;
     return (
       <AnimatedHeight>
-        <CrossFade itemKey={`${shownSelection.kind}:${shownSelection.id}`}>{panel}</CrossFade>
+        <div
+          key={selectionKey(shownSelection)}
+          className={`detail-swap ${detailLeaving ? "detail-swap-out" : ""}`}
+        >
+          {panel}
+        </div>
       </AnimatedHeight>
     );
   };

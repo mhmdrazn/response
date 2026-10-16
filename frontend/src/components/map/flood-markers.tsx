@@ -1,6 +1,6 @@
 "use client";
 
-import type { ExpressionSpecification } from "maplibre-gl";
+import type { ExpressionSpecification, Map as MapLibreMap } from "maplibre-gl";
 import { useEffect, useMemo, useRef } from "react";
 
 import { formatNumber } from "../../lib/format-metrics";
@@ -45,7 +45,7 @@ export function FloodMarkers({ points, selectedId, onSelect }: FloodMarkersProps
   const selectedRef = useRef<string | null>(selectedId ?? null);
   const fx = useRef({ opacity: 1, scale: 1 });
   const lastSignature = useRef<string | null>(null);
-  const cancelSwap = useRef<(() => void) | null>(null);
+  const cancelSwap = useRef<((map?: MapLibreMap) => void) | null>(null);
 
   const data = useMemo<GeoJSON.FeatureCollection<GeoJSON.Point>>(
     () => ({
@@ -143,7 +143,7 @@ export function FloodMarkers({ points, selectedId, onSelect }: FloodMarkersProps
     } else if (lastSignature.current !== signature) {
       // A different set of points (a new study area): fade the old out, pop the new in.
       lastSignature.current = signature;
-      cancelSwap.current?.();
+      cancelSwap.current?.(map);
       cancelSwap.current = animateSwap(
         (opacity, scale) => {
           fx.current = { opacity, scale };
@@ -180,7 +180,7 @@ export function FloodMarkers({ points, selectedId, onSelect }: FloodMarkersProps
 
   useEffect(
     () => () => {
-      cancelSwap.current?.();
+      cancelSwap.current?.(map);
       removeOverlay(map, LAYERS, SOURCE);
     },
     [map],
