@@ -60,3 +60,6 @@ pnpm-debug.log*
 
 # Regenerable preprocessing cache (rebuild with build_scenario.py --warm-cache)
 backend/app/data/files/cache/
+
+# The blank canvas scenario is created at runtime from hand-placed points.
+backend/app/data/files/scenarios/kanvas/

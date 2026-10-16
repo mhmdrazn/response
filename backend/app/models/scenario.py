@@ -10,6 +10,8 @@ class ScenarioMeta(BaseModel):
     date_to: str | None = None
     n_points: int | None = None
     description: str | None = None
+    # "study": a recorded flood event. "canvas": starts empty, points placed by hand.
+    kind: str = "study"
 
 
 class ScenarioList(BaseModel):

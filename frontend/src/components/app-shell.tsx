@@ -38,6 +38,8 @@ import type {
   TrafficStatus,
 } from "../types";
 import { AnimatedHeight } from "./animated-height";
+import { ConfirmDialog } from "./confirm-dialog";
+import { CrossFade } from "./cross-fade";
 import { ErrorBoundary } from "./error-boundary";
 import { AlgorithmPanel } from "./sidebar/algorithm-panel";
 import { DataTableModal, type DatasetKey } from "./data-table-modal";
@@ -392,6 +394,26 @@ export function AppShell() {
 
   const visibleRoutes = (result?.routes ?? []).filter((r) => !hiddenRoutes.has(r.vehicle_id));
 
+  // The blank canvas: an empty study area of its own, points placed by hand.
+  const isCanvas = scenarios.find((sc) => sc.id === scenario)?.kind === "canvas";
+  const [confirmReset, setConfirmReset] = useState(false);
+  async function resetCanvas() {
+    setConfirmReset(false);
+    if (!scenario) return;
+    try {
+      await api.resetScenario(scenario);
+    } finally {
+      reset();
+      setSelection(null);
+      setPicking(false);
+      setFocusedRoute(null);
+      setHighlightVehicleId(null);
+      setHiddenRoutes(new Set());
+      setAnimating(false);
+      reload();
+    }
+  }
+
   const algorithmPanelContent = (
     <AlgorithmPanel
       mode={mode}
@@ -417,6 +439,19 @@ export function AppShell() {
         enabled: trafficWanted && trafficAvailable,
         onChange: setTrafficWanted,
       }}
+      canvas={
+        isCanvas
+          ? {
+              count: data?.floods.length ?? 0,
+              onAddPoint: startPick,
+              onImport: () => {
+                setMobilePanel("none");
+                setImportOpen(true);
+              },
+              onReset: () => setConfirmReset(true),
+            }
+          : undefined
+      }
       closures={{
         depots: closures.disabledDepots.size,
         ifs: closures.closedIfs.size,
@@ -567,15 +602,13 @@ export function AppShell() {
     }
   };
 
-  // Swapping one detail for another eases the height and fades the new content in.
+  // Swapping one detail for another eases the height and cross-fades the panels.
   const renderDetail = (variant: "fullscreen" | "embedded"): ReactNode => {
     const panel = renderDetailPanel(variant);
     if (!panel || !shownSelection) return null;
     return (
       <AnimatedHeight>
-        <div key={`${shownSelection.kind}:${shownSelection.id}`} className="soft-fade">
-          {panel}
-        </div>
+        <CrossFade itemKey={`${shownSelection.kind}:${shownSelection.id}`}>{panel}</CrossFade>
       </AnimatedHeight>
     );
   };
@@ -626,6 +659,15 @@ export function AppShell() {
 
   const dialogs = (
     <>
+      <ConfirmDialog
+        open={confirmReset}
+        title="Kosongkan kanvas?"
+        description="Semua titik genangan yang kamu tambahkan di kanvas ini akan dihapus, beserta hasil optimasinya. Area studi lain tidak berubah."
+        confirmLabel="Kosongkan"
+        variant="danger"
+        onConfirm={() => void resetCanvas()}
+        onCancel={() => setConfirmReset(false)}
+      />
       <ConfigDialog
         open={configTab !== null}
         tab={configTab ?? "fleet"}

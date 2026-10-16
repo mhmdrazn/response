@@ -16,14 +16,17 @@ export function ScenarioSelect({ scenarios, value, onChange }: ScenarioSelectPro
   const options: SelectOption[] = scenarios.map((sc) => ({
     value: sc.id,
     label: toTitleCase(sc.name),
-    hint: sc.n_points != null ? `${sc.n_points} titik` : undefined,
+    hint:
+      sc.kind === "canvas"
+        ? "Titik sendiri"
+        : sc.n_points != null
+          ? `${sc.n_points} titik`
+          : undefined,
   }));
 
   return (
     <div className="flex flex-col gap-[6px]">
-      <span className="text-[10px] font-bold uppercase tracking-normal text-slate">
-        Study Area
-      </span>
+      <span className="text-slate text-[10px] font-bold tracking-normal uppercase">Study Area</span>
       <SelectMenu
         options={options}
         value={value}

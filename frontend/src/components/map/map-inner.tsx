@@ -74,7 +74,7 @@ export interface MapInnerProps {
   onReloadData?: () => void;
   reloadingData?: boolean;
   scenario?: string;
-  /** Hide all floating chrome (controls, docks, legends) for a full-map view. */
+  /** Hide the floating docks for a fuller map; the map buttons and legends stay. */
   hideChrome?: boolean;
   /** Marker whose detail panel is open, and the click handler to open one. */
   selection?: MapSelection | null;
@@ -337,25 +337,23 @@ export function MapInner({
              Kept mounted and faded via hideChrome so it animates in/out. --- */}
           {!isMobile && variant === "fullscreen" ? (
             <>
-              {/* Legends sit bottom left of the map, just right of the left docks. */}
+              {/* Legends sit bottom left of the map, just right of the left docks. They
+                  stay when the panels are hidden: the map still needs its key. */}
               {overlays.choropleth || trafficOn ? (
                 <div
                   style={{ left: controlsLeft }}
-                  className={`pointer-events-none absolute bottom-16 z-[1000] flex flex-col items-start gap-8 transition-[left,opacity] duration-300 ease-out ${
-                    hideChrome ? "opacity-0 [&_*]:pointer-events-none" : "opacity-100"
-                  }`}
+                  className="pointer-events-none absolute bottom-16 z-[1000] flex flex-col items-start gap-8 transition-[left] duration-300 ease-out"
                 >
                   {trafficOn ? <TrafficLegend status={trafficStatus} usage={trafficUsage} /> : null}
                   {overlays.choropleth ? <ChoroplethLegend /> : null}
                 </div>
               ) : null}
 
-              {/* Map buttons: top left of the map, as in the dashboard map, just right of the left panels. */}
+              {/* Map buttons: top left of the map, just right of the left panels. Hiding
+                  the panels keeps them (3D, zoom, recenter): they slide to the edge. */}
               <div
                 style={{ left: controlsLeft }}
-                className={`pointer-events-none absolute top-[84px] z-[1000] transition-[left,opacity] duration-300 ease-out ${
-                  hideChrome ? "opacity-0 [&_*]:pointer-events-none" : "opacity-100"
-                }`}
+                className="pointer-events-none absolute top-[84px] z-[1000] transition-[left] duration-300 ease-out"
               >
                 <MapControls orientation="vertical" />
               </div>

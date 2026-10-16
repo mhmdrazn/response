@@ -303,6 +303,8 @@ export interface ScenarioMeta {
   date_to?: string | null;
   n_points?: number | null;
   description?: string | null;
+  /** "study": a recorded flood event. "canvas": starts empty, points placed by hand. */
+  kind?: "study" | "canvas";
 }
 
 export interface ScenarioList {

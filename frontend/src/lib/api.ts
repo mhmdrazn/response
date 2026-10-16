@@ -71,6 +71,9 @@ export const api = {
   health: (): Promise<{ status: string; service: string }> => request("/health"),
 
   getScenarios: (): Promise<ScenarioList> => request<ScenarioList>("/api/scenarios"),
+  /** Empties the blank canvas (the study areas cannot be reset). */
+  resetScenario: (scenario: string): Promise<void> =>
+    request<void>(`/api/scenarios/${encodeURIComponent(scenario)}/reset`, { method: "POST" }),
 
   getFloodPoints: (scenario?: string): Promise<FloodPoint[]> =>
     request<FloodPoint[]>(s("/api/data/floods", scenario)),

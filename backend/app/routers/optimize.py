@@ -102,6 +102,11 @@ def _build_ready_instance(
         bundle = store.get(scenario)
     except KeyError:
         raise HTTPException(status_code=404, detail=f"Skenario '{scenario}' tidak ditemukan.")
+    if len(bundle.floods) == 0 and len(bundle.depots) > 0 and len(bundle.ifs) > 0:
+        raise HTTPException(
+            status_code=422,
+            detail="Belum ada titik genangan. Tambahkan titik di peta terlebih dahulu.",
+        )
     if len(bundle.floods) == 0 or len(bundle.depots) == 0 or len(bundle.ifs) == 0:
         raise HTTPException(status_code=503, detail="Dataset floods/depo/if belum lengkap.")
 

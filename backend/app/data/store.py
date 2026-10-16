@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 
 from app.config import SHARED_FILES, readable_path, scenario_floods_path, scenario_matrix_paths
-from app.data import loaders, registry
+from app.data import canvas, loaders, registry
 
 _log = logging.getLogger("response.data")
 
@@ -50,6 +50,8 @@ class ScenarioStore:
         if cached is not None:
             return cached
 
+        if canvas.is_canvas(sid):
+            canvas.ensure()
         depots, ifs, faskes = self._shared_data()
         floods = loaders.load_floods(readable_path(scenario_floods_path(sid)))
         n_expected = len(depots) + len(floods) + len(ifs)

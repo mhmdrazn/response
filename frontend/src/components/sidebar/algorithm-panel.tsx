@@ -18,6 +18,7 @@ import type { ACSParams, AppMode, ScenarioMeta, VNSParams } from "../../types";
 import { Reveal } from "../reveal";
 import { ScenarioSelect } from "../scenario-select";
 import { ComputationBudgetSelect, type ComputationBudget } from "./computation-budget";
+import { CanvasCard } from "./canvas-card";
 import { ClosuresNote } from "./closures-note";
 import { TrafficToggle } from "./traffic-toggle";
 
@@ -47,6 +48,8 @@ interface AlgorithmPanelProps {
   onBudgetChange: (value: ComputationBudget) => void;
   /** Plan on live traffic (Google Routes API); available when the backend has a key. */
   traffic?: { available: boolean; enabled: boolean; onChange: (on: boolean) => void };
+  /** The blank canvas is open: place points by hand, or start over. */
+  canvas?: { count: number; onAddPoint: () => void; onImport: () => void; onReset: () => void };
   /** Depots and outlets taken out of the next run from the map. */
   closures?: { depots: number; ifs: number; onClear: () => void };
 }
@@ -75,6 +78,7 @@ export function AlgorithmPanel({
   budgetS,
   onBudgetChange,
   traffic,
+  canvas,
   closures,
 }: AlgorithmPanelProps) {
   const [open, setOpen] = useState(true);
@@ -201,6 +205,15 @@ export function AlgorithmPanel({
           </Reveal>
 
           <ScenarioSelect scenarios={scenarios} value={scenario} onChange={onScenarioChange} />
+          {canvas ? (
+            <CanvasCard
+              count={canvas.count}
+              onAddPoint={canvas.onAddPoint}
+              onImport={canvas.onImport}
+              onReset={canvas.onReset}
+              disabled={isLoading}
+            />
+          ) : null}
 
           <ComputationBudgetSelect value={budgetS} onChange={onBudgetChange} disabled={isLoading} />
 
