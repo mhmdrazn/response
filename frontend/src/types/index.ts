@@ -229,6 +229,10 @@ export interface RunExtras {
   remaining_volumes?: Record<string, number> | null;
   /** Plan on live-traffic travel times from the Google Routes API. */
   use_traffic?: boolean;
+  /** Depots switched off for this run. */
+  disabled_depots?: string[];
+  /** Outlets closed for this run (an overflowing river, say). */
+  closed_ifs?: string[];
 }
 
 export interface ACSParams extends RunExtras {

@@ -13,6 +13,7 @@ import {
 } from "react";
 
 import { useAlgorithmConfig } from "../hooks/use-algorithm-config";
+import { useClosures } from "../hooks/use-closures";
 import { useFleetConfig } from "../hooks/use-fleet-config";
 import { useBreakpoint } from "../hooks/use-breakpoint";
 import { usePersistentState } from "../hooks/use-persistent-state";
@@ -29,6 +30,7 @@ import type {
   AppLayout,
   AppMode,
   Depot,
+  IntermediateFacility,
   MapSelection,
   RouteOut,
   ScenarioMeta,
@@ -97,6 +99,7 @@ const SIDEBAR_BOTTOM_CLEARANCE = "calc(var(--left-stack-h, 220px) + 24px)";
 const PANEL_ANIM = "transition-opacity duration-300 ease-out";
 
 const NO_DEPOTS: Depot[] = [];
+const NO_IFS: IntermediateFacility[] = [];
 
 const HIDDEN_ROUTES_STORAGE_KEY = "floodroute:hidden-routes:v1";
 const LAYOUT_STORAGE_KEY = "floodroute:layout:v1";
@@ -198,6 +201,7 @@ export function AppShell() {
   const priorityCfg = usePriority();
   const { data, loading, error: dataError, reload } = useMapData(scenario, priorityCfg.weights);
   const fleetCfg = useFleetConfig(data?.depots ?? NO_DEPOTS);
+  const closures = useClosures(data?.depots ?? NO_DEPOTS, data?.ifs ?? NO_IFS);
   // Plan with live traffic: remembered between visits, used only when the backend has a key.
   const [trafficWanted, setTrafficWanted] = usePersistentState<boolean>(
     TRAFFIC_ROUTING_STORAGE_KEY,
@@ -223,6 +227,7 @@ export function AppShell() {
     fleet: fleetCfg.payload,
     severity_weights: priorityCfg.weights,
     use_traffic: trafficWanted && trafficAvailable,
+    ...closures.payload,
   };
   const {
     result,
@@ -411,6 +416,11 @@ export function AppShell() {
         available: trafficAvailable,
         enabled: trafficWanted && trafficAvailable,
         onChange: setTrafficWanted,
+      }}
+      closures={{
+        depots: closures.disabledDepots.size,
+        ifs: closures.closedIfs.size,
+        onClear: closures.clear,
       }}
       onRun={handleRun}
       stale={stale}
@@ -664,6 +674,7 @@ export function AppShell() {
           onPreviewData={handlePreviewData}
           animating={animating}
           scenario={scenario}
+          closures={closures}
           mobileTools={extra.isMobile ? <MobileMapTools onOpen={setMobilePanel} /> : undefined}
           mobileToolsHidden={detailVisible}
           extraDock={manageDock}

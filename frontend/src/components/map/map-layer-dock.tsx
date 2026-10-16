@@ -14,7 +14,7 @@ import {
 import { type ReactNode, useState } from "react";
 
 import { basemapCredit, basemapSwatch, type BasemapSwatch } from "../../lib/basemap-style";
-import { trafficTilesConfigured } from "../../lib/google-traffic";
+import { useTrafficTilesStatus } from "../../hooks/use-traffic-tiles-status";
 import { BASE_MAP_LAYERS, type BaseMapId, type OverlayLayerId } from "../../lib/map-constants";
 
 interface MapLayerDockProps {
@@ -61,6 +61,7 @@ export function MapLayerDock({
   bare = false,
 }: MapLayerDockProps) {
   const [open, setOpen] = useState(defaultOpen);
+  const trafficUsage = useTrafficTilesStatus();
 
   return (
     <div
@@ -128,8 +129,8 @@ export function MapLayerDock({
               activeColor={activeColor}
               onClick={() => setOverlay(id, !overlays[id])}
               disabledReason={
-                id === "traffic" && !trafficTilesConfigured()
-                  ? "Atur NEXT_PUBLIC_GOOGLE_MAPS_API_KEY untuk menampilkan lalu lintas langsung"
+                id === "traffic" && trafficUsage && !trafficUsage.configured
+                  ? "Atur TOMTOM_API_KEY di server frontend untuk menampilkan lalu lintas langsung"
                   : undefined
               }
             >

@@ -358,6 +358,22 @@ button:not(:disabled):active,
   animation: response-tooltip-fade 0.15s ease-out;
 }
 
+/* A tooltip with actions in it (close a depot or an outlet) takes the pointer.
+   The invisible strip below it bridges the gap to the marker, so the pointer can
+   travel from the icon into the tooltip without it closing. */
+.map-hover-tooltip-interactive {
+  pointer-events: auto;
+}
+
+.map-hover-tooltip-interactive::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 18px;
+}
+
 /* DOM markers (the draft pin): only a draggable one takes the pointer. */
 .map-marker {
   pointer-events: none;

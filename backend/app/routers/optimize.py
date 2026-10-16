@@ -6,6 +6,7 @@ import logging
 from collections import Counter
 
 import numpy as np
+import pandas as pd
 from fastapi import APIRouter, HTTPException, Query
 
 from app.data.store import store
@@ -94,6 +95,8 @@ def _build_ready_instance(
     severity_weights: list[float] | None = None,
     remaining_volumes: dict[str, float] | None = None,
     use_traffic: bool = False,
+    disabled_depots: list[str] | None = None,
+    closed_ifs: list[str] | None = None,
 ) -> tuple[Instance, TrafficOut | None]:
     try:
         bundle = store.get(scenario)
@@ -107,15 +110,29 @@ def _build_ready_instance(
     kwargs: dict[str, object] = (
         {} if unserved_penalty is None else {"unserved_penalty": unserved_penalty}
     )
-    fleet_cfg = _fleet_from_request(fleet, {str(i) for i in bundle.depots["id"]})
+    depots_df, ifs_df, dist, tmat = _without_closed(
+        bundle.depots,
+        bundle.floods,
+        bundle.ifs,
+        bundle.distance_matrix,
+        bundle.time_matrix,
+        set(disabled_depots or []),
+        set(closed_ifs or []),
+    )
+    open_depots = {str(i) for i in depots_df["id"]}
+    if fleet is not None:
+        # A switched-off depot's fleet stays home with it.
+        off = set(disabled_depots or [])
+        fleet = [f for f in fleet if f.depot_id not in off]
+    fleet_cfg = _fleet_from_request(fleet, open_depots)
     if fleet_cfg is not None:
         kwargs["fleet"] = fleet_cfg
     build_args: dict[str, object] = {
-        "depots_df": bundle.depots,
+        "depots_df": depots_df,
         "floods_df": bundle.floods,
-        "ifs_df": bundle.ifs,
-        "dist_matrix": bundle.distance_matrix,
-        "time_matrix": bundle.time_matrix,
+        "ifs_df": ifs_df,
+        "dist_matrix": dist,
+        "time_matrix": tmat,
         "si_values": sev.si_values,
         **kwargs,
     }
@@ -125,14 +142,61 @@ def _build_ready_instance(
 
     traffic_out: TrafficOut | None = None
     if use_traffic:
-        inst, traffic_out = _with_live_traffic(bundle.scenario_id, inst, build_args)
+        # The node set decides which legs are sampled, so it is part of the cache key.
+        closed_key = ",".join(sorted(set(disabled_depots or []))) + "|" + ",".join(
+            sorted(set(closed_ifs or []))
+        )
+        inst, traffic_out = _with_live_traffic(
+            f"{bundle.scenario_id}:{closed_key}", inst, build_args
+        )
     if remaining_volumes is not None:
         _carry_over(inst, remaining_volumes)
     return inst, traffic_out
 
 
+def _without_closed(
+    depots: pd.DataFrame,
+    floods: pd.DataFrame,
+    ifs: pd.DataFrame,
+    dist: np.ndarray | None,
+    tmat: np.ndarray | None,
+    disabled_depots: set[str],
+    closed_ifs: set[str],
+) -> tuple[pd.DataFrame, pd.DataFrame, np.ndarray | None, np.ndarray | None]:
+    """Drop switched-off depots and closed outlets, with their matrix rows and columns.
+
+    The matrices are in node order [depots, floods, outlets]; the floods all stay.
+    """
+    if not disabled_depots and not closed_ifs:
+        return depots, ifs, dist, tmat
+    keep_d = ~depots["id"].astype(str).isin(disabled_depots).to_numpy()
+    keep_i = ~ifs["id"].astype(str).isin(closed_ifs).to_numpy()
+    if not keep_d.any():
+        raise HTTPException(
+            status_code=422,
+            detail="Semua depo dinonaktifkan: aktifkan minimal satu depo untuk menjalankan optimasi.",
+        )
+    if not keep_i.any():
+        raise HTTPException(
+            status_code=422,
+            detail="Semua titik buang air ditutup: buka minimal satu agar tangki bisa dikosongkan.",
+        )
+    keep = np.concatenate([keep_d, np.ones(len(floods), dtype=bool), keep_i])
+    idx = np.flatnonzero(keep)
+
+    def cut(m: np.ndarray | None) -> np.ndarray | None:
+        return None if m is None else m[np.ix_(idx, idx)]
+
+    return (
+        depots[keep_d].reset_index(drop=True),
+        ifs[keep_i].reset_index(drop=True),
+        cut(dist),
+        cut(tmat),
+    )
+
+
 def _with_live_traffic(
-    scenario_id: str, inst: Instance, build_args: dict[str, object]
+    cache_key: str, inst: Instance, build_args: dict[str, object]
 ) -> tuple[Instance, TrafficOut]:
     """Rebuild the instance on live-traffic travel times; fall back to free flow on failure.
 
@@ -144,7 +208,7 @@ def _with_live_traffic(
     )
     try:
         snap = traffic.snapshot_for(
-            f"{scenario_id}:{inst.n_total}",
+            f"{cache_key}:{inst.n_total}",
             coords,
             inst.time_matrix,
             inst.n_depots,
@@ -352,6 +416,8 @@ async def run_acs(
             request.severity_weights,
             request.remaining_volumes,
             request.use_traffic,
+            request.disabled_depots,
+            request.closed_ifs,
         )
         params = ACSParams(
             iterations=request.iterations,
@@ -401,6 +467,8 @@ async def run_vns(
             request.severity_weights,
             request.remaining_volumes,
             request.use_traffic,
+            request.disabled_depots,
+            request.closed_ifs,
         )
         params = VNSParams(
             max_iterations=request.max_iterations,

@@ -38,6 +38,10 @@ class _RunContext(_Base):
     remaining_volumes: dict[str, float] | None = Field(None, max_length=5000)
     # Plan with live traffic from the Google Routes API instead of free-flow times.
     use_traffic: bool = False
+    # Depots switched off for this run (no crew, no vehicles leave from them) and
+    # outlets that cannot take water (an overflowing river, a blocked access road).
+    disabled_depots: list[str] = Field(default_factory=list, max_length=500)
+    closed_ifs: list[str] = Field(default_factory=list, max_length=5000)
 
     @field_validator("remaining_volumes")
     @classmethod

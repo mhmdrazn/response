@@ -5,12 +5,14 @@ import type { Depot, Faskes, FloodPoint, IntermediateFacility, RunExtras } from 
  * the result and compared with the current settings, it says which changes the
  * result does not yet reflect.
  */
-export type SettingGroup = "fleet" | "priority" | "algorithm" | "budget" | "traffic" | "data";
+export type SettingGroup =
+  "fleet" | "closures" | "priority" | "algorithm" | "budget" | "traffic" | "data";
 
 export type RunSignature = Record<SettingGroup, string>;
 
 export const GROUP_LABEL: Record<SettingGroup, string> = {
   fleet: "Armada & depo",
+  closures: "Depo & titik buang ditutup",
   priority: "Prioritas keparahan",
   algorithm: "Parameter algoritma",
   budget: "Anggaran komputasi",
@@ -58,6 +60,7 @@ interface SignatureInput extends RunExtras {
 export function buildSignature(i: SignatureInput): RunSignature {
   return {
     fleet: hashString(JSON.stringify(i.fleet ?? null)),
+    closures: closuresKey(i),
     priority: hashString(JSON.stringify(i.severity_weights ?? null)),
     algorithm: hashString(JSON.stringify([i.acsParams, i.vnsParams])),
     budget: String(i.budgetS),
@@ -73,4 +76,10 @@ export function changedGroups(saved: RunSignature, now: RunSignature): SettingGr
   return (Object.keys(GROUP_LABEL) as SettingGroup[]).filter((g) => was(g) !== now[g]);
 }
 
-const GROUP_DEFAULT: Partial<Record<SettingGroup, string>> = { traffic: "off" };
+function closuresKey(i: RunExtras): string {
+  const d = [...(i.disabled_depots ?? [])].sort();
+  const f = [...(i.closed_ifs ?? [])].sort();
+  return d.length || f.length ? hashString(JSON.stringify([d, f])) : "none";
+}
+
+const GROUP_DEFAULT: Partial<Record<SettingGroup, string>> = { traffic: "off", closures: "none" };

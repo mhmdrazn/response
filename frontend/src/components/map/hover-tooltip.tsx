@@ -94,19 +94,31 @@ export function HoverTooltip({
   x,
   y,
   gap = 14,
+  interactive = false,
+  onPointerEnter,
+  onPointerLeave,
   children,
 }: {
   x: number;
   y: number;
   /** Space in px between the point and the tooltip's bottom edge. */
   gap?: number;
+  /** Takes the pointer, for a tooltip with buttons in it. */
+  interactive?: boolean;
+  onPointerEnter?: () => void;
+  onPointerLeave?: () => void;
   children: ReactNode;
 }) {
   const map = useMap();
   return createPortal(
     <div
-      className="map-hover-tooltip"
+      className={`map-hover-tooltip${interactive ? " map-hover-tooltip-interactive" : ""}`}
       style={{ left: x, top: y, transform: `translate(-50%, calc(-100% - ${gap}px))` }}
+      onPointerEnter={onPointerEnter}
+      onPointerLeave={onPointerLeave}
+      // Clicks and drags inside the tooltip are its own, never the map's.
+      onPointerDown={interactive ? (e) => e.stopPropagation() : undefined}
+      onWheel={interactive ? (e) => e.stopPropagation() : undefined}
     >
       {children}
     </div>,

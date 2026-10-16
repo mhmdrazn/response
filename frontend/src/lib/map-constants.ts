@@ -156,7 +156,7 @@ export const OVERLAY_LAYERS: OverlayLayerMeta[] = [
   },
   {
     id: "traffic",
-    label: "Lalu Lintas Langsung (Google)",
+    label: "Lalu Lintas Langsung (TomTom)",
     swatchColor: "#F23C32",
     defaultVisible: false,
   },

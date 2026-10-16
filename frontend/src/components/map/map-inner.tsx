@@ -10,7 +10,11 @@ import {
   basemapBackground,
   basemapStyle,
 } from "../../lib/basemap-style";
-import { trafficTilesConfigured } from "../../lib/google-traffic";
+import type { Closures } from "../../hooks/use-closures";
+import {
+  refreshTrafficTilesStatus,
+  useTrafficTilesStatus,
+} from "../../hooks/use-traffic-tiles-status";
 import {
   DEFAULT_ZOOM,
   SURABAYA_CENTER,
@@ -75,6 +79,8 @@ export interface MapInnerProps {
   /** Marker whose detail panel is open, and the click handler to open one. */
   selection?: MapSelection | null;
   onSelect?: (selection: MapSelection) => void;
+  /** Depots switched off and outlets closed for the next run, toggled from their tooltips. */
+  closures?: Closures;
   /** Phone only: extra square buttons stacked under the zoom controls. */
   mobileTools?: ReactNode;
   /** Phone only: fade the tool column out, e.g. while a detail sheet covers the map. */
@@ -146,6 +152,7 @@ export function MapInner({
   hideChrome = false,
   selection,
   onSelect,
+  closures,
   mobileTools,
   mobileToolsHidden = false,
   extraDock,
@@ -166,7 +173,17 @@ export function MapInner({
   const [styleVersion, setStyleVersion] = useState(0);
   const [overlayGone, setOverlayGone] = useState(false);
   const [trafficStatus, setTrafficStatus] = useState<TrafficStatusState>({ kind: "loading" });
-  const showTraffic = overlays.traffic && trafficTilesConfigured();
+  const trafficUsage = useTrafficTilesStatus();
+  // On only while the proxy has a key and the free-tier cap is not reached.
+  const trafficOn = overlays.traffic && (trafficUsage?.configured ?? false);
+  const showTraffic = trafficOn && !(trafficUsage?.limited ?? false);
+  const trafficLimited = trafficOn && (trafficUsage?.limited ?? false);
+  // Past the cap the layer waits; check now and then whether a new day has begun.
+  useEffect(() => {
+    if (!trafficLimited) return;
+    const t = window.setInterval(() => void refreshTrafficTilesStatus(), 10 * 60 * 1000);
+    return () => window.clearInterval(t);
+  }, [trafficLimited]);
   // Drop the loading cover once its fade-out has had time to finish.
   useEffect(() => {
     if (!map) return;
@@ -247,6 +264,8 @@ export function MapInner({
               depots={depots}
               selectedId={selectedOf("depot")}
               onSelect={(id) => onSelect?.({ kind: "depot", id })}
+              disabledIds={closures?.disabledDepots}
+              onToggleDisabled={closures?.toggleDepot}
             />
           ) : null}
           {overlays.ifs ? (
@@ -254,6 +273,8 @@ export function MapInner({
               ifs={ifs}
               selectedId={selectedOf("if")}
               onSelect={(id) => onSelect?.({ kind: "if", id })}
+              closedIds={closures?.closedIfs}
+              onToggleClosed={closures?.toggleIf}
             />
           ) : null}
           {overlays.faskes ? (
@@ -295,9 +316,9 @@ export function MapInner({
             <PickBanner onCancel={() => onCancelPick?.()} belowNavbar={variant === "fullscreen"} />
           ) : null}
 
-          {isMobile && showTraffic ? (
+          {isMobile && trafficOn ? (
             <div className="pointer-events-none absolute top-[78px] left-12 z-[1000]">
-              <TrafficLegend status={trafficStatus} />
+              <TrafficLegend status={trafficStatus} usage={trafficUsage} />
             </div>
           ) : null}
 
@@ -317,14 +338,14 @@ export function MapInner({
           {!isMobile && variant === "fullscreen" ? (
             <>
               {/* Legends sit bottom left of the map, just right of the left docks. */}
-              {overlays.choropleth || showTraffic ? (
+              {overlays.choropleth || trafficOn ? (
                 <div
                   style={{ left: controlsLeft }}
                   className={`pointer-events-none absolute bottom-16 z-[1000] flex flex-col items-start gap-8 transition-[left,opacity] duration-300 ease-out ${
                     hideChrome ? "opacity-0 [&_*]:pointer-events-none" : "opacity-100"
                   }`}
                 >
-                  {showTraffic ? <TrafficLegend status={trafficStatus} /> : null}
+                  {trafficOn ? <TrafficLegend status={trafficStatus} usage={trafficUsage} /> : null}
                   {overlays.choropleth ? <ChoroplethLegend /> : null}
                 </div>
               ) : null}
@@ -365,7 +386,7 @@ export function MapInner({
                 <MapControls orientation="vertical" />
               </div>
               <div className="pointer-events-none absolute right-16 bottom-16 z-[800] flex flex-col items-end gap-8">
-                {showTraffic ? <TrafficLegend status={trafficStatus} /> : null}
+                {trafficOn ? <TrafficLegend status={trafficStatus} usage={trafficUsage} /> : null}
                 {overlays.choropleth ? <ChoroplethLegend /> : null}
               </div>
             </>
