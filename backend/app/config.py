@@ -12,6 +12,28 @@ from pathlib import Path
 
 _APP_DIR = Path(__file__).resolve().parent  # backend/app
 
+
+def _load_dotenv(path: Path) -> None:
+    """Read KEY=value lines from backend/.env into the environment.
+
+    Real environment variables win, so a deployment's settings (Vercel, a shell
+    export) override the file. Kept tiny on purpose: no new dependency.
+    """
+    if not path.exists():
+        return
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip().removeprefix("export ").strip()
+        value = value.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = value
+
+
+_load_dotenv(_APP_DIR.parent / ".env")
+
 # --- Data layout ---------------------------------------------------------
 # files/
 #   shared/      depo.csv, if.csv, faskes.csv        (constant across scenarios)
@@ -90,6 +112,16 @@ def scenario_matrix_paths(scenario_id: str) -> tuple[Path, Path]:
 
 # --- External services ---------------------------------------------------
 OSRM_URL = os.getenv("OSRM_URL", "https://router.project-osrm.org")
+
+# Live traffic for route planning: the Google Maps Routes API (computeRouteMatrix,
+# TRAFFIC_AWARE). Server-side key, restricted to the Routes API. Unset: runs use
+# the precomputed OSRM travel times only.
+GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY", "").strip()
+# Matrix elements bought per traffic refresh. Each element is one origin to one
+# destination; Google bills them individually, so this caps the cost of a refresh.
+TRAFFIC_MAX_ELEMENTS = int(os.getenv("TRAFFIC_MAX_ELEMENTS", "400"))
+# How long a traffic snapshot is reused before Google is asked again, in seconds.
+TRAFFIC_CACHE_TTL_S = float(os.getenv("TRAFFIC_CACHE_TTL_S", "600"))
 
 OVERPASS_ENDPOINTS = [
     "https://overpass-api.de/api/interpreter",

@@ -10,6 +10,7 @@ import {
   basemapBackground,
   basemapStyle,
 } from "../../lib/basemap-style";
+import { trafficTilesConfigured } from "../../lib/google-traffic";
 import {
   DEFAULT_ZOOM,
   SURABAYA_CENTER,
@@ -36,6 +37,8 @@ import { IfMarkers } from "./if-markers";
 import { LeftPanel } from "./left-panel";
 import { MapContext, useMap, type MapContextValue } from "./map-context";
 import { MapControls } from "./map-controls";
+import { TrafficLayer, type TrafficStatusState } from "./traffic-layer";
+import { TrafficLegend } from "./traffic-legend";
 import { MapLoading } from "./map-loading";
 import { PickBanner } from "./pick-banner";
 import { PickLayer } from "./pick-layer";
@@ -162,6 +165,8 @@ export function MapInner({
   const [map, setMap] = useState<maplibregl.Map | null>(null);
   const [styleVersion, setStyleVersion] = useState(0);
   const [overlayGone, setOverlayGone] = useState(false);
+  const [trafficStatus, setTrafficStatus] = useState<TrafficStatusState>({ kind: "loading" });
+  const showTraffic = overlays.traffic && trafficTilesConfigured();
   // Drop the loading cover once its fade-out has had time to finish.
   useEffect(() => {
     if (!map) return;
@@ -228,6 +233,7 @@ export function MapInner({
         <MapContext.Provider value={ctx}>
           {/* Choropleth sits directly above the basemap so markers/routes overlay it. */}
           {overlays.choropleth ? <ChoroplethLayer floods={floods} /> : null}
+          {showTraffic ? <TrafficLayer onStatus={setTrafficStatus} /> : null}
 
           {overlays.floods ? (
             <FloodMarkers
@@ -289,6 +295,12 @@ export function MapInner({
             <PickBanner onCancel={() => onCancelPick?.()} belowNavbar={variant === "fullscreen"} />
           ) : null}
 
+          {isMobile && showTraffic ? (
+            <div className="pointer-events-none absolute top-[78px] left-12 z-[1000]">
+              <TrafficLegend status={trafficStatus} />
+            </div>
+          ) : null}
+
           {isMobile ? (
             <div
               className={`pointer-events-none absolute top-[78px] right-12 z-[1000] flex flex-col items-end gap-8 transition-opacity duration-300 ease-out ${
@@ -304,14 +316,16 @@ export function MapInner({
              Kept mounted and faded via hideChrome so it animates in/out. --- */}
           {!isMobile && variant === "fullscreen" ? (
             <>
-              {/* Choropleth legend sits on the left, just right of the Data dock. */}
-              {overlays.choropleth ? (
+              {/* Legends sit bottom left of the map, just right of the left docks. */}
+              {overlays.choropleth || showTraffic ? (
                 <div
-                  className={`absolute bottom-16 left-[364px] z-[1000] transition-opacity duration-300 ease-out ${
-                    hideChrome ? "pointer-events-none opacity-0" : "pointer-events-none opacity-100"
+                  style={{ left: controlsLeft }}
+                  className={`pointer-events-none absolute bottom-16 z-[1000] flex flex-col items-start gap-8 transition-[left,opacity] duration-300 ease-out ${
+                    hideChrome ? "opacity-0 [&_*]:pointer-events-none" : "opacity-100"
                   }`}
                 >
-                  <ChoroplethLegend />
+                  {showTraffic ? <TrafficLegend status={trafficStatus} /> : null}
+                  {overlays.choropleth ? <ChoroplethLegend /> : null}
                 </div>
               ) : null}
 
@@ -351,6 +365,7 @@ export function MapInner({
                 <MapControls orientation="vertical" />
               </div>
               <div className="pointer-events-none absolute right-16 bottom-16 z-[800] flex flex-col items-end gap-8">
+                {showTraffic ? <TrafficLegend status={trafficStatus} /> : null}
                 {overlays.choropleth ? <ChoroplethLegend /> : null}
               </div>
             </>

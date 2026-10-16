@@ -8,6 +8,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 
 from app.config import CORS_ORIGIN_REGEX, CORS_ORIGINS
@@ -16,6 +17,7 @@ from app.routers import data as data_router
 from app.routers import optimize as optimize_router
 from app.routers import scenarios as scenarios_router
 from app.routers import severity as severity_router
+from app.routers import traffic as traffic_router
 
 _log = logging.getLogger("response")
 
@@ -67,6 +69,10 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Response API", version="0.2.0", lifespan=lifespan)
 
+# Route geometries and the data lists are large, repetitive JSON; compressed they
+# are a fraction of the size over the wire.
+app.add_middleware(GZipMiddleware, minimum_size=1024)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
@@ -101,6 +107,7 @@ async def _unwritable_storage(_: Request, exc: OSError) -> JSONResponse:
 
 app.include_router(data_router.router)
 app.include_router(severity_router.router)
+app.include_router(traffic_router.router)
 app.include_router(optimize_router.router)
 app.include_router(scenarios_router.router)
 

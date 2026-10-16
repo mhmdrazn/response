@@ -18,6 +18,7 @@ import type { ACSParams, AppMode, ScenarioMeta, VNSParams } from "../../types";
 import { Reveal } from "../reveal";
 import { ScenarioSelect } from "../scenario-select";
 import { ComputationBudgetSelect, type ComputationBudget } from "./computation-budget";
+import { TrafficToggle } from "./traffic-toggle";
 
 interface AlgorithmPanelProps {
   mode: AppMode;
@@ -43,6 +44,8 @@ interface AlgorithmPanelProps {
   onScenarioChange: (id: string) => void;
   budgetS: ComputationBudget;
   onBudgetChange: (value: ComputationBudget) => void;
+  /** Plan on live traffic (Google Routes API); available when the backend has a key. */
+  traffic?: { available: boolean; enabled: boolean; onChange: (on: boolean) => void };
 }
 
 export function AlgorithmPanel({
@@ -68,6 +71,7 @@ export function AlgorithmPanel({
   onScenarioChange,
   budgetS,
   onBudgetChange,
+  traffic,
 }: AlgorithmPanelProps) {
   const [open, setOpen] = useState(true);
 
@@ -195,6 +199,15 @@ export function AlgorithmPanel({
           <ScenarioSelect scenarios={scenarios} value={scenario} onChange={onScenarioChange} />
 
           <ComputationBudgetSelect value={budgetS} onChange={onBudgetChange} disabled={isLoading} />
+
+          {traffic ? (
+            <TrafficToggle
+              available={traffic.available}
+              enabled={traffic.enabled}
+              onChange={traffic.onChange}
+              disabled={isLoading}
+            />
+          ) : null}
 
         </div>
 

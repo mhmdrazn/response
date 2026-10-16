@@ -41,6 +41,11 @@ export function maxPitch(zoom: number): number {
 }
 
 const BUILDING_FADE_MS = 450;
+const TILT_MS = 900;
+/** Turning 3D on zooms in at least this far, where the buildings stand out. */
+const ZOOM_3D = 15.6;
+/** Most the tilt moves per frame when it catches up after an interrupted tilt. */
+const CATCH_UP_DEG = 3;
 
 const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
@@ -71,6 +76,10 @@ export function useThreeD(map: MapLibreMap | null, styleVersion: number): ThreeD
   const mode = useRef<Mode>("auto");
   const manualPitch = useRef(PITCH_3D);
   const tilting = useRef(false);
+  // Bumped by every tilt animation, so the end of a superseded one is ignored.
+  const tiltGen = useRef(0);
+  // The zoom 3D was switched on from, to return to when it is switched off.
+  const zoomBefore3D = useRef<number | null>(null);
   const activeRef = useRef(false);
   const [active, setActive] = useState(false);
 
@@ -133,8 +142,11 @@ export function useThreeD(map: MapLibreMap | null, styleVersion: number): ThreeD
         return {};
       }
       if (mode.current === "auto") return { pitch: Math.min(autoPitch(next.zoom), cap) };
-      // Manual 3D: hold the chosen tilt, within what the zoom allows.
-      return { pitch: Math.min(manualPitch.current, cap) };
+      // Manual 3D: hold the chosen tilt, within what the zoom allows. If a tilt was
+      // cut short (a scroll mid-animation), close the gap a little per frame.
+      const target = Math.min(manualPitch.current, cap);
+      const step = Math.max(-CATCH_UP_DEG, Math.min(CATCH_UP_DEG, target - next.pitch));
+      return { pitch: Math.min(next.pitch + step, cap) };
     });
     const sync = () =>
       show(mode.current === "manual" || (mode.current === "auto" && map.getPitch() > 0.5));
@@ -143,13 +155,19 @@ export function useThreeD(map: MapLibreMap | null, styleVersion: number): ThreeD
       if (map.getPitch() < 3) mode.current = autoPitch(map.getZoom()) > 0 ? "flat" : "auto";
       sync();
     };
+    // A scroll or pinch of the user's own: switching 3D off stays at that zoom.
+    const onZoomStart = (e: MapLibreEvent<Event | undefined>) => {
+      if (e.originalEvent) zoomBefore3D.current = null;
+    };
     // Tilt set through transformCameraUpdate fires no "pitch" event, so watch every move.
     map.on("move", sync);
     map.on("pitchend", onPitchEnd);
+    map.on("zoomstart", onZoomStart);
     return () => {
       setCameraTransform(map, null);
       map.off("move", sync);
       map.off("pitchend", onPitchEnd);
+      map.off("zoomstart", onZoomStart);
     };
   }, [map, show]);
 
@@ -171,16 +189,38 @@ export function useThreeD(map: MapLibreMap | null, styleVersion: number): ThreeD
 
   useEffect(() => () => window.clearTimeout(fadeTimer.current), []);
 
+  // Eases the camera for the 3D button. Clicking again mid-way starts a new ease
+  // from wherever the camera is, so quick clicks reverse smoothly.
+  const animateTilt = useCallback(
+    (to: { pitch: number; zoom?: number }, done?: () => void) => {
+      if (!map) return;
+      const gen = ++tiltGen.current;
+      tilting.current = true;
+      const finish = () => {
+        if (gen !== tiltGen.current) return;
+        tilting.current = false;
+        done?.();
+      };
+      // easeTo first ends any earlier ease; that one's moveend fires before the
+      // listener below exists, and its own listener sees a stale generation.
+      map.easeTo({ ...to, duration: TILT_MS, easing: easeInOutCubic });
+      if (map.isEasing()) map.once("moveend", finish);
+      else finish(); // reduced motion: the move already happened
+    },
+    [map],
+  );
+
   const toggle = useCallback(() => {
     if (!map) return;
     if (activeRef.current) {
       mode.current = "flat";
       show(false);
-      // Ease the camera down to flat while the buildings fade away.
-      tilting.current = true;
-      map.easeTo({ pitch: 0, duration: 900, easing: easeInOutCubic });
-      map.once("moveend", () => {
-        tilting.current = false;
+      // Back down to flat, and back out to where 3D was switched on from.
+      // Kept until the ease ends, so a quick on-off-on still returns to the start.
+      const back = zoomBefore3D.current;
+      const zoom = back != null && back < map.getZoom() ? back : undefined;
+      animateTilt({ pitch: 0, ...(zoom != null ? { zoom } : {}) }, () => {
+        zoomBefore3D.current = null;
         // Turned off where auto tilt wouldn't tilt anyway: back to auto right away.
         if (map.getZoom() < AUTO_3D_START) mode.current = "auto";
       });
@@ -188,19 +228,20 @@ export function useThreeD(map: MapLibreMap | null, styleVersion: number): ThreeD
       mode.current = "manual";
       manualPitch.current = PITCH_3D;
       show(true);
-      tilting.current = true;
-      map.easeTo({ pitch: maxPitch(map.getZoom()), duration: 800, easing: easeInOutCubic });
-      // Registered after easeTo, which ends any earlier move first.
-      map.once("moveend", () => {
-        tilting.current = false;
-      });
+      // Close enough in for the buildings to read as 3D.
+      const from = map.getZoom();
+      const zoom = Math.max(from, ZOOM_3D);
+      if (zoomBefore3D.current == null) zoomBefore3D.current = from;
+      animateTilt({ pitch: maxPitch(zoom), zoom });
     }
-  }, [map, show]);
+  }, [map, show, animateTilt]);
 
   const zoomBy = useCallback(
     (delta: number) => {
       if (!map) return;
       const zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, map.getZoom() + delta));
+      // A zoom of the user's own: switching 3D off stays at it.
+      zoomBefore3D.current = null;
       // In auto mode the tilt follows along through transformCameraUpdate.
       map.easeTo({ zoom, duration: 300 });
     },
@@ -209,6 +250,7 @@ export function useThreeD(map: MapLibreMap | null, styleVersion: number): ThreeD
 
   const recenter = useCallback(() => {
     if (!map) return;
+    zoomBefore3D.current = null;
     map.flyTo({
       center: SURABAYA_CENTER,
       zoom: DEFAULT_ZOOM,

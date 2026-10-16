@@ -1,16 +1,16 @@
 "use client";
 
 import { ChevronDown, FileDown, Pause, Play } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useState } from "react";
 
-import { exportReport, exportExcel } from "../lib/export-report";
 import { Reveal } from "./reveal";
 import { BalancePanel } from "./sidebar/balance-panel";
-import { ConvergenceChart } from "./sidebar/convergence-chart";
 import { PeriodsPanel } from "./sidebar/periods-panel";
 import { ResultsPanel } from "./sidebar/results-panel";
 import { RouteList } from "./sidebar/route-list";
 import { SeverityPanel } from "./sidebar/severity-panel";
+import { SimSpeedControl } from "./sidebar/sim-speed-control";
 import { UnservedPanel } from "./sidebar/unserved-panel";
 import type {
   AppMode,
@@ -19,6 +19,15 @@ import type {
   SeverityIndexResponse,
   Suggestion,
 } from "../types";
+
+// The chart library and the PDF/Excel writers are big and only needed once a
+// result is open, so they load on demand instead of with the page.
+const ConvergenceChart = dynamic(
+  () => import("./sidebar/convergence-chart").then((m) => m.ConvergenceChart),
+  { ssr: false, loading: () => <div aria-hidden className="h-[172px]" /> },
+);
+const loadExport = () => import("../lib/export-report");
+
 
 type DetailsTab = "routes" | "periods" | "unserved" | "balance" | "severity";
 
@@ -117,11 +126,17 @@ export function ResultsDock({
               <div className="flex gap-[6px]">
                 <ExportBtn
                   label="PDF"
-                  onClick={() => exportReport(result, { completedAt, periods })}
+                  onPrefetch={loadExport}
+                  onClick={() =>
+                    void loadExport().then((m) => m.exportReport(result, { completedAt, periods }))
+                  }
                 />
                 <ExportBtn
                   label="Excel"
-                  onClick={() => exportExcel(result, { completedAt, periods })}
+                  onPrefetch={loadExport}
+                  onClick={() =>
+                    void loadExport().then((m) => m.exportExcel(result, { completedAt, periods }))
+                  }
                 />
               </div>
             </div>
@@ -139,6 +154,8 @@ export function ResultsDock({
           >
             <span className={headerLabelCls}>Detail Rute</span>
           </button>
+
+          {onToggleAnimating && animating ? <SimSpeedControl /> : null}
 
           {onToggleAnimating ? (
             <button
@@ -303,11 +320,21 @@ function TabButton({
   );
 }
 
-function ExportBtn({ label, onClick }: { label: string; onClick: () => void }) {
+function ExportBtn({
+  label,
+  onClick,
+  onPrefetch,
+}: {
+  label: string;
+  onClick: () => void;
+  onPrefetch: () => void;
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
+      onPointerEnter={onPrefetch}
+      onFocus={onPrefetch}
       className="border-frost bg-pure-white text-steel hover:bg-mist inline-flex flex-1 cursor-pointer items-center justify-center gap-[5px] rounded-md border px-[10px] py-8 text-[11px] font-bold tracking-[-0.11px] transition-colors"
     >
       <FileDown size={12} strokeWidth={2.2} />

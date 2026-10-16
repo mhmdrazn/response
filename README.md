@@ -51,6 +51,25 @@ npm run dev
 
 Opens at <http://localhost:3000>. The frontend expects the backend at `NEXT_PUBLIC_API_URL` (defaults to `http://localhost:8000` via `.env.local`).
 
+### Live traffic (Google Maps, optional)
+
+Two separate keys from one Google Cloud project with billing enabled:
+
+| Where | Variable | Google API to enable | Restrict the key to |
+| --- | --- | --- | --- |
+| Map layer "Lalu Lintas" | `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` in `frontend/.env.local` | Map Tiles API | HTTP referrers of your site, Map Tiles API only |
+| Route planning with traffic | `GOOGLE_MAPS_API_KEY` in `backend/.env` | Routes API | Routes API only (and server IP if fixed) |
+
+Copy `frontend/.env.example` and `backend/.env.example`, fill the keys, restart both
+servers. On Vercel, set the same variables in the project settings instead.
+The traffic layer is then a pill under *Lapisan Data*; the routing switch is
+*Pertimbangkan lalu lintas saat ini* in the algorithm panel. Without the keys both
+stay disabled and everything runs on the precomputed OSRM times.
+
+Cost: each traffic refresh for routing buys at most `TRAFFIC_MAX_ELEMENTS` matrix
+elements (default 400) and is reused for `TRAFFIC_CACHE_TTL_S` (default 10 min);
+the map layer bills per traffic tile loaded.
+
 ## Documentation
 
 - [PRD.md](PRD.md) — product requirements, architecture, API specs, feature priorities

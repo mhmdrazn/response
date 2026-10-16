@@ -253,9 +253,21 @@ export function RouteDecorators({ routes, highlightId, animating }: RouteDecorat
     }
 
     let frame = 0;
+    let lastKey = "";
     const step = () => {
       const t = simNow();
-      if (t !== null) geojsonSource(map, SOURCE)?.setData(frameData(t));
+      if (t !== null) {
+        const data = frameData(t);
+        // Vehicles spend most of the cycle parked at a stop (pumping, draining,
+        // the pause between cycles); skip the source update while nothing moved.
+        const key = data.features
+          .map((f) => `${f.geometry.coordinates.join(",")}:${f.properties?.dim}:${f.properties?.front}`)
+          .join("|");
+        if (key !== lastKey) {
+          lastKey = key;
+          geojsonSource(map, SOURCE)?.setData(data);
+        }
+      }
       frame = requestAnimationFrame(step);
     };
     frame = requestAnimationFrame(step);

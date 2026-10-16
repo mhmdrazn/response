@@ -8,6 +8,7 @@ import type {
   OptimizationResult,
   ScenarioList,
   SeverityIndexResponse,
+  TrafficStatus,
   VNSParams,
 } from "../types";
 
@@ -92,6 +93,7 @@ export const api = {
       : request<SeverityIndexResponse>(s("/api/severity-index", scenario)),
 
   getFleetDefaults: (): Promise<FleetDefaults> => request<FleetDefaults>("/api/optimize/fleet-defaults"),
+  getTrafficStatus: (): Promise<TrafficStatus> => request<TrafficStatus>("/api/traffic/status"),
 
   getDataMeta: (scenario?: string): Promise<DataMetaResponse> =>
     request<DataMetaResponse>(s("/api/data/meta", scenario)),

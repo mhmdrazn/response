@@ -68,6 +68,12 @@ export function FloodMarkers({ points, selectedId, onSelect }: FloodMarkersProps
     [points],
   );
   const signature = useMemo(() => idSignature(points), [points]);
+  // With no critical point the rings have nothing to draw, so the pulse sleeps
+  // instead of restyling the map (and so repainting it) thirty times a second.
+  const hasCritical = useRef(false);
+  useEffect(() => {
+    hasCritical.current = data.features.some((f) => f.properties?.critical);
+  }, [data]);
 
   useEffect(() => {
     // Paints the dot and halo for the current selection and animation frame.
@@ -158,7 +164,7 @@ export function FloodMarkers({ points, selectedId, onSelect }: FloodMarkersProps
     let last = 0;
     const tick = (now: number) => {
       frame = requestAnimationFrame(tick);
-      if (now - last < 33 || !map.getLayer(PULSE_A)) return;
+      if (now - last < 33 || !hasCritical.current || !map.getLayer(PULSE_A)) return;
       last = now;
       [PULSE_A, PULSE_B].forEach((id, i) => {
         const t = (now / PULSE_MS + i * 0.5) % 1;

@@ -36,6 +36,8 @@ class _RunContext(_Base):
     # Litres still to pump per flood id, carried over from the previous period.
     # When given it replaces the scenario's volumes: floods not listed have none left.
     remaining_volumes: dict[str, float] | None = Field(None, max_length=5000)
+    # Plan with live traffic from the Google Routes API instead of free-flow times.
+    use_traffic: bool = False
 
     @field_validator("remaining_volumes")
     @classmethod
@@ -167,6 +169,21 @@ class BalanceOut(_Base):
     depots: list[DepotBalanceOut]
 
 
+class TrafficOut(_Base):
+    """Whether live traffic shaped the travel times of this run, and how much."""
+
+    requested: bool
+    applied: bool
+    source: str | None = None
+    fetched_at: str | None = None
+    sampled_pairs: int = 0
+    requested_pairs: int = 0
+    # Mean and largest traffic / free-flow ratio over the sampled legs.
+    mean_factor: float = 1.0
+    max_factor: float = 1.0
+    message: str | None = None
+
+
 class OptimizationResponse(_Base):
     algorithm: Literal["acs", "vns"]
     routes: list[RouteOut]
@@ -188,3 +205,4 @@ class OptimizationResponse(_Base):
     unserved: list[UnservedPointOut] = Field(default_factory=list)
     suggestions: list[SuggestionOut] = Field(default_factory=list)
     balance: BalanceOut | None = None
+    traffic: TrafficOut | None = None

@@ -114,7 +114,7 @@ export const BASE_MAP_LAYERS = {
 
 export type BaseMapId = keyof typeof BASE_MAP_LAYERS;
 
-export type OverlayLayerId = "floods" | "depots" | "ifs" | "faskes" | "choropleth";
+export type OverlayLayerId = "floods" | "depots" | "ifs" | "faskes" | "choropleth" | "traffic";
 
 export interface OverlayLayerMeta {
   id: OverlayLayerId;
@@ -152,6 +152,12 @@ export const OVERLAY_LAYERS: OverlayLayerMeta[] = [
     id: "choropleth",
     label: "Indeks Keparahan per Kecamatan",
     swatchColor: "#f97316",
+    defaultVisible: false,
+  },
+  {
+    id: "traffic",
+    label: "Lalu Lintas Langsung (Google)",
+    swatchColor: "#F23C32",
     defaultVisible: false,
   },
 ];

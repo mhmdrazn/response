@@ -5,7 +5,7 @@ import type { Depot, Faskes, FloodPoint, IntermediateFacility, RunExtras } from 
  * the result and compared with the current settings, it says which changes the
  * result does not yet reflect.
  */
-export type SettingGroup = "fleet" | "priority" | "algorithm" | "budget" | "data";
+export type SettingGroup = "fleet" | "priority" | "algorithm" | "budget" | "traffic" | "data";
 
 export type RunSignature = Record<SettingGroup, string>;
 
@@ -14,6 +14,7 @@ export const GROUP_LABEL: Record<SettingGroup, string> = {
   priority: "Prioritas keparahan",
   algorithm: "Parameter algoritma",
   budget: "Anggaran komputasi",
+  traffic: "Lalu lintas langsung",
   data: "Data genangan",
 };
 
@@ -60,11 +61,16 @@ export function buildSignature(i: SignatureInput): RunSignature {
     priority: hashString(JSON.stringify(i.severity_weights ?? null)),
     algorithm: hashString(JSON.stringify([i.acsParams, i.vnsParams])),
     budget: String(i.budgetS),
+    traffic: i.use_traffic ? "on" : "off",
     data: i.dataKey,
   };
 }
 
 /** The settings that differ between a saved result and now, in a fixed order. */
 export function changedGroups(saved: RunSignature, now: RunSignature): SettingGroup[] {
-  return (Object.keys(GROUP_LABEL) as SettingGroup[]).filter((g) => saved[g] !== now[g]);
+  // Results saved before a group existed were computed at its default.
+  const was = (g: SettingGroup) => saved[g] ?? GROUP_DEFAULT[g];
+  return (Object.keys(GROUP_LABEL) as SettingGroup[]).filter((g) => was(g) !== now[g]);
 }
+
+const GROUP_DEFAULT: Partial<Record<SettingGroup, string>> = { traffic: "off" };

@@ -43,10 +43,12 @@ from app.models.optimization import (
     OptimizationResponse,
     RouteOut,
     SuggestionOut,
+    TrafficOut,
     UnservedPointOut,
     VisitOut,
 )
 from app.severity.index import compute_severity_index
+from app.traffic import live as traffic
 
 _log = logging.getLogger("response.optimize")
 
@@ -91,7 +93,8 @@ def _build_ready_instance(
     fleet: list[DepotFleetIn] | None = None,
     severity_weights: list[float] | None = None,
     remaining_volumes: dict[str, float] | None = None,
-) -> Instance:
+    use_traffic: bool = False,
+) -> tuple[Instance, TrafficOut | None]:
     try:
         bundle = store.get(scenario)
     except KeyError:
@@ -107,20 +110,63 @@ def _build_ready_instance(
     fleet_cfg = _fleet_from_request(fleet, {str(i) for i in bundle.depots["id"]})
     if fleet_cfg is not None:
         kwargs["fleet"] = fleet_cfg
-    inst = build_instance(
-        depots_df=bundle.depots,
-        floods_df=bundle.floods,
-        ifs_df=bundle.ifs,
-        dist_matrix=bundle.distance_matrix,
-        time_matrix=bundle.time_matrix,
-        si_values=sev.si_values,
+    build_args: dict[str, object] = {
+        "depots_df": bundle.depots,
+        "floods_df": bundle.floods,
+        "ifs_df": bundle.ifs,
+        "dist_matrix": bundle.distance_matrix,
+        "time_matrix": bundle.time_matrix,
+        "si_values": sev.si_values,
         **kwargs,
-    )
+    }
+    inst = build_instance(**build_args)  # type: ignore[arg-type]
     if not inst.vehicles:
         raise HTTPException(status_code=422, detail="Armada kosong: minimal satu unit.")
+
+    traffic_out: TrafficOut | None = None
+    if use_traffic:
+        inst, traffic_out = _with_live_traffic(bundle.scenario_id, inst, build_args)
     if remaining_volumes is not None:
         _carry_over(inst, remaining_volumes)
-    return inst
+    return inst, traffic_out
+
+
+def _with_live_traffic(
+    scenario_id: str, inst: Instance, build_args: dict[str, object]
+) -> tuple[Instance, TrafficOut]:
+    """Rebuild the instance on live-traffic travel times; fall back to free flow on failure.
+
+    The instance is rebuilt, not patched, because which depots may dispatch to a
+    flood is decided on drive time, and traffic changes that too.
+    """
+    coords = np.array(
+        [(float(n["lat"]), float(n["lon"])) for n in [*inst.depots, *inst.floods, *inst.ifs]]
+    )
+    try:
+        snap = traffic.snapshot_for(
+            f"{scenario_id}:{inst.n_total}",
+            coords,
+            inst.time_matrix,
+            inst.n_depots,
+            inst.n_floods,
+            inst.dispatch_limit_s,
+        )
+    except traffic.TrafficUnavailable as exc:
+        _log.warning("Live traffic unavailable, planning on free-flow times: %s", exc)
+        return inst, TrafficOut(requested=True, applied=False, message=str(exc))
+
+    adjusted = traffic.apply_traffic(inst.time_matrix, snap)
+    rebuilt = build_instance(**{**build_args, "time_matrix": adjusted})  # type: ignore[arg-type]
+    return rebuilt, TrafficOut(
+        requested=True,
+        applied=True,
+        source="google-routes",
+        fetched_at=snap.fetched_at.isoformat(),
+        sampled_pairs=snap.sampled_pairs,
+        requested_pairs=snap.requested_pairs,
+        mean_factor=round(snap.mean_factor, 3),
+        max_factor=round(snap.max_factor, 3),
+    )
 
 
 def _carry_over(inst: Instance, remaining: dict[str, float]) -> None:
@@ -299,12 +345,13 @@ async def run_acs(
     request: ACSRequest, scenario: str | None = Query(default=None)
 ) -> OptimizationResponse:
     try:
-        inst = _build_ready_instance(
+        inst, traffic_out = _build_ready_instance(
             scenario,
             request.unserved_penalty,
             request.fleet,
             request.severity_weights,
             request.remaining_volumes,
+            request.use_traffic,
         )
         params = ACSParams(
             iterations=request.iterations,
@@ -324,7 +371,7 @@ async def run_acs(
             for v in violations:
                 _log.warning("Constraint violation: %s", v)
 
-        return _to_response(
+        response = _to_response(
             inst=inst,
             routes=sol.routes,
             capacities=sol.capacities,
@@ -334,6 +381,8 @@ async def run_acs(
             computation_time_s=sol.computation_time_s,
             algorithm="acs",
         )
+        response.traffic = traffic_out
+        return response
     except HTTPException:
         raise
     except Exception as exc:  # noqa: BLE001
@@ -345,12 +394,13 @@ async def run_vns(
     request: VNSRequest, scenario: str | None = Query(default=None)
 ) -> OptimizationResponse:
     try:
-        inst = _build_ready_instance(
+        inst, traffic_out = _build_ready_instance(
             scenario,
             request.unserved_penalty,
             request.fleet,
             request.severity_weights,
             request.remaining_volumes,
+            request.use_traffic,
         )
         params = VNSParams(
             max_iterations=request.max_iterations,
@@ -366,7 +416,7 @@ async def run_vns(
             for v in violations:
                 _log.warning("VNS constraint violation: %s", v)
 
-        return _to_response(
+        response = _to_response(
             inst=inst,
             routes=sol.routes,
             capacities=sol.capacities,
@@ -376,6 +426,8 @@ async def run_vns(
             computation_time_s=sol.computation_time_s,
             algorithm="vns",
         )
+        response.traffic = traffic_out
+        return response
     except HTTPException:
         raise
     except Exception as exc:  # noqa: BLE001

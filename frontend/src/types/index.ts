@@ -162,6 +162,27 @@ export interface ConvergencePoint {
   iter_best_score: number;
 }
 
+/** Whether live traffic shaped a run's travel times (matches backend TrafficOut). */
+export interface TrafficInfo {
+  requested: boolean;
+  applied: boolean;
+  source: string | null;
+  fetched_at: string | null;
+  sampled_pairs: number;
+  requested_pairs: number;
+  /** Mean and largest traffic / free-flow ratio over the sampled road legs. */
+  mean_factor: number;
+  max_factor: number;
+  message: string | null;
+}
+
+/** GET /api/traffic/status */
+export interface TrafficStatus {
+  routes_api_configured: boolean;
+  max_elements: number;
+  cache_ttl_s: number;
+}
+
 export interface OptimizationResult {
   algorithm: "acs" | "vns";
   routes: RouteOut[];
@@ -183,6 +204,7 @@ export interface OptimizationResult {
   unserved: UnservedPoint[];
   suggestions: Suggestion[];
   balance: BalanceMetrics | null;
+  traffic?: TrafficInfo | null;
 }
 
 /** Tank size and how many vehicles carry it (matches backend TankUnits). */
@@ -205,6 +227,8 @@ export interface RunExtras {
   severity_weights?: number[] | null;
   /** Litres still to pump per flood id, carried over from the previous period. */
   remaining_volumes?: Record<string, number> | null;
+  /** Plan on live-traffic travel times from the Google Routes API. */
+  use_traffic?: boolean;
 }
 
 export interface ACSParams extends RunExtras {

@@ -3,6 +3,7 @@ import type { GeoJSONSource, Map as MapLibreMap } from "maplibre-gl";
 /** Overlays from bottom to top; each group's layers are named "<prefix>-...". */
 const OVERLAY_ORDER = [
   "app-choropleth",
+  "app-traffic",
   "app-routes",
   "app-faskes",
   "app-if",
@@ -20,7 +21,7 @@ export function beforeIdFor(map: MapLibreMap, prefix: string): string | undefine
   const layers = map.getStyle().layers;
   const above = layers.find((l) => higher.some((h) => l.id.startsWith(`${h}-`)));
   if (above) return above.id;
-  if (prefix === "app-choropleth" || prefix === "app-routes") {
+  if (prefix === "app-choropleth" || prefix === "app-traffic" || prefix === "app-routes") {
     return layers.find((l) => l.type === "symbol")?.id;
   }
   return undefined;

@@ -1,6 +1,7 @@
 "use client";
 
 import { PanelsTopLeft } from "lucide-react";
+import dynamic from "next/dynamic";
 import {
   useCallback,
   useEffect,
@@ -32,11 +33,11 @@ import type {
   RouteOut,
   ScenarioMeta,
   Suggestion,
+  TrafficStatus,
 } from "../types";
 import { AnimatedHeight } from "./animated-height";
 import { ErrorBoundary } from "./error-boundary";
 import { AlgorithmPanel } from "./sidebar/algorithm-panel";
-import { ComparisonPanel } from "./sidebar/comparison-panel";
 import { DataTableModal, type DatasetKey } from "./data-table-modal";
 import { FloatingNavbar } from "./floating-navbar";
 import { WindowedLayout } from "./layouts/windowed-layout";
@@ -64,6 +65,12 @@ import { ToastProvider, useToast } from "./toast";
 import type { RunKind } from "../hooks/use-optimization";
 import { formatDateTimeId } from "../lib/format";
 import { readJSON, readStringSet, writeJSON, writeStringSet } from "../lib/storage";
+
+// Only shown after a two-algorithm comparison; its chart library loads then.
+const ComparisonPanel = dynamic(
+  () => import("./sidebar/comparison-panel").then((m) => m.ComparisonPanel),
+  { ssr: false },
+);
 
 const INITIAL_OVERLAYS: Record<OverlayLayerId, boolean> = OVERLAY_LAYERS.reduce(
   (acc, l) => ({ ...acc, [l.id]: l.defaultVisible }),
@@ -94,6 +101,7 @@ const NO_DEPOTS: Depot[] = [];
 const HIDDEN_ROUTES_STORAGE_KEY = "floodroute:hidden-routes:v1";
 const LAYOUT_STORAGE_KEY = "floodroute:layout:v1";
 const BASEMAP_STORAGE_KEY = "floodroute:basemap:v1";
+const TRAFFIC_ROUTING_STORAGE_KEY = "floodroute:traffic-routing:v1";
 
 function subscribeStorage(onChange: () => void): () => void {
   window.addEventListener("storage", onChange);
@@ -190,7 +198,32 @@ export function AppShell() {
   const priorityCfg = usePriority();
   const { data, loading, error: dataError, reload } = useMapData(scenario, priorityCfg.weights);
   const fleetCfg = useFleetConfig(data?.depots ?? NO_DEPOTS);
-  const runExtras = { fleet: fleetCfg.payload, severity_weights: priorityCfg.weights };
+  // Plan with live traffic: remembered between visits, used only when the backend has a key.
+  const [trafficWanted, setTrafficWanted] = usePersistentState<boolean>(
+    TRAFFIC_ROUTING_STORAGE_KEY,
+    false,
+  );
+  const [trafficStatus, setTrafficStatus] = useState<TrafficStatus | null>(null);
+  useEffect(() => {
+    let alive = true;
+    api
+      .getTrafficStatus()
+      .then((st) => {
+        if (alive) setTrafficStatus(st);
+      })
+      .catch(() => {
+        /* older backend: no traffic routing */
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+  const trafficAvailable = trafficStatus?.routes_api_configured ?? false;
+  const runExtras = {
+    fleet: fleetCfg.payload,
+    severity_weights: priorityCfg.weights,
+    use_traffic: trafficWanted && trafficAvailable,
+  };
   const {
     result,
     periods,
@@ -374,6 +407,11 @@ export function AppShell() {
       onScenarioChange={handleScenarioChange}
       budgetS={algoCfg.budgetS}
       onBudgetChange={algoCfg.setBudgetS}
+      traffic={{
+        available: trafficAvailable,
+        enabled: trafficWanted && trafficAvailable,
+        onChange: setTrafficWanted,
+      }}
       onRun={handleRun}
       stale={stale}
       onCompare={handleCompare}

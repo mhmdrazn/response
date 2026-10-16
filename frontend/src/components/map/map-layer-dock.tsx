@@ -7,12 +7,14 @@ import {
   Hospital,
   Layers,
   Map as MapIcon,
+  TrafficCone,
   Waves,
   type LucideIcon,
 } from "lucide-react";
 import { type ReactNode, useState } from "react";
 
 import { basemapCredit, basemapSwatch, type BasemapSwatch } from "../../lib/basemap-style";
+import { trafficTilesConfigured } from "../../lib/google-traffic";
 import { BASE_MAP_LAYERS, type BaseMapId, type OverlayLayerId } from "../../lib/map-constants";
 
 interface MapLayerDockProps {
@@ -47,6 +49,7 @@ const OVERLAY_OPTIONS: OverlayOption[] = [
   { id: "ifs", label: "Sungai", Icon: Waves, activeColor: "#0284c7" },
   { id: "faskes", label: "Faskes", Icon: Hospital, activeColor: "#059669" },
   { id: "choropleth", label: "Keparahan Kecamatan", Icon: MapIcon, activeColor: "#f97316" },
+  { id: "traffic", label: "Lalu Lintas", Icon: TrafficCone, activeColor: "#F23C32" },
 ];
 
 export function MapLayerDock({
@@ -124,6 +127,11 @@ export function MapLayerDock({
               active={overlays[id]}
               activeColor={activeColor}
               onClick={() => setOverlay(id, !overlays[id])}
+              disabledReason={
+                id === "traffic" && !trafficTilesConfigured()
+                  ? "Atur NEXT_PUBLIC_GOOGLE_MAPS_API_KEY untuk menampilkan lalu lintas langsung"
+                  : undefined
+              }
             >
               <Icon size={14} strokeWidth={2} />
             </Pill>
@@ -221,12 +229,15 @@ function Pill({
   activeColor,
   onClick,
   label,
+  disabledReason,
   children,
 }: {
   active: boolean;
   activeColor: string;
   onClick: () => void;
   label: string;
+  /** Set when the layer cannot be shown; the pill is greyed out and says why. */
+  disabledReason?: string;
   children: ReactNode;
 }) {
   return (
@@ -234,7 +245,9 @@ function Pill({
       type="button"
       aria-pressed={active}
       onClick={onClick}
-      className={`inline-flex cursor-pointer items-center gap-[6px] rounded-md border py-[5px] pr-[10px] pl-8 text-[12px] font-semibold tracking-[-0.1px] whitespace-nowrap transition-colors ${
+      disabled={Boolean(disabledReason)}
+      title={disabledReason}
+      className={`inline-flex cursor-pointer items-center gap-[6px] rounded-md border py-[5px] pr-[10px] pl-8 text-[12px] font-semibold tracking-[-0.1px] whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-45 ${
         active
           ? "border-transparent text-white"
           : "border-frost bg-pure-white text-steel hover:bg-frost hover:text-midnight-ink"

@@ -1,6 +1,14 @@
 "use client";
 
-import { CheckCircle2, Clock, MapPinned, Route, TrendingDown, Truck } from "lucide-react";
+import {
+  CheckCircle2,
+  Clock,
+  MapPinned,
+  Route,
+  TrafficCone,
+  TrendingDown,
+  Truck,
+} from "lucide-react";
 
 import { formatDateTimeId } from "../../lib/format";
 import { formatDuration, formatMeters, formatNumber } from "../../lib/format-metrics";
@@ -33,6 +41,7 @@ export function ResultsPanel({
           <span className="text-steel">Dijalankan: {runAt}</span>
         </div>
       ) : null}
+      {result.traffic?.requested ? <TrafficNote traffic={result.traffic} /> : null}
       <div className="grid grid-cols-2 gap-8">
         <Metric
           Icon={TrendingDown}
@@ -156,6 +165,39 @@ function Metric({ Icon, label, value, hint, accent }: MetricProps) {
         {value}
       </div>
       {hint ? <div className="text-[11.5px] font-medium text-steel">{hint}</div> : null}
+    </div>
+  );
+}
+
+/** How live traffic shaped this run, or why it could not. */
+function TrafficNote({ traffic }: { traffic: NonNullable<OptimizationResult["traffic"]> }) {
+  if (!traffic.applied) {
+    return (
+      <div className="text-steel flex items-start gap-[6px] text-[11px] leading-[1.4] font-semibold">
+        <TrafficCone size={13} strokeWidth={2.2} className="text-indigo-ink mt-px flex-shrink-0" />
+        <span>
+          Lalu lintas tidak dipakai, rute memakai waktu tempuh normal.
+          {traffic.message ? <span className="text-slate font-medium"> {traffic.message}</span> : null}
+        </span>
+      </div>
+    );
+  }
+  const at = traffic.fetched_at
+    ? new Date(traffic.fetched_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })
+    : null;
+  const slower = Math.round((traffic.mean_factor - 1) * 100);
+  return (
+    <div className="text-steel flex items-start gap-[6px] text-[11px] leading-[1.4] font-semibold">
+      <TrafficCone size={13} strokeWidth={2.2} className="mt-px flex-shrink-0" />
+      <span>
+        Memakai lalu lintas langsung{at ? ` pukul ${at}` : ""}: rata-rata{" "}
+        {slower > 0 ? `${formatNumber(slower)}% lebih lambat` : "lancar"}, terpadat ×
+        {formatNumber(traffic.max_factor, 2)}
+        <span className="text-slate font-medium">
+          {" "}
+          · {formatNumber(traffic.sampled_pairs)} ruas diukur
+        </span>
+      </span>
     </div>
   );
 }

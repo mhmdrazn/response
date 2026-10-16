@@ -7,6 +7,9 @@ dist/
 *.tsbuildinfo
 next-env.d.ts
 .env*.local
+# API keys live in .env files; only the examples are tracked.
+.env
+!.env.example
 .vercel
 
 frontend/node_modules/

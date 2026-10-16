@@ -7,6 +7,7 @@ import type { RouteCycles } from "../../lib/route-cycles";
 import { routePhase, stopTimings, type RoutePhase } from "../../lib/route-schedule";
 import { useSimTime } from "../../lib/sim-clock";
 import type { MapSelection, RouteOut, VisitOut } from "../../types";
+import { SimProgressBar } from "./sim-progress-bar";
 
 interface RouteTimelineProps {
   route: RouteOut;
@@ -195,6 +196,17 @@ export function RouteTimeline({ route, color, cycles, onSelectStop }: RouteTimel
                     >
                       {here && simT !== null ? liveCaption(route, i, simT) : caption(route, i)}
                     </span>
+                    {here && v.node_type !== "depot" ? (
+                      <span className="pt-[4px]">
+                        <SimProgressBar
+                          route={route}
+                          index={i}
+                          kind="service"
+                          color={color}
+                          label={v.node_type === "flood" ? "Progres pemompaan" : "Progres pembuangan"}
+                        />
+                      </span>
+                    ) : null}
                   </span>
                 </button>
               </li>
@@ -214,12 +226,13 @@ export function RouteTimeline({ route, color, cycles, onSelectStop }: RouteTimel
                         Menuju {route.visits[i + 1]?.node_name ?? "perhentian berikutnya"}
                       </span>
                     </span>
-                    <span className="bg-frost relative h-[3px] w-full overflow-hidden rounded-full">
-                      <span
-                        className="absolute inset-y-0 left-0 rounded-full"
-                        style={{ width: `${Math.round(phase.frac * 100)}%`, background: color }}
-                      />
-                    </span>
+                    <SimProgressBar
+                      route={route}
+                      index={i}
+                      kind="travel"
+                      color={color}
+                      label="Progres perjalanan ke perhentian berikutnya"
+                    />
                   </span>
                 </li>
               ) : null}
