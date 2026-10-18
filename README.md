@@ -65,14 +65,15 @@ severity index, ACS/VNS and every route stay exactly as they are.
    variable to the frontend project's environment variables.
 3. Restart `npm run dev`.
 
-The browser never sees the key: tiles come through `/api/traffic-tiles/{z}/{x}/{y}`,
-a Next.js route that adds it on the server. To stay inside the free tier the proxy
+The browser never sees the key: tiles come through `/traffic/{z}/{x}/{y}`,
+a Next.js route that adds it on the server (outside `/api`, which `vercel.json` sends to
+the Python backend). To stay inside the free tier the proxy
 serves only tiles over Surabaya (zoom 10–15; closer in the map reuses the zoom-15
 tiles, so zooming costs nothing; a full view is about 8 tiles), reuses each tile for 2 minutes (in memory and via `Cache-Control`
 for the browser/CDN), and stops at a daily and a monthly cap — by default 90 % of
 the free tier spread over 31 days (`TOMTOM_DAILY_TILE_LIMIT`, `TOMTOM_MONTHLY_TILE_LIMIT`
 to change them). Past a cap the layer hides itself with a note and comes back the
-next day. `/api/traffic-tiles/status` shows today's and this month's count. The
+next day. `/traffic/status` shows today's and this month's count. The
 count lives in memory and in a file in the OS temp folder; on a serverless host
 each instance counts on its own, which is why the caps sit below the free tier.
 

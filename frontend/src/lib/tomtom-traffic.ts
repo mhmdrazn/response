@@ -1,9 +1,10 @@
 // Live traffic on the map: TomTom's traffic flow vector tiles, served through this app's
-// own /api/traffic-tiles proxy so the TomTom key stays on the server. The proxy
-// also caps the calls to stay within TomTom's free tier (see lib/server).
+// own /traffic proxy so the TomTom key stays on the server. The proxy also caps the
+// calls to stay within TomTom's free tier (see lib/server). It is not under /api:
+// on Vercel, vercel.json sends every /api path to the Python backend.
 
-export const TRAFFIC_TILE_URL = "/api/traffic-tiles/{z}/{x}/{y}";
-const STATUS_URL = "/api/traffic-tiles/status";
+export const TRAFFIC_TILE_URL = "/traffic/{z}/{x}/{y}";
+const STATUS_URL = "/traffic/status";
 
 /** Same as the proxy: tiles exist from MIN to MAX zoom, over Surabaya only. */
 export const TRAFFIC_MIN_ZOOM = 10;

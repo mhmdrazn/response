@@ -6,7 +6,7 @@ import { CACHE_TTL_MS, configured, tileAllowed, trafficTile } from "@/lib/server
 // may keep it as long as the server would, so a tile is not paid for twice.
 const CACHE_S = Math.floor(CACHE_TTL_MS / 1000);
 
-export async function GET(_req: NextRequest, ctx: RouteContext<"/api/traffic-tiles/[z]/[x]/[y]">) {
+export async function GET(_req: NextRequest, ctx: RouteContext<"/traffic/[z]/[x]/[y]">) {
   const { z, x, y } = await ctx.params;
   const [zi, xi, yi] = [z, x, y].map((v) => Number(v));
   if (!configured()) return new Response("TomTom belum dikonfigurasi", { status: 503 });
