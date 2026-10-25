@@ -66,3 +66,32 @@ def test_standby_full_routes_start_with_if(s2, solver):
 
     for r in sol.evaluation.routes:
         assert r.visits[0].tank_load_after == r.capacity, "standby tank must start full"
+
+
+def test_acs_global_update_touches_only_best_route_arcs(s2):
+    # Standard ACS: evaporation and deposit both apply only to the arcs of the
+    # best solution, τ = (1 − ρ) τ + ρ / best_score, kept symmetric. Every other
+    # arc must come out exactly as it went in.
+    inst = _instance(s2)
+    solver = HybridACS(inst, ACSParams(seed=3, rho=0.15))
+    rng = np.random.default_rng(0)
+    tau = rng.uniform(1e-7, 1e-5, size=solver.pheromone.shape)
+    solver.pheromone = (tau + tau.T) / 2  # symmetric, all values distinct
+    before = solver.pheromone.copy()
+
+    routes, _ = solver._construct_one_ant()
+    solver.pheromone = before.copy()  # undo the ant's local updates
+    best_score = 1_234_567.0
+    solver._global_update(routes, best_score)
+
+    on_route = np.zeros_like(before, dtype=bool)
+    for route in routes:
+        for a, b in zip(route[:-1], route[1:]):
+            on_route[a, b] = on_route[b, a] = True
+    assert on_route.any()
+
+    after = solver.pheromone
+    assert np.array_equal(after[~on_route], before[~on_route])
+    expected = (1 - 0.15) * before[on_route] + 0.15 / best_score
+    assert np.allclose(after[on_route], expected, rtol=0, atol=1e-18)
+    assert np.array_equal(after, after.T)

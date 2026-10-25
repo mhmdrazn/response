@@ -1,11 +1,17 @@
 """Experiments for the thesis: ACS against VNS, and how the plan reacts to its limits.
 
-Three experiments, each run for both solvers with the same seeds so the runs pair
-up for a Wilcoxon signed-rank test on Z:
+Three experiments run both solvers with the same seeds, so the runs pair up for
+a Wilcoxon signed-rank test on Z:
 
   main       every scenario, 30 seeds, at the defaults (281 min, 7 min)
   horizon    s2-jun, route duration limit 240 / 281 / 360 / 517 minutes
   dispatch   s2-jun, dispatch reach 5 / 7 / 10 / 15 minutes
+
+and one tunes Hybrid ACS alone, one parameter at a time, the others at default:
+
+  acs_params s2-jun, 30 seeds: n_ants 10 / 20 / 30, q0 0.5 / 0.7 / 0.9,
+             rho 0.10 / 0.15 / 0.30. The all-default setting is run once and
+             counted in each of the three groups.
 
 Results go to CSV in --out (default backend/experiments/):
 
@@ -13,6 +19,7 @@ Results go to CSV in --out (default backend/experiments/):
   summary.csv       mean / std / median of Z, coverage and more per group
   wilcoxon.csv      paired test of ACS vs VNS on Z per group
   sensitivity.csv   the horizon and dispatch groups of summary.csv
+  sensitivity_acs.csv  mean / std / median per ACS parameter setting
 
 A full run is long (main alone is 3 x 2 x 30 runs at 45 s), so runs are spread
 over worker processes and --resume skips the runs runs.csv already holds.
@@ -20,6 +27,7 @@ over worker processes and --resume skips the runs runs.csv already holds.
     python scripts/run_experiments.py                    # everything
     python scripts/run_experiments.py --only main --seeds 5 --time-limit 10
     python scripts/run_experiments.py --resume
+    python scripts/run_experiments.py --only acs_params --resume
 """
 
 from __future__ import annotations
@@ -46,6 +54,14 @@ DISPATCH_MIN = [5, 7, 10, 15]
 DEFAULT_HORIZON_MIN = 281
 DEFAULT_DISPATCH_MIN = 7
 ALGORITHMS = ["acs", "vns"]
+EXPERIMENTS = ["main", "horizon", "dispatch", "acs_params"]
+
+# ACS parameter sweep: each varied alone, the rest at the ACSParams defaults.
+ACS_SWEEP: dict[str, list[float]] = {
+    "n_ants": [10, 20, 30],
+    "q0": [0.5, 0.7, 0.9],
+    "rho": [0.10, 0.15, 0.30],
+}
 
 OUT_DEFAULT = Path(__file__).resolve().parents[1] / "experiments"
 
@@ -72,6 +88,9 @@ RUN_FIELDS = [
     "overtime_s",
     "violations",
     "runtime_s",
+    "param",
+    "param_value",
+    "iterations",
 ]
 
 
@@ -84,6 +103,10 @@ class Job:
     horizon_min: float
     dispatch_min: float
     time_limit_s: float
+    # acs_params only: the ACSParams field set away from its default ("default"
+    # for the all-default setting), and its value.
+    param: str = ""
+    param_value: float = 0.0
 
     def key(self) -> tuple[str, ...]:
         return (
@@ -93,6 +116,8 @@ class Job:
             str(self.seed),
             _num(self.horizon_min),
             _num(self.dispatch_min),
+            self.param,
+            _num(self.param_value),
         )
 
 
@@ -128,7 +153,12 @@ def run_job(job: Job) -> dict[str, object]:
 
     t0 = time.perf_counter()
     if job.algorithm == "acs":
-        sol = HybridACS(inst, ACSParams(seed=job.seed, time_limit_s=job.time_limit_s)).solve()
+        overrides: dict[str, object] = {}
+        if job.param and job.param != "default":
+            value = job.param_value
+            overrides[job.param] = int(value) if job.param == "n_ants" else float(value)
+        params = ACSParams(seed=job.seed, time_limit_s=job.time_limit_s, **overrides)
+        sol = HybridACS(inst, params).solve()
     else:
         sol = VNS(inst, VNSParams(seed=job.seed, time_limit_s=job.time_limit_s)).solve()
     runtime = time.perf_counter() - t0
@@ -152,6 +182,7 @@ def run_job(job: Job) -> dict[str, object]:
         "overtime_s": round(ev.overtime_s, 1),
         "violations": len(validate_hard_constraints(inst, ev)),
         "runtime_s": round(runtime, 2),
+        "iterations": sol.trace.iterations,
     }
 
 
@@ -252,7 +283,30 @@ def plan(args: argparse.Namespace) -> list[Job]:
             for algo in ALGORITHMS:
                 for s in sens_seeds:
                     jobs.append(Job("dispatch", SENSITIVITY_SCENARIO, algo, s, DEFAULT_HORIZON_MIN, dm, tl))
+    if "acs_params" in args.only:
+        for param, value in acs_settings():
+            for s in sens_seeds:
+                jobs.append(Job(
+                    "acs_params", SENSITIVITY_SCENARIO, "acs", s,
+                    DEFAULT_HORIZON_MIN, DEFAULT_DISPATCH_MIN, tl, param, value,
+                ))
     return jobs
+
+
+def _acs_defaults() -> dict[str, float]:
+    from app.algorithms.acs import ACSParams
+
+    d = ACSParams()
+    return {p: float(getattr(d, p)) for p in ACS_SWEEP}
+
+
+def acs_settings() -> list[tuple[str, float]]:
+    """The distinct settings to run: all-default once, then every off-default value."""
+    defaults = _acs_defaults()
+    out: list[tuple[str, float]] = [("default", 0.0)]
+    for param, values in ACS_SWEEP.items():
+        out += [(param, float(v)) for v in values if float(v) != defaults[param]]
+    return out
 
 
 def _read_runs(path: Path) -> list[dict[str, str]]:
@@ -262,17 +316,23 @@ def _read_runs(path: Path) -> list[dict[str, str]]:
         return list(csv.DictReader(fh))
 
 
+def _param(row: dict[str, str]) -> tuple[str, str]:
+    # Rows written before acs_params existed have no such columns.
+    value = row.get("param_value") or "0"
+    return row.get("param") or "", _num(float(value))
+
+
 def _run_key(row: dict[str, str]) -> tuple[str, ...]:
     return (
         row["experiment"], row["scenario"], row["algorithm"], str(int(float(row["seed"]))),
-        _num(float(row["horizon_min"])), _num(float(row["dispatch_min"])),
+        _num(float(row["horizon_min"])), _num(float(row["dispatch_min"])), *_param(row),
     )
 
 
-def _group_key(row: dict[str, str]) -> tuple[str, str, str, str]:
+def _group_key(row: dict[str, str]) -> tuple[str, ...]:
     return (
         row["experiment"], row["scenario"],
-        _num(float(row["horizon_min"])), _num(float(row["dispatch_min"])),
+        _num(float(row["horizon_min"])), _num(float(row["dispatch_min"])), *_param(row),
     )
 
 
@@ -281,13 +341,14 @@ def summarise(runs: list[dict[str, str]]) -> list[dict[str, object]]:
     for r in runs:
         groups.setdefault((*_group_key(r), r["algorithm"]), []).append(r)
     out: list[dict[str, object]] = []
-    for (exp, sc, h, dm, algo), rows in sorted(groups.items()):
+    for (exp, sc, h, dm, param, value, algo), rows in sorted(groups.items()):
         def col(name: str) -> np.ndarray:
             return np.array([float(r[name]) for r in rows])
 
         z = col("objective_z")
         out.append({
             "experiment": exp, "scenario": sc, "horizon_min": h, "dispatch_min": dm,
+            "param": param, "param_value": value,
             "algorithm": algo, "n_runs": len(rows),
             "z_mean": round(float(z.mean()), 2),
             "z_std": round(float(z.std(ddof=1)) if len(z) > 1 else 0.0, 2),
@@ -314,7 +375,7 @@ def compare(runs: list[dict[str, str]]) -> list[dict[str, object]]:
         g = by_group.setdefault(_group_key(r), {"acs": {}, "vns": {}})
         g[r["algorithm"]][int(float(r["seed"]))] = float(r["objective_z"])
     out: list[dict[str, object]] = []
-    for (exp, sc, h, dm), algos in sorted(by_group.items()):
+    for (exp, sc, h, dm, _param_name, _value), algos in sorted(by_group.items()):
         seeds = sorted(set(algos["acs"]) & set(algos["vns"]))
         if not seeds:
             continue
@@ -336,6 +397,65 @@ def compare(runs: list[dict[str, str]]) -> list[dict[str, object]]:
     return out
 
 
+def _stats(prefix: str, values: np.ndarray, digits: int) -> dict[str, float]:
+    return {
+        f"{prefix}_mean": round(float(values.mean()), digits),
+        f"{prefix}_std": round(float(values.std(ddof=1)) if len(values) > 1 else 0.0, digits),
+        f"{prefix}_median": round(float(np.median(values)), digits),
+    }
+
+
+def summarise_acs(runs: list[dict[str, str]]) -> list[dict[str, object]]:
+    """One row per parameter value; the all-default runs count in every group."""
+    rows = [r for r in runs if r["experiment"] == "acs_params"]
+    if not rows:
+        return []
+    defaults = _acs_defaults()
+    out: list[dict[str, object]] = []
+    for param, values in ACS_SWEEP.items():
+        for v in values:
+            v = float(v)
+            is_default = v == defaults[param]
+            group = [
+                r for r in rows
+                if (r["param"] == param and float(r["param_value"]) == v)
+                or (is_default and r["param"] == "default")
+            ]
+            if not group:
+                continue
+
+            def col(name: str) -> np.ndarray:
+                return np.array([float(r[name]) for r in group])
+
+            out.append({
+                "param": param,
+                "value": _num(v),
+                "is_default": is_default,
+                "n_runs": len(group),
+                **_stats("z", col("objective_z"), 2),
+                **_stats("score", col("score"), 2),
+                **_stats("coverage_pct", col("coverage_pct"), 3),
+                **_stats("vehicles_used", col("vehicles_used"), 2),
+                **_stats("iterations", col("iterations"), 2),
+            })
+    return out
+
+
+def _migrate_runs(path: Path) -> None:
+    """Rewrite runs.csv under the current columns if it was written with older ones."""
+    if not path.exists():
+        return
+    with path.open(newline="", encoding="utf-8") as fh:
+        reader = csv.DictReader(fh)
+        if reader.fieldnames == RUN_FIELDS:
+            return
+        old = list(reader)
+    with path.open("w", newline="", encoding="utf-8") as fh:
+        w = csv.DictWriter(fh, fieldnames=RUN_FIELDS, restval="", extrasaction="ignore")
+        w.writeheader()
+        w.writerows(old)
+
+
 def _write(path: Path, rows: list[dict[str, object]]) -> None:
     if not rows:
         return
@@ -351,8 +471,7 @@ def main() -> None:
     ap.add_argument("--sensitivity-seeds", type=int, default=30, help="seeds per setting in sensitivity runs")
     ap.add_argument("--time-limit", type=float, default=45.0, help="seconds per solver run")
     ap.add_argument("--scenarios", nargs="+", default=SCENARIOS)
-    ap.add_argument("--only", nargs="+", default=["main", "horizon", "dispatch"],
-                    choices=["main", "horizon", "dispatch"])
+    ap.add_argument("--only", nargs="+", default=EXPERIMENTS, choices=EXPERIMENTS)
     ap.add_argument("--workers", type=int, default=max(1, (os.cpu_count() or 2) - 1))
     ap.add_argument("--out", type=Path, default=OUT_DEFAULT)
     ap.add_argument("--resume", action="store_true", help="skip runs already in runs.csv")
@@ -362,6 +481,7 @@ def main() -> None:
     runs_path = args.out / "runs.csv"
     jobs = plan(args)
     if args.resume:
+        _migrate_runs(runs_path)
         done = {_run_key(r) for r in _read_runs(runs_path)}
         jobs = [j for j in jobs if j.key() not in done]
     elif runs_path.exists():
@@ -387,10 +507,12 @@ def main() -> None:
                     continue
                 writer.writerow(row)
                 fh.flush()
+                setting = f" {job.param}={_num(job.param_value)}" if job.param else ""
                 print(
                     f"[{i}/{total}] {job.experiment} {job.scenario} {job.algorithm} "
-                    f"seed={job.seed} h={_num(job.horizon_min)} d={_num(job.dispatch_min)} "
-                    f"Z={row['objective_z']:.0f} cov={row['coverage_pct']:.2f}%",
+                    f"seed={job.seed} h={_num(job.horizon_min)} d={_num(job.dispatch_min)}{setting} "
+                    f"Z={row['objective_z']:.0f} cov={row['coverage_pct']:.2f}% "
+                    f"it={row['iterations']}",
                     flush=True,
                 )
 
@@ -398,7 +520,11 @@ def main() -> None:
     summary = summarise(runs)
     _write(args.out / "summary.csv", summary)
     _write(args.out / "wilcoxon.csv", compare(runs))
-    _write(args.out / "sensitivity.csv", [r for r in summary if r["experiment"] != "main"])
+    _write(
+        args.out / "sensitivity.csv",
+        [r for r in summary if r["experiment"] in ("horizon", "dispatch")],
+    )
+    _write(args.out / "sensitivity_acs.csv", summarise_acs(runs))
     print(f"results in {args.out}")
 
 

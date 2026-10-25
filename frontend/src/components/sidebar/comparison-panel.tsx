@@ -28,7 +28,8 @@ export function ComparisonPanel({ comparison }: ComparisonPanelProps) {
   // less water reaches its remaining points sooner, so a lower Z at lower
   // coverage means less work done, not a better route.
   const coverageGap = acs.coverage_pct - vns.coverage_pct;
-  const coverageTied = Math.abs(coverageGap) < 0.5;
+  // Within 1 percentage point the two plans count as equal on coverage.
+  const coverageTied = Math.abs(coverageGap) < 1.0;
   const zWinner: Winner = acs.objective_z <= vns.objective_z ? "acs" : "vns";
   const overallWinner: Winner = coverageTied ? zWinner : coverageGap > 0 ? "acs" : "vns";
 
@@ -178,7 +179,7 @@ export function ComparisonPanel({ comparison }: ComparisonPanelProps) {
                     stroke="var(--color-slate)"
                     fontSize={10}
                     tickLine={false}
-                    width={48}
+                    width={64}
                     domain={[
                       (min: number) => Math.floor(min * 0.98),
                       (max: number) => Math.ceil(max * 1.02),

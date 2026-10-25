@@ -43,7 +43,7 @@ export function ConvergenceChart({ data }: ConvergenceChartProps) {
                   stroke="var(--color-slate)"
                   fontSize={10}
                   tickLine={false}
-                  width={48}
+                  width={64}
                   tickFormatter={(v: number) => formatNumber(v, 0)}
                 />
                 <Tooltip

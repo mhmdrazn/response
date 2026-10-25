@@ -1,6 +1,7 @@
 # Hybrid ACS for MDCVRP-IF-SI
 # η(i,j) = SI_j / d(i,j); pseudorandom-proportional with q0
-# Local pheromone update per move; global update per iteration with ρ
+# Local pheromone update per move; global update per iteration with ρ, on the
+# best solution's arcs only (standard ACS). τ0 = 1 / (n × L_nn), distance based.
 
 from __future__ import annotations
 
@@ -67,6 +68,8 @@ class ACSParams:
 class ACSTrace:
     best_score: list[float] = field(default_factory=list)
     iter_best_score: list[float] = field(default_factory=list)
+    # Main-loop iterations completed (the trace also holds the closing steps).
+    iterations: int = 0
 
 
 @dataclass
@@ -88,6 +91,11 @@ class HybridACS:
         n_total = instance.n_total
         d = instance.dist_matrix.copy()
         np.fill_diagonal(d, np.inf)
+        # τ0 = 1 / (n × L_nn), L_nn estimated from nearest-neighbour distances.
+        # A score-based τ0 (1 / (n × score of a first ant)) was tried and dropped:
+        # it sits ~35x below the first deposit, the trail then drowns the
+        # heuristic and the search stagnates (s2-jun, 15 paired seeds at 45 s:
+        # score +1.8%, p = 0.005).
         nn_len = float(d.min(axis=1).mean() * (instance.n_floods + 1))
         self.tau0 = 1.0 / max(n_total * nn_len, 1.0)
         self.pheromone = np.full((n_total, n_total), self.tau0)
@@ -101,26 +109,43 @@ class HybridACS:
         for k, fi in enumerate(instance.flood_indices):
             self.node_si[fi] = instance.si_values[k]
 
+        # Heuristic η(i, j), computed once: SI_j / d(i, j) towards a flood,
+        # 1 / d(i, j) otherwise.
+        self.eta = self.inv_dist.copy()
+        flood_cols = np.asarray(instance.flood_indices, dtype=int)
+        self.eta[:, flood_cols] = self.node_si[flood_cols] * self.inv_dist[:, flood_cols]
+
         self._flood_set: set[int] = set(instance.flood_indices)
         self._flood_lookup: dict[int, int] = {
             fi: k for k, fi in enumerate(instance.flood_indices)
         }
+        # Node index -> flood slot (-1 for depots and outlets), as an array.
+        self._slot_of = np.full(n_total, -1, dtype=int)
+        self._slot_of[flood_cols] = np.arange(len(flood_cols))
+        # Each depot's floods in the order its set iterates, so the candidate
+        # order (and with it every RNG outcome) is the same as filtering the set.
+        self._depot_flood_order: dict[int, list[int]] = {
+            depot: list(floods) for depot, floods in instance.depot_flood_sets.items()
+        }
+        # Flood slot -> the depots whose candidate list holds that flood.
+        self._flood_depots: list[list[int]] = [[] for _ in flood_cols]
+        for depot, floods in self._depot_flood_order.items():
+            for fi in floods:
+                self._flood_depots[int(self._slot_of[fi])].append(depot)
 
     # ---------------- Ant construction ----------------
 
     def _eta(self, i: int, j: int) -> float:
-        if j in self._flood_set:
-            return self.node_si[j] * self.inv_dist[i, j]
-        return self.inv_dist[i, j]
+        return float(self.eta[i, j])
 
     def _choose_next(
         self,
         current: int,
         candidates: list[int],
     ) -> int:
-        assert candidates
+        assert len(candidates)
         tau = self.pheromone[current, candidates]
-        eta = np.array([self._eta(current, j) for j in candidates])
+        eta = self.eta[current, candidates]
         score = (tau ** self.p.alpha) * (eta ** self.p.beta)
         # Defensive: never let a non-finite heuristic reach argmax/choice.
         score = np.nan_to_num(score, nan=0.0, posinf=0.0, neginf=0.0)
@@ -163,8 +188,16 @@ class HybridACS:
         self._rng.shuffle(order)
 
         max_rounds = self.inst.n_floods * 2 + self.inst.n_ifs + 5
-        depot_floods = self.inst.depot_flood_sets
         if_base = self.inst.n_depots + self.inst.n_floods
+        # Each depot's floods that still have water, kept up to date as volume is
+        # booked instead of re-filtered for every vehicle every round. A flood
+        # leaves every list it is in once its volume drops to 0.5 L or below.
+        slot_of = self._slot_of
+        remaining: dict[int, list[int]] = {
+            depot: [fi for fi in floods if volumes_left[slot_of[fi]] > 0.5]
+            for depot, floods in self._depot_flood_order.items()
+        }
+        none_left: list[int] = []
 
         for _round in range(max_rounds):
             if not np.any(volumes_left > 0.5):
@@ -173,11 +206,7 @@ class HybridACS:
             for vi in order:
                 home = depots[vi]
                 # Hard constraint: only serve floods assigned to this depot
-                own_floods = depot_floods.get(home, set())
-                served_now = [
-                    fi for fi in own_floods
-                    if volumes_left[self._flood_lookup[fi]] > 0.5
-                ]
+                served_now = remaining.get(home, none_left)
                 if not served_now:
                     continue
                 cur = routes[vi][-1]
@@ -193,7 +222,7 @@ class HybridACS:
                     continue
 
                 nxt = self._choose_next(cur, served_now)
-                slot = self._flood_lookup[nxt]
+                slot = int(slot_of[nxt])
                 free = cap - tanks[vi]
                 pump = float(min(volumes_left[slot], free))
                 if pump <= 0:
@@ -201,6 +230,9 @@ class HybridACS:
                 if not step(vi, nxt, SERVICE_SETUP_S + pump / PUMP_RATE_LPS):
                     continue
                 volumes_left[slot] -= pump
+                if volumes_left[slot] <= 0.5:
+                    for depot in self._flood_depots[slot]:
+                        remaining[depot].remove(nxt)
                 tanks[vi] += pump
                 made_progress = True
             if not made_progress:
@@ -312,14 +344,24 @@ class HybridACS:
         self.pheromone[j, i] = self.pheromone[i, j]
 
     def _global_update(self, best_routes: list[list[int]], best_score: float) -> None:
+        """Standard ACS global rule, on the best solution's arcs only.
+
+        τ_ij ← (1 − ρ) τ_ij + ρ / best_score for every arc (i, j) of best_routes,
+        kept symmetric. Every other arc is left as it is: evaporation and
+        deposit both apply only where the best solution goes. An arc used more
+        than once is updated once.
+        """
         deposit = 1.0 / max(best_score, 1e-6)
-        # Evaporate.
-        self.pheromone *= 1 - self.p.rho
-        # Reinforce edges of best solution.
-        for route in best_routes:
-            for a, b in zip(route[:-1], route[1:]):
-                self.pheromone[a, b] += self.p.rho * deposit
-                self.pheromone[b, a] = self.pheromone[a, b]
+        rho = self.p.rho
+        arcs = {
+            (min(a, b), max(a, b))
+            for route in best_routes
+            for a, b in zip(route[:-1], route[1:])
+        }
+        for a, b in arcs:
+            value = (1 - rho) * self.pheromone[a, b] + rho * deposit
+            self.pheromone[a, b] = value
+            self.pheromone[b, a] = value
 
     # ---------------- Main loop ----------------
 
@@ -402,6 +444,7 @@ class HybridACS:
             self._global_update(best_routes or iter_best_routes, best_score)
             trace.iter_best_score.append(float(iter_best_score))
             trace.best_score.append(float(best_score))
+            trace.iterations += 1
 
             if search_deadline is not None and time.perf_counter() >= search_deadline:
                 break

@@ -76,3 +76,48 @@ def test_plan_covers_the_requested_settings():
     assert {j.horizon_min for j in jobs if j.experiment == "horizon"} == {240, 281, 360, 517}
     assert {j.dispatch_min for j in jobs if j.experiment == "dispatch"} == {5, 7, 10, 15}
     assert {j.scenario for j in jobs if j.experiment != "main"} == {"s2-jun"}
+
+
+def test_acs_params_runs_each_distinct_setting_once():
+    from argparse import Namespace
+
+    args = Namespace(
+        seeds=30, sensitivity_seeds=30, time_limit=45.0,
+        scenarios=["s2-jun"], only=["acs_params"],
+    )
+    jobs = experiments.plan(args)
+    settings = {(j.param, j.param_value) for j in jobs}
+    # All-default once, plus the two off-default values of each parameter.
+    assert settings == {
+        ("default", 0.0),
+        ("n_ants", 10.0), ("n_ants", 30.0),
+        ("q0", 0.5), ("q0", 0.9),
+        ("rho", 0.10), ("rho", 0.30),
+    }
+    assert len(jobs) == 7 * 30
+    assert {j.algorithm for j in jobs} == {"acs"}
+    assert {j.scenario for j in jobs} == {"s2-jun"}
+    assert {j.time_limit_s for j in jobs} == {45.0}
+
+
+def test_acs_summary_counts_the_default_runs_in_every_group():
+    def row(param, value, seed, z):
+        return {
+            "experiment": "acs_params", "param": param, "param_value": str(value),
+            "seed": str(seed), "objective_z": str(z), "score": str(z + 10),
+            "coverage_pct": "90", "vehicles_used": "12", "iterations": "40",
+        }
+
+    runs = [row("default", 0, s, 100 + s) for s in (1, 2)]
+    runs += [row("n_ants", 10, s, 200 + s) for s in (1, 2)]
+    summary = experiments.summarise_acs(runs)
+    by = {(r["param"], r["value"]): r for r in summary}
+
+    for param, default in (("n_ants", "20"), ("q0", "0.7"), ("rho", "0.15")):
+        assert by[(param, default)]["is_default"] is True
+        assert by[(param, default)]["n_runs"] == 2
+        assert by[(param, default)]["z_median"] == 101.5
+    assert by[("n_ants", "10")]["z_mean"] == 201.5
+    assert by[("n_ants", "10")]["is_default"] is False
+    # Settings with no runs yet are left out rather than reported empty.
+    assert ("q0", "0.9") not in by

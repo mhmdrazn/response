@@ -54,6 +54,8 @@ class VNSParams:
 class VNSTrace:
     best_score: list[float] = field(default_factory=list)
     iter_best_score: list[float] = field(default_factory=list)
+    # Shake-and-polish cycles completed (the trace also holds the closing steps).
+    iterations: int = 0
 
 
 @dataclass
@@ -440,6 +442,7 @@ class VNS:
 
             trace.iter_best_score.append(float(min(cand_score, best_score)))
             trace.best_score.append(float(best_score))
+            trace.iterations += 1
 
             if search_deadline is not None and time.perf_counter() >= search_deadline:
                 break
