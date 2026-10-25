@@ -77,12 +77,23 @@ next day. `/traffic/status` shows today's and this month's count. The
 count lives in memory and in a file in the OS temp folder; on a serverless host
 each instance counts on its own, which is why the caps sit below the free tier.
 
-**Route planning with traffic (Google, optional).** The switch *Pertimbangkan lalu
-lintas saat ini* in the algorithm panel uses Google's Routes API from the backend:
-set `GOOGLE_MAPS_API_KEY` in `backend/.env` (restrict the key to the Routes API).
-Each refresh buys at most `TRAFFIC_MAX_ELEMENTS` matrix elements (default 400),
-reused for `TRAFFIC_CACHE_TTL_S` (default 10 min). Without the key the switch stays
-disabled and everything runs on the precomputed OSRM times.
+**Route planning with traffic (TomTom, blank canvas only).** On *Kanvas Baru* the
+algorithm panel shows the switch *Pertimbangkan lalu lintas saat ini*. The study
+areas are recorded events and always plan on the precomputed OSRM times; the
+backend ignores the switch for them.
+
+The backend asks TomTom's Traffic Flow Segment Data API how congested the road is
+at each flood, each depot that may dispatch to it, and each flood's two nearest
+outlets (travel time now ÷ free-flow travel time, shrunk towards 1 by TomTom's
+confidence). Points not asked about borrow from their nearest measured
+neighbours, and a leg's OSRM time is scaled by √(fᵢ·fⱼ). Set `TOMTOM_API_KEY` in
+`backend/.env` (the map layer's key works). On Vercel the backend service must see
+`TOMTOM_API_KEY` too; `/api/traffic/status` reports `"configured": true` when it does. One point is one request: a refresh asks at most
+`TRAFFIC_MAX_POINTS` (60), is reused for `TRAFFIC_CACHE_TTL_S` (10 min), and all
+refreshes stop at `TOMTOM_FLOW_DAILY_LIMIT` (580 a day, 90 % of the 20,000/month
+free tier). Past the cap, or without a key, runs fall back to the OSRM times and
+the result says why. (TomTom's routing and matrix APIs would measure whole legs,
+but they need a key licensed for routing.)
 
 ### Closing depots and outlets
 

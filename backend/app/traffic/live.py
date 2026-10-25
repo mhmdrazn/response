@@ -1,27 +1,36 @@
 """Live traffic: scale the precomputed travel times by current congestion.
 
-A full traffic-aware matrix over every node (depots, floods and ~140 outlets) is
-tens of thousands of elements, and the Routes API bills each one. So a budget of
-the legs the plan actually drives is sampled instead:
+Source: TomTom's Traffic Flow Segment Data API. For a point it returns the road
+segment there with its travel time now and at free flow; their ratio is the
+congestion at that point. (The TomTom routing and matrix APIs would give it per
+leg, but the project key is licensed for the Traffic products only.)
 
-  depot -> every flood it may dispatch to
-  flood -> its nearest outlets and nearest floods
+The points asked about are the ones a plan drives through: every flood, every
+depot that may dispatch to one, and each flood's nearest outlets. Each sampled
+node gets a factor (ratio shrunk towards 1 by TomTom's confidence), nodes not
+sampled borrow from their nearest sampled neighbours, and the OSRM time of a
+leg i -> j is scaled by sqrt(f_i * f_j).
 
-For each sampled leg Google returns the duration in current traffic and the same
-route's duration without traffic; their ratio is the congestion on that leg.
-Every node gets a factor, the median ratio of its sampled legs (a node with none
-borrows from its nearest sampled neighbours), and the OSRM time of a leg i -> j is
-scaled by sqrt(f_i * f_j). Legs that were sampled use their own ratio exactly.
+Only the blank canvas uses this: the study areas are recorded events and keep
+the precomputed OSRM times.
+
+One point is one request. TomTom's free tier for Flow Segment Data is 20,000 a
+month, so a refresh is capped (TRAFFIC_MAX_POINTS), reused for
+TRAFFIC_CACHE_TTL_S, and all refreshes together stop at a daily cap
+(TOMTOM_FLOW_DAILY_LIMIT) kept in memory and in a file in the temp folder.
 """
 
 from __future__ import annotations
 
+import json
 import logging
+import tempfile
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from pathlib import Path
 
 import httpx
 import numpy as np
@@ -30,18 +39,16 @@ from app import config
 
 _log = logging.getLogger("response.traffic")
 
-ROUTES_MATRIX_URL = "https://routes.googleapis.com/distanceMatrix/v2:computeRouteMatrix"
-FIELD_MASK = "originIndex,destinationIndex,status,condition,duration,staticDuration"
-
-# Destinations per request. With TRAFFIC_AWARE the Routes API caps a request at
-# 625 elements; one origin per request keeps every request well inside that.
-MAX_DESTINATIONS = 25
+FLOW_URL = "https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/{zoom}/json"
+# Map zoom TomTom uses to pick the segment: at 12 a point snaps to the
+# collector/arterial road around it, which is what the legs mostly drive on.
+FLOW_ZOOM = 12
 K_OUTLETS = 2
-K_FLOODS = 2
-# A ratio outside this band is a routing quirk (a closed road, a detour), not traffic.
+# A ratio outside this band is a data quirk (a closure, a detour), not traffic.
 MIN_FACTOR, MAX_FACTOR = 1.0, 4.0
-REQUEST_TIMEOUT_S = 20.0
+REQUEST_TIMEOUT_S = 15.0
 WORKERS = 8
+USAGE_FILE = Path(tempfile.gettempdir()) / "response-tomtom-flow-usage.json"
 
 
 class TrafficUnavailable(RuntimeError):
@@ -50,153 +57,118 @@ class TrafficUnavailable(RuntimeError):
 
 @dataclass
 class TrafficSnapshot:
-    factors: np.ndarray                         # per node, aligned to the node space
-    ratios: dict[tuple[int, int], float]        # sampled legs -> traffic / free-flow
+    factors: np.ndarray                 # per node, aligned to the node space
+    measured: dict[int, float]          # sampled node -> its congestion factor
     fetched_at: datetime
-    requested_pairs: int
-    sampled_pairs: int = field(init=False)
+    requested_points: int
+    sampled_points: int = field(init=False)
 
     def __post_init__(self) -> None:
-        self.sampled_pairs = len(self.ratios)
+        self.sampled_points = len(self.measured)
 
     @property
     def mean_factor(self) -> float:
-        return float(np.mean(list(self.ratios.values()))) if self.ratios else 1.0
+        return float(np.mean(list(self.measured.values()))) if self.measured else 1.0
 
     @property
     def max_factor(self) -> float:
-        return float(max(self.ratios.values())) if self.ratios else 1.0
+        return float(max(self.measured.values())) if self.measured else 1.0
 
 
 def configured() -> bool:
-    return bool(config.GOOGLE_MAPS_API_KEY)
+    return bool(config.TOMTOM_API_KEY)
 
 
-# --- Which legs to ask about -----------------------------------------------------
+# --- Which points to ask about -------------------------------------------------
 
 
-def sample_pairs(
+def sample_nodes(
     time_matrix: np.ndarray,
     n_depots: int,
     n_floods: int,
     dispatch_limit_s: float,
     budget: int,
-) -> dict[int, list[int]]:
-    """Origin -> destinations to query, most useful legs first, within `budget` elements."""
+) -> list[int]:
+    """Nodes to query, most useful first, at most `budget` of them."""
     n_total = time_matrix.shape[0]
     depots = list(range(n_depots))
     floods = list(range(n_depots, n_depots + n_floods))
     outlets = list(range(n_depots + n_floods, n_total))
 
-    wanted: list[tuple[int, int]] = []
-    # 1. Dispatch legs: the drive every route starts with.
-    for d in depots:
-        reach = [f for f in floods if time_matrix[d, f] <= dispatch_limit_s]
-        if not reach and floods:
-            reach = [min(floods, key=lambda f: time_matrix[d, f])]
-        wanted += [(d, f) for f in reach]
-    # 2. Flood -> nearest outlets: every tank is emptied there.
+    wanted: list[int] = list(floods)
+    # Depots that may dispatch: in range of some flood, or the nearest to one out of range.
     for f in floods:
-        near = sorted(outlets, key=lambda o: time_matrix[f, o])[:K_OUTLETS]
-        wanted += [(f, o) for o in near]
-    # 3. Flood -> nearest floods: the hops between pumping stops.
+        reach = [d for d in depots if time_matrix[d, f] <= dispatch_limit_s]
+        wanted += reach or [min(depots, key=lambda d: time_matrix[d, f])]
+    # Each flood's nearest outlets: every tank is emptied there.
     for f in floods:
-        near = sorted((g for g in floods if g != f), key=lambda g: time_matrix[f, g])[:K_FLOODS]
-        wanted += [(f, g) for g in near]
+        wanted += sorted(outlets, key=lambda o: time_matrix[f, o])[:K_OUTLETS]
 
-    plan: dict[int, list[int]] = {}
-    seen: set[tuple[int, int]] = set()
-    for pair in wanted:
-        if len(seen) >= budget:
+    out: list[int] = []
+    seen: set[int] = set()
+    for n in wanted:
+        if n in seen:
+            continue
+        seen.add(n)
+        out.append(n)
+        if len(out) >= budget:
             break
-        if pair in seen or pair[0] == pair[1]:
-            continue
-        seen.add(pair)
-        plan.setdefault(pair[0], []).append(pair[1])
-    return plan
-
-
-# --- Asking Google ---------------------------------------------------------------
-
-
-def _seconds(value: object) -> float | None:
-    """'123s' / '123.4s' as used by the Routes API, in seconds."""
-    if isinstance(value, str) and value.endswith("s"):
-        try:
-            return float(value[:-1])
-        except ValueError:
-            return None
-    return None
-
-
-def _waypoint(lat: float, lon: float) -> dict[str, object]:
-    return {"waypoint": {"location": {"latLng": {"latitude": lat, "longitude": lon}}}}
-
-
-def _query(
-    client: httpx.Client,
-    coords: np.ndarray,
-    origin: int,
-    dests: list[int],
-) -> dict[tuple[int, int], float]:
-    body = {
-        "origins": [_waypoint(*coords[origin])],
-        "destinations": [_waypoint(*coords[d]) for d in dests],
-        "travelMode": "DRIVE",
-        # Without a departureTime the Routes API uses now: live traffic.
-        "routingPreference": "TRAFFIC_AWARE",
-    }
-    resp = client.post(ROUTES_MATRIX_URL, json=body)
-    if resp.status_code != 200:
-        detail = resp.text[:300]
-        raise TrafficUnavailable(f"Routes API menolak permintaan ({resp.status_code}): {detail}")
-    out: dict[tuple[int, int], float] = {}
-    for el in resp.json():
-        if el.get("condition") != "ROUTE_EXISTS":
-            continue
-        live = _seconds(el.get("duration"))
-        free = _seconds(el.get("staticDuration"))
-        if live is None or not free:
-            continue
-        j = dests[int(el.get("destinationIndex", 0))]
-        out[(origin, j)] = float(np.clip(live / free, MIN_FACTOR, MAX_FACTOR))
     return out
 
 
-def fetch_ratios(
+# --- Asking TomTom ---------------------------------------------------------------
+
+
+def _query(client: httpx.Client, lat: float, lon: float, api_key: str) -> float | None:
+    """Congestion factor of the road at (lat, lon), or None if TomTom has no segment."""
+    resp = client.get(
+        FLOW_URL.format(zoom=FLOW_ZOOM),
+        params={"point": f"{lat},{lon}", "unit": "KMPH", "key": api_key},
+    )
+    if resp.status_code in (401, 403, 429):
+        raise TrafficUnavailable(
+            f"TomTom Traffic Flow menolak permintaan ({resp.status_code}): {resp.text[:200]}"
+        )
+    if resp.status_code != 200:
+        return None  # no road nearby, or a passing error: this point is skipped
+    seg = resp.json().get("flowSegmentData") or {}
+    now, free = seg.get("currentTravelTime"), seg.get("freeFlowTravelTime")
+    if not now or not free:
+        return None
+    ratio = float(np.clip(float(now) / float(free), MIN_FACTOR, MAX_FACTOR))
+    # Low confidence means TomTom is mostly guessing from history: lean on free flow.
+    confidence = float(np.clip(float(seg.get("confidence", 1.0)), 0.0, 1.0))
+    return 1.0 + confidence * (ratio - 1.0)
+
+
+def fetch_factors(
     coords: np.ndarray,
-    plan: dict[int, list[int]],
+    nodes: list[int],
     api_key: str,
     transport: httpx.BaseTransport | None = None,
-) -> dict[tuple[int, int], float]:
-    """Traffic / free-flow ratio per queried leg. `coords` is (n, 2) of (lat, lon)."""
-    headers = {"X-Goog-Api-Key": api_key, "X-Goog-FieldMask": FIELD_MASK}
-    jobs = [
-        (origin, dests[i : i + MAX_DESTINATIONS])
-        for origin, dests in plan.items()
-        for i in range(0, len(dests), MAX_DESTINATIONS)
-    ]
-    ratios: dict[tuple[int, int], float] = {}
-    with httpx.Client(headers=headers, timeout=REQUEST_TIMEOUT_S, transport=transport) as client:
+) -> dict[int, float]:
+    """Congestion factor per queried node. `coords` is (n, 2) of (lat, lon)."""
+    out: dict[int, float] = {}
+    with httpx.Client(timeout=REQUEST_TIMEOUT_S, transport=transport) as client:
         with ThreadPoolExecutor(max_workers=WORKERS) as pool:
-            for part in pool.map(lambda job: _query(client, coords, *job), jobs):
-                ratios.update(part)
-    return ratios
+            results = pool.map(
+                lambda n: (n, _query(client, float(coords[n][0]), float(coords[n][1]), api_key)),
+                nodes,
+            )
+            for n, factor in results:
+                if factor is not None:
+                    out[n] = factor
+    return out
 
 
-# --- From legs to the whole matrix -----------------------------------------------
+# --- From points to the whole matrix ---------------------------------------------
 
 
-def node_factors(n_total: int, ratios: dict[tuple[int, int], float], time_matrix: np.ndarray) -> np.ndarray:
-    """Congestion factor per node: the median over its sampled legs."""
-    per_node: list[list[float]] = [[] for _ in range(n_total)]
-    for (i, j), r in ratios.items():
-        per_node[i].append(r)
-        per_node[j].append(r)
+def node_factors(n_total: int, measured: dict[int, float], time_matrix: np.ndarray) -> np.ndarray:
+    """A factor for every node: measured ones as they are, others from their neighbours."""
     factors = np.full(n_total, np.nan)
-    for k, rs in enumerate(per_node):
-        if rs:
-            factors[k] = float(np.median(rs))
+    for k, f in measured.items():
+        factors[k] = f
     known = np.where(~np.isnan(factors))[0]
     if len(known) == 0:
         return np.ones(n_total)
@@ -211,10 +183,52 @@ def apply_traffic(time_matrix: np.ndarray, snapshot: TrafficSnapshot) -> np.ndar
     """The travel-time matrix under the snapshot's traffic."""
     f = snapshot.factors
     adjusted = time_matrix * np.sqrt(np.outer(f, f))
-    for (i, j), r in snapshot.ratios.items():
-        adjusted[i, j] = time_matrix[i, j] * r
     np.fill_diagonal(adjusted, 0.0)
     return adjusted
+
+
+# --- Daily cap -------------------------------------------------------------------
+
+_usage_lock = threading.Lock()
+_usage: dict[str, object] | None = None
+
+
+def _today() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+
+def _load_usage() -> dict[str, object]:
+    global _usage
+    if _usage is None:
+        try:
+            _usage = json.loads(USAGE_FILE.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            _usage = {"day": _today(), "count": 0}
+    if _usage.get("day") != _today():
+        _usage = {"day": _today(), "count": 0}
+    return _usage
+
+
+def usage_today() -> int:
+    with _usage_lock:
+        return int(_load_usage()["count"])
+
+
+def _reserve(n: int) -> None:
+    """Books n requests against today's cap, or refuses if they do not fit."""
+    with _usage_lock:
+        u = _load_usage()
+        used = int(u["count"])
+        if used + n > config.TOMTOM_FLOW_DAILY_LIMIT:
+            raise TrafficUnavailable(
+                "Batas harian lalu lintas TomTom tercapai "
+                f"({used}/{config.TOMTOM_FLOW_DAILY_LIMIT} titik); rute memakai waktu normal."
+            )
+        u["count"] = used + n
+        try:
+            USAGE_FILE.write_text(json.dumps(u), encoding="utf-8")
+        except OSError:
+            pass  # the in-memory count still holds for this process
 
 
 # --- Cached snapshots ------------------------------------------------------------
@@ -234,7 +248,7 @@ def snapshot_for(
     """The current traffic for a node set, from cache while it is fresh."""
     if not configured():
         raise TrafficUnavailable(
-            "Lalu lintas langsung belum dikonfigurasi: isi GOOGLE_MAPS_API_KEY di backend."
+            "Lalu lintas langsung belum dikonfigurasi: isi TOMTOM_API_KEY di backend."
         )
     now = time.monotonic()
     with _lock:
@@ -242,24 +256,24 @@ def snapshot_for(
         if hit and now - hit[0] < config.TRAFFIC_CACHE_TTL_S:
             return hit[1]
 
-    plan = sample_pairs(time_matrix, n_depots, n_floods, dispatch_limit_s, config.TRAFFIC_MAX_ELEMENTS)
-    requested = sum(len(v) for v in plan.values())
+    nodes = sample_nodes(time_matrix, n_depots, n_floods, dispatch_limit_s, config.TRAFFIC_MAX_POINTS)
+    _reserve(len(nodes))
     try:
-        ratios = fetch_ratios(coords, plan, config.GOOGLE_MAPS_API_KEY)
+        measured = fetch_factors(coords, nodes, config.TOMTOM_API_KEY)
     except httpx.HTTPError as exc:
-        raise TrafficUnavailable(f"Routes API tidak bisa dihubungi: {exc}") from exc
-    if not ratios:
-        raise TrafficUnavailable("Routes API tidak mengembalikan waktu tempuh untuk ruas yang diminta.")
+        raise TrafficUnavailable(f"TomTom Traffic Flow tidak bisa dihubungi: {exc}") from exc
+    if not measured:
+        raise TrafficUnavailable("TomTom tidak mengembalikan data lalu lintas untuk titik yang diminta.")
 
     snap = TrafficSnapshot(
-        factors=node_factors(time_matrix.shape[0], ratios, time_matrix),
-        ratios=ratios,
+        factors=node_factors(time_matrix.shape[0], measured, time_matrix),
+        measured=measured,
         fetched_at=datetime.now(timezone.utc),
-        requested_pairs=requested,
+        requested_points=len(nodes),
     )
     _log.info(
-        "Traffic snapshot %s: %d/%d legs, mean x%.2f, max x%.2f",
-        key, snap.sampled_pairs, requested, snap.mean_factor, snap.max_factor,
+        "Traffic snapshot %s: %d/%d points, mean x%.2f, max x%.2f",
+        key, snap.sampled_points, len(nodes), snap.mean_factor, snap.max_factor,
     )
     with _lock:
         _cache[key] = (now, snap)

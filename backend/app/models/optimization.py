@@ -36,7 +36,7 @@ class _RunContext(_Base):
     # Litres still to pump per flood id, carried over from the previous period.
     # When given it replaces the scenario's volumes: floods not listed have none left.
     remaining_volumes: dict[str, float] | None = Field(None, max_length=5000)
-    # Plan with live traffic from the Google Routes API instead of free-flow times.
+    # Plan with live TomTom traffic instead of free-flow times (blank canvas only).
     use_traffic: bool = False
     # Depots switched off for this run (no crew, no vehicles leave from them) and
     # outlets that cannot take water (an overflowing river, a blocked access road).
@@ -180,9 +180,9 @@ class TrafficOut(_Base):
     applied: bool
     source: str | None = None
     fetched_at: str | None = None
-    sampled_pairs: int = 0
-    requested_pairs: int = 0
-    # Mean and largest traffic / free-flow ratio over the sampled legs.
+    sampled_points: int = 0
+    requested_points: int = 0
+    # Mean and largest traffic / free-flow ratio over the sampled points.
     mean_factor: float = 1.0
     max_factor: float = 1.0
     message: str | None = None

@@ -49,6 +49,7 @@ from app.models.optimization import (
     VisitOut,
 )
 from app.severity.index import compute_severity_index
+from app.data import canvas
 from app.traffic import live as traffic
 
 _log = logging.getLogger("response.optimize")
@@ -146,7 +147,14 @@ def _build_ready_instance(
         raise HTTPException(status_code=422, detail="Armada kosong: minimal satu unit.")
 
     traffic_out: TrafficOut | None = None
-    if use_traffic:
+    if use_traffic and not canvas.is_canvas(bundle.scenario_id):
+        # The study areas are recorded events: they keep the OSRM times.
+        traffic_out = TrafficOut(
+            requested=True,
+            applied=False,
+            message="Lalu lintas langsung hanya dipakai di Kanvas Baru; area studi memakai waktu tempuh OSRM.",
+        )
+    elif use_traffic:
         # The node set decides which legs are sampled, so it is part of the cache key.
         closed_key = ",".join(sorted(set(disabled_depots or []))) + "|" + ",".join(
             sorted(set(closed_ifs or []))
@@ -229,10 +237,10 @@ def _with_live_traffic(
     return rebuilt, TrafficOut(
         requested=True,
         applied=True,
-        source="google-routes",
+        source="tomtom-flow",
         fetched_at=snap.fetched_at.isoformat(),
-        sampled_pairs=snap.sampled_pairs,
-        requested_pairs=snap.requested_pairs,
+        sampled_points=snap.sampled_points,
+        requested_points=snap.requested_points,
         mean_factor=round(snap.mean_factor, 3),
         max_factor=round(snap.max_factor, 3),
     )

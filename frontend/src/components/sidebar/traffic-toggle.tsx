@@ -3,14 +3,17 @@
 import { TrafficCone } from "lucide-react";
 
 interface TrafficToggleProps {
-  /** The backend has a Google Routes API key. */
+  /** The backend has a TomTom key for live traffic. */
   available: boolean;
   enabled: boolean;
   onChange: (on: boolean) => void;
   disabled?: boolean;
 }
 
-/** Whether the next run plans on live traffic instead of free-flow travel times. */
+/**
+ * Whether the next canvas run plans on live TomTom traffic instead of free-flow
+ * travel times. Shown on the blank canvas only.
+ */
 export function TrafficToggle({ available, enabled, onChange, disabled }: TrafficToggleProps) {
   const off = disabled || !available;
   return (
@@ -20,7 +23,7 @@ export function TrafficToggle({ available, enabled, onChange, disabled }: Traffi
         <span className="text-slate text-[10px] font-bold tracking-normal uppercase">
           Lalu Lintas
         </span>
-        <span className="text-slate ml-auto text-[10px] font-medium">Google Routes</span>
+        <span className="text-slate ml-auto text-[10px] font-medium">TomTom</span>
       </div>
       <button
         type="button"
@@ -31,7 +34,7 @@ export function TrafficToggle({ available, enabled, onChange, disabled }: Traffi
         title={
           available
             ? undefined
-            : "Atur GOOGLE_MAPS_API_KEY di backend untuk memakai lalu lintas langsung"
+            : "Atur TOMTOM_API_KEY di backend untuk memakai lalu lintas langsung"
         }
         className={`border-frost bg-pure-white flex w-full items-center gap-[10px] rounded-lg border px-[12px] py-[9px] text-left transition-colors ${
           off ? "cursor-not-allowed opacity-60" : "hover:bg-mist cursor-pointer"
@@ -43,8 +46,8 @@ export function TrafficToggle({ available, enabled, onChange, disabled }: Traffi
           </span>
           <span className="text-slate text-[11px] leading-[1.35] font-medium">
             {available
-              ? "Waktu tempuh disesuaikan dengan kemacetan langsung dari Google."
-              : "Belum dikonfigurasi di backend (GOOGLE_MAPS_API_KEY)."}
+              ? "Waktu tempuh disesuaikan dengan kemacetan langsung dari TomTom."
+              : "Belum dikonfigurasi di backend (TOMTOM_API_KEY)."}
           </span>
         </span>
         <span

@@ -216,7 +216,9 @@ export function AppShell() {
   const { data, loading, error: dataError, reload } = useMapData(scenario, priorityCfg.weights);
   const fleetCfg = useFleetConfig(data?.depots ?? NO_DEPOTS);
   const closures = useClosures(data?.depots ?? NO_DEPOTS, data?.ifs ?? NO_IFS);
-  // Plan with live traffic: remembered between visits, used only when the backend has a key.
+  // Plan with live traffic (TomTom): remembered between visits, offered only on the
+  // blank canvas and only when the backend has a key. The study areas are recorded
+  // events and always plan on the precomputed OSRM times.
   const [trafficWanted, setTrafficWanted] = usePersistentState<boolean>(
     TRAFFIC_ROUTING_STORAGE_KEY,
     false,
@@ -236,11 +238,12 @@ export function AppShell() {
       alive = false;
     };
   }, []);
-  const trafficAvailable = trafficStatus?.routes_api_configured ?? false;
+  const trafficAvailable = trafficStatus?.configured ?? false;
+  const isCanvas = scenarios.find((sc) => sc.id === scenario)?.kind === "canvas";
   const runExtras = {
     fleet: fleetCfg.payload,
     severity_weights: priorityCfg.weights,
-    use_traffic: trafficWanted && trafficAvailable,
+    use_traffic: isCanvas && trafficWanted && trafficAvailable,
     ...closures.payload,
   };
   const {
@@ -392,8 +395,17 @@ export function AppShell() {
     if (isMobile) setMobilePanel("none");
   }
 
+  // Planning on live traffic shows the traffic it plans on.
+  function setTrafficRouting(on: boolean) {
+    setTrafficWanted(on);
+    if (on) setOverlay("traffic", true);
+  }
+
   function handleScenarioChange(id: string) {
     if (id === scenario) return;
+    // Opening the canvas with traffic planning already on: show the traffic too.
+    const toCanvas = scenarios.find((sc) => sc.id === id)?.kind === "canvas";
+    if (toCanvas && trafficWanted && trafficAvailable) setOverlay("traffic", true);
     setScenario(id); // useMapData refetches on change
     reset(); // optimization results are per-scenario
     setSelection(null);
@@ -407,7 +419,6 @@ export function AppShell() {
   const visibleRoutes = (result?.routes ?? []).filter((r) => !hiddenRoutes.has(r.vehicle_id));
 
   // The blank canvas: an empty study area of its own, points placed by hand.
-  const isCanvas = scenarios.find((sc) => sc.id === scenario)?.kind === "canvas";
   const [confirmReset, setConfirmReset] = useState(false);
   async function resetCanvas() {
     setConfirmReset(false);
@@ -446,11 +457,15 @@ export function AppShell() {
       onScenarioChange={handleScenarioChange}
       budgetS={algoCfg.budgetS}
       onBudgetChange={algoCfg.setBudgetS}
-      traffic={{
-        available: trafficAvailable,
-        enabled: trafficWanted && trafficAvailable,
-        onChange: setTrafficWanted,
-      }}
+      traffic={
+        isCanvas
+          ? {
+              available: trafficAvailable,
+              enabled: trafficWanted && trafficAvailable,
+              onChange: setTrafficRouting,
+            }
+          : undefined
+      }
       canvas={
         isCanvas
           ? {

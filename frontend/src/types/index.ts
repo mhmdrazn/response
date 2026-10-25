@@ -168,19 +168,22 @@ export interface TrafficInfo {
   applied: boolean;
   source: string | null;
   fetched_at: string | null;
-  sampled_pairs: number;
-  requested_pairs: number;
-  /** Mean and largest traffic / free-flow ratio over the sampled road legs. */
+  sampled_points: number;
+  requested_points: number;
+  /** Mean and largest traffic / free-flow ratio over the sampled road points. */
   mean_factor: number;
   max_factor: number;
   message: string | null;
 }
 
-/** GET /api/traffic/status */
+/** GET /api/traffic/status: live traffic for canvas runs (TomTom Traffic Flow). */
 export interface TrafficStatus {
-  routes_api_configured: boolean;
-  max_elements: number;
+  configured: boolean;
+  provider: string;
+  max_points: number;
   cache_ttl_s: number;
+  daily_limit: number;
+  used_today: number;
 }
 
 export interface OptimizationResult {
@@ -227,7 +230,7 @@ export interface RunExtras {
   severity_weights?: number[] | null;
   /** Litres still to pump per flood id, carried over from the previous period. */
   remaining_volumes?: Record<string, number> | null;
-  /** Plan on live-traffic travel times from the Google Routes API. */
+  /** Plan on live TomTom traffic (blank canvas only). */
   use_traffic?: boolean;
   /** Depots switched off for this run. */
   disabled_depots?: string[];

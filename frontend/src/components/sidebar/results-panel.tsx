@@ -195,7 +195,7 @@ function TrafficNote({ traffic }: { traffic: NonNullable<OptimizationResult["tra
         {formatNumber(traffic.max_factor, 2)}
         <span className="text-slate font-medium">
           {" "}
-          · {formatNumber(traffic.sampled_pairs)} ruas diukur
+          · {formatNumber(traffic.sampled_points)} titik jalan diukur (TomTom)
         </span>
       </span>
     </div>

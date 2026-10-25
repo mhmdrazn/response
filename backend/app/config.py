@@ -113,15 +113,16 @@ def scenario_matrix_paths(scenario_id: str) -> tuple[Path, Path]:
 # --- External services ---------------------------------------------------
 OSRM_URL = os.getenv("OSRM_URL", "https://router.project-osrm.org")
 
-# Live traffic for route planning: the Google Maps Routes API (computeRouteMatrix,
-# TRAFFIC_AWARE). Server-side key, restricted to the Routes API. Unset: runs use
-# the precomputed OSRM travel times only.
-GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY", "").strip()
-# Matrix elements bought per traffic refresh. Each element is one origin to one
-# destination; Google bills them individually, so this caps the cost of a refresh.
-TRAFFIC_MAX_ELEMENTS = int(os.getenv("TRAFFIC_MAX_ELEMENTS", "400"))
-# How long a traffic snapshot is reused before Google is asked again, in seconds.
+# Live traffic for route planning on the blank canvas: TomTom's Traffic Flow
+# Segment Data API (the same key as the map's traffic layer). Unset: runs use the
+# precomputed OSRM travel times only.
+TOMTOM_API_KEY = os.getenv("TOMTOM_API_KEY", "").strip()
+# Points (one request each) asked about per traffic refresh.
+TRAFFIC_MAX_POINTS = int(os.getenv("TRAFFIC_MAX_POINTS", "60"))
+# How long a traffic snapshot is reused before TomTom is asked again, in seconds.
 TRAFFIC_CACHE_TTL_S = float(os.getenv("TRAFFIC_CACHE_TTL_S", "600"))
+# Requests per day across all refreshes: 90 % of the 20,000/month free tier over 31 days.
+TOMTOM_FLOW_DAILY_LIMIT = int(os.getenv("TOMTOM_FLOW_DAILY_LIMIT", "580"))
 
 OVERPASS_ENDPOINTS = [
     "https://overpass-api.de/api/interpreter",

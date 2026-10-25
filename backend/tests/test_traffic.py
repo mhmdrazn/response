@@ -1,11 +1,14 @@
-import json
-
 import httpx
 import numpy as np
 import pytest
 
 from app import config
+from app.data import canvas
+from app.data.store import store
+from app.preprocessing import enrich
 from app.traffic import live as traffic
+
+RUN = {"max_iterations": 3, "time_limit_s": 3, "seed": 1}
 
 
 def _grid(n: int) -> np.ndarray:
@@ -14,127 +17,173 @@ def _grid(n: int) -> np.ndarray:
     return np.abs(idx[:, None] - idx[None, :]).astype(float) * 60.0
 
 
-def test_sample_pairs_puts_dispatch_legs_first_and_keeps_the_budget():
-    t = _grid(12)  # 2 depots, 4 floods, 6 outlets
-    plan = traffic.sample_pairs(t, n_depots=2, n_floods=4, dispatch_limit_s=180.0, budget=5)
+@pytest.fixture(autouse=True)
+def _isolated_usage(tmp_path, monkeypatch):
+    """Each test starts with an empty daily count in its own file."""
+    monkeypatch.setattr(traffic, "USAGE_FILE", tmp_path / "usage.json")
+    monkeypatch.setattr(traffic, "_usage", None)
+    traffic.clear_cache()
+    yield
+    traffic.clear_cache()
 
-    pairs = [(o, d) for o, ds in plan.items() for d in ds]
-    assert len(pairs) == 5
-    assert all(o < 2 for o, _ in pairs[:3]), "depot -> flood legs come first"
-    assert all(o != d for o, d in pairs)
+
+def test_sample_nodes_puts_floods_first_then_dispatching_depots_and_outlets():
+    t = _grid(12)  # 2 depots (0-1), 4 floods (2-5), 6 outlets (6-11)
+    nodes = traffic.sample_nodes(t, n_depots=2, n_floods=4, dispatch_limit_s=180.0, budget=99)
+
+    assert nodes[:4] == [2, 3, 4, 5], "floods come first"
+    assert len(nodes) == len(set(nodes))
+    assert set(nodes) & {0, 1}, "depots that dispatch are sampled"
+    assert set(nodes) & set(range(6, 12)), "each flood's nearest outlets are sampled"
 
 
-def test_sample_pairs_covers_outlets_and_neighbouring_floods():
+def test_sample_nodes_keeps_the_budget():
     t = _grid(12)
-    plan = traffic.sample_pairs(t, n_depots=2, n_floods=4, dispatch_limit_s=180.0, budget=999)
-    pairs = {(o, d) for o, ds in plan.items() for d in ds}
-    floods, outlets = range(2, 6), range(6, 12)
-    assert any(o in floods and d in outlets for o, d in pairs)
-    assert any(o in floods and d in floods for o, d in pairs)
+    assert len(traffic.sample_nodes(t, 2, 4, 180.0, budget=3)) == 3
 
 
-def test_node_factors_take_the_median_and_borrow_for_unmeasured_nodes():
+def test_node_factors_keep_measured_values_and_borrow_for_the_rest():
     t = _grid(5)
-    ratios = {(0, 1): 1.2, (0, 2): 1.6, (1, 2): 2.0}
-    f = traffic.node_factors(5, ratios, t)
+    f = traffic.node_factors(5, {0: 1.2, 2: 1.8}, t)
 
-    assert f[0] == pytest.approx(1.4)  # median of 1.2 and 1.6
+    assert f[0] == pytest.approx(1.2)
     assert f[2] == pytest.approx(1.8)
     assert 1.0 <= f[4] <= 4.0, "node 4 was never measured but still gets a factor"
 
 
-def test_apply_traffic_never_makes_a_leg_faster_and_keeps_sampled_ratios():
+def test_apply_traffic_scales_legs_by_both_ends_and_never_speeds_up():
     t = _grid(4)
     snap = traffic.TrafficSnapshot(
         factors=np.array([1.0, 1.5, 2.0, 1.0]),
-        ratios={(0, 1): 1.3},
+        measured={1: 1.5, 2: 2.0},
         fetched_at=traffic.datetime.now(traffic.timezone.utc),
-        requested_pairs=1,
+        requested_points=2,
     )
     adj = traffic.apply_traffic(t, snap)
 
-    assert adj[0, 1] == pytest.approx(t[0, 1] * 1.3)
     assert adj[1, 2] == pytest.approx(t[1, 2] * np.sqrt(1.5 * 2.0))
     assert np.all(adj >= t - 1e-9)
     assert np.all(np.diag(adj) == 0.0)
 
 
-def test_fetch_ratios_reads_the_routes_api_matrix():
-    seen = {}
+def _flow(current: float, free: float, confidence: float = 1.0) -> dict:
+    return {"flowSegmentData": {
+        "currentTravelTime": current, "freeFlowTravelTime": free, "confidence": confidence,
+    }}
+
+
+def test_fetch_factors_reads_tomtom_flow_segment_data():
+    seen: list[httpx.Request] = []
 
     def handler(request: httpx.Request) -> httpx.Response:
-        seen["key"] = request.headers.get("X-Goog-Api-Key")
-        seen["mask"] = request.headers.get("X-Goog-FieldMask")
-        body = json.loads(request.content)
-        assert body["routingPreference"] == "TRAFFIC_AWARE"
-        assert len(body["destinations"]) == 2
-        return httpx.Response(
-            200,
-            json=[
-                {"originIndex": 0, "destinationIndex": 0, "condition": "ROUTE_EXISTS",
-                 "duration": "390s", "staticDuration": "300s"},
-                {"originIndex": 0, "destinationIndex": 1, "condition": "ROUTE_NOT_FOUND"},
-            ],
-        )
+        seen.append(request)
+        point = request.url.params["point"]
+        if point.startswith("-7.25"):
+            return httpx.Response(200, json=_flow(130, 100))  # 30% slower, sure
+        if point.startswith("-7.26"):
+            return httpx.Response(200, json=_flow(200, 100, confidence=0.5))
+        return httpx.Response(400, json={"detailedError": {"message": "no segment"}})
 
     coords = np.array([[-7.25, 112.75], [-7.26, 112.76], [-7.27, 112.77]])
-    ratios = traffic.fetch_ratios(coords, {0: [1, 2]}, "test-key", httpx.MockTransport(handler))
+    factors = traffic.fetch_factors(coords, [0, 1, 2], "test-key", httpx.MockTransport(handler))
 
-    assert ratios == {(0, 1): pytest.approx(1.3)}
-    assert seen["key"] == "test-key"
-    assert "staticDuration" in seen["mask"]
+    assert factors[0] == pytest.approx(1.3)
+    assert factors[1] == pytest.approx(1.5), "ratio 2.0 shrunk halfway by confidence 0.5"
+    assert 2 not in factors, "a point without a road segment is skipped"
+    assert all(r.url.params["key"] == "test-key" for r in seen)
+    assert "flowSegmentData" in str(seen[0].url)
 
 
 def test_a_rejected_key_is_reported_not_raised_as_a_crash():
     def handler(_request: httpx.Request) -> httpx.Response:
-        return httpx.Response(403, json={"error": {"message": "API key not valid"}})
+        return httpx.Response(403, json={"detailedError": {"message": "Forbidden"}})
 
     coords = np.array([[-7.25, 112.75], [-7.26, 112.76]])
     with pytest.raises(traffic.TrafficUnavailable, match="403"):
-        traffic.fetch_ratios(coords, {0: [1]}, "bad", httpx.MockTransport(handler))
+        traffic.fetch_factors(coords, [0, 1], "bad", httpx.MockTransport(handler))
+
+
+def test_daily_cap_refuses_a_refresh_that_does_not_fit(monkeypatch):
+    monkeypatch.setattr(config, "TOMTOM_FLOW_DAILY_LIMIT", 5)
+    traffic._reserve(4)
+    assert traffic.usage_today() == 4
+    with pytest.raises(traffic.TrafficUnavailable, match="Batas harian"):
+        traffic._reserve(2)
+    assert traffic.usage_today() == 4
 
 
 def test_status_endpoint_reports_configuration(client, monkeypatch):
-    monkeypatch.setattr(config, "GOOGLE_MAPS_API_KEY", "")
-    assert client.get("/api/traffic/status").json()["routes_api_configured"] is False
-    monkeypatch.setattr(config, "GOOGLE_MAPS_API_KEY", "abc")
-    assert client.get("/api/traffic/status").json()["routes_api_configured"] is True
+    monkeypatch.setattr(config, "TOMTOM_API_KEY", "")
+    body = client.get("/api/traffic/status").json()
+    assert body["configured"] is False and body["provider"] == "tomtom"
+    monkeypatch.setattr(config, "TOMTOM_API_KEY", "abc")
+    assert client.get("/api/traffic/status").json()["configured"] is True
 
 
-def test_run_without_a_key_falls_back_to_free_flow(client, monkeypatch):
-    monkeypatch.setattr(config, "GOOGLE_MAPS_API_KEY", "")
-    traffic.clear_cache()
-    r = client.post(
-        "/api/optimize/vns?scenario=s1-jan",
-        json={"max_iterations": 3, "time_limit_s": 3, "seed": 1, "use_traffic": True},
-    )
+@pytest.fixture()
+def canvas_with_points(tmp_path, monkeypatch):
+    """A blank canvas in a temp folder with two hand-placed points, offline."""
+    monkeypatch.setattr(config, "WRITABLE_ROOT", tmp_path / "data")
+    monkeypatch.setattr(enrich, "enrich_attrs", lambda lat, lon, **_: (2, 150.0))
+
+    def vectors(lat, lon, lats, lons):
+        d = np.hypot(lats - lat, lons - lon) * 111_000.0
+        return d, d, d / 8.0, d / 8.0
+
+    monkeypatch.setattr(enrich, "node_vectors", vectors)
+    store.invalidate(canvas.CANVAS_ID)
+    canvas.reset()
+    from fastapi.testclient import TestClient
+
+    from app.main import app
+
+    c = TestClient(app)
+    for lat, lon in [(-7.2650, 112.7378), (-7.2900, 112.7500)]:
+        r = c.post("/api/data/floods?scenario=kanvas", json={"lat": lat, "lon": lon, "ketinggian_cm": 30})
+        assert r.status_code in (200, 201), r.text
+    yield c
+    store.invalidate(canvas.CANVAS_ID)
+
+
+def test_canvas_run_without_a_key_falls_back_to_free_flow(canvas_with_points, monkeypatch):
+    monkeypatch.setattr(config, "TOMTOM_API_KEY", "")
+    r = canvas_with_points.post("/api/optimize/vns?scenario=kanvas", json={**RUN, "use_traffic": True})
     assert r.status_code == 200, r.text
     info = r.json()["traffic"]
     assert info["requested"] is True and info["applied"] is False
-    assert "GOOGLE_MAPS_API_KEY" in info["message"]
+    assert "TOMTOM_API_KEY" in info["message"]
 
 
-def test_run_with_traffic_plans_on_slower_roads(client, monkeypatch):
-    monkeypatch.setattr(config, "GOOGLE_MAPS_API_KEY", "abc")
-    traffic.clear_cache()
-    # Every queried leg is 50% slower than free flow.
+def test_canvas_run_with_traffic_plans_on_slower_roads(canvas_with_points, monkeypatch):
+    monkeypatch.setattr(config, "TOMTOM_API_KEY", "abc")
+    # Every queried point is 50% slower than free flow.
     monkeypatch.setattr(
-        traffic,
-        "fetch_ratios",
-        lambda coords, plan, key, transport=None: {
-            (o, d): 1.5 for o, ds in plan.items() for d in ds
-        },
+        traffic, "fetch_factors", lambda coords, nodes, key, transport=None: {n: 1.5 for n in nodes}
     )
-    body = {"max_iterations": 3, "time_limit_s": 3, "seed": 1}
-    free = client.post("/api/optimize/vns?scenario=s1-jan", json=body).json()
-    jammed = client.post("/api/optimize/vns?scenario=s1-jan", json={**body, "use_traffic": True}).json()
-    traffic.clear_cache()
+    free = canvas_with_points.post("/api/optimize/vns?scenario=kanvas", json=RUN).json()
+    jammed = canvas_with_points.post(
+        "/api/optimize/vns?scenario=kanvas", json={**RUN, "use_traffic": True}
+    ).json()
 
     assert free["traffic"] is None
     info = jammed["traffic"]
-    assert info["applied"] is True
+    assert info["applied"] is True and info["source"] == "tomtom-flow"
     assert info["mean_factor"] == pytest.approx(1.5)
-    assert info["sampled_pairs"] > 0
+    assert info["sampled_points"] > 0
+
+
+def test_study_areas_ignore_live_traffic(client, monkeypatch):
+    monkeypatch.setattr(config, "TOMTOM_API_KEY", "abc")
+
+    def must_not_be_called(*_a, **_k):
+        raise AssertionError("study areas must not ask TomTom")
+
+    monkeypatch.setattr(traffic, "fetch_factors", must_not_be_called)
+    r = client.post("/api/optimize/vns?scenario=s1-jan", json={**RUN, "use_traffic": True})
+    assert r.status_code == 200, r.text
+    info = r.json()["traffic"]
+    assert info["requested"] is True and info["applied"] is False
+    assert "Kanvas" in info["message"]
 
 
 def test_dotenv_values_do_not_override_the_environment(tmp_path, monkeypatch):
