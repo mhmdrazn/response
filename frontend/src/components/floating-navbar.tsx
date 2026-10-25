@@ -12,6 +12,8 @@ interface FloatingNavbarProps {
   onHidePanels?: () => void;
   /** Extra classes (e.g. hide/show transition state) appended to the root. */
   className?: string;
+  /** Widest it may get, so it stops short of the results column on the right. */
+  maxWidth?: number;
 }
 
 export function FloatingNavbar({
@@ -20,9 +22,11 @@ export function FloatingNavbar({
   compact = false,
   onHidePanels,
   className = "",
+  maxWidth,
 }: FloatingNavbarProps) {
   return (
     <div
+      style={maxWidth != null ? { maxWidth } : undefined}
       className={`border-frost bg-pure-white absolute z-[1000] flex items-center rounded-lg border ${
         compact
           ? "top-12 right-12 left-12 gap-8 px-[10px] py-[6px]"
@@ -37,14 +41,14 @@ export function FloatingNavbar({
           }`}
         />
         <span
-          className={`text-midnight-ink leading-none font-bold tracking-[-0.2px] ${
+          className={`text-midnight-ink flex-shrink-0 leading-none font-bold tracking-[-0.2px] ${
             compact ? "text-[15px]" : "text-[17px]"
           }`}
         >
           Response
         </span>
         {!compact ? (
-          <span className="border-frost text-slate ml-8 border-l pl-[10px] text-[12px] leading-none font-semibold">
+          <span className="border-frost text-slate ml-8 min-w-0 truncate border-l pl-[10px] text-[12px] leading-none font-semibold">
             Sistem Pendukung Keputusan - Dinas Pemadam Kebakaran dan Penyelamatan Kota Surabaya
           </span>
         ) : null}

@@ -49,6 +49,13 @@ import { PickLayer } from "./pick-layer";
 import { RouteDecorators } from "./route-decorators";
 import { RoutePolylines } from "./route-polylines";
 import { useThreeD } from "./use-three-d";
+import { useElementHeight } from "../../hooks/use-element-height";
+import { useViewportSize } from "../../hooks/use-viewport-size";
+
+/** Space kept between neighbouring floating panels. */
+const LAYOUT_GAP = 10;
+/** Narrowest the legends may be squeezed before they step aside. */
+const MIN_LEGEND_W = 240;
 
 export interface MapInnerProps {
   floods: FloodPoint[];
@@ -96,6 +103,18 @@ export interface MapInnerProps {
   onMoveDraft?: (lat: number, lon: number) => void;
   /** Fullscreen only: gap in px between the map buttons and the left edge, to clear the left panels. */
   controlsLeft?: number;
+  /** Where the map buttons sit (full-map layout); defaults to beside the panels. */
+  controlsPos?: { left: number; top: number };
+  /** Width of the left panel column (full-map layout). */
+  panelWidth?: number;
+  /** Height the algorithm panel keeps above the left docks; they fold to fit under it. */
+  dockReserve?: number;
+  /** A dock opened by the user needs the room the algorithm panel keeps. */
+  onDocksNeedRoom?: () => void;
+  /** Height of the detail panel open along the bottom; the legends rise above it. */
+  bottomInset?: number;
+  /** Width taken on the right (the results column and its gap); legends stop short of it. */
+  rightInset?: number;
   /** Current page layout and the switch to the other one (a button on the map). */
   layout?: AppLayout;
   onToggleLayout?: () => void;
@@ -164,6 +183,12 @@ export function MapInner({
   layout,
   onToggleLayout,
   controlsLeft = 16,
+  controlsPos,
+  panelWidth = 340,
+  dockReserve = 400,
+  onDocksNeedRoom,
+  bottomInset = 0,
+  rightInset = 0,
 }: MapInnerProps) {
   const selectedOf = (kind: MapSelection["kind"]) =>
     selection?.kind === kind ? selection.id : null;
@@ -191,6 +216,27 @@ export function MapInner({
     return () => window.clearTimeout(t);
   }, [map]);
   const threeD = useThreeD(map, styleVersion);
+
+  // --- Full-map layout: keep the legends clear of the map buttons and panels ---
+  const viewport = useViewportSize();
+  const controlsRef = useRef<HTMLDivElement>(null);
+  const legendsRef = useRef<HTMLDivElement>(null);
+  const controlsH = useElementHeight(controlsRef);
+  const legendsH = useElementHeight(legendsRef);
+  const buttonsLeft = controlsPos?.left ?? controlsLeft;
+  const buttonsTop = controlsPos?.top ?? 84;
+  // Above the detail panel while one is open, else at the bottom edge.
+  const legendsBottom = 16 + (bottomInset > 0 ? bottomInset + LAYOUT_GAP : 0);
+  // Room between the legends' left edge and the results column.
+  const legendsRoom = Math.max(0, viewport.w - controlsLeft - rightInset - 16);
+  const legendsTop = viewport.h - legendsBottom - legendsH;
+  const sharesColumn = buttonsLeft < controlsLeft + 280 && controlsLeft < buttonsLeft + 48;
+  // Shown only where they fit whole: wide enough, and below the buttons when
+  // they share a column. Otherwise they fade out until there is room again.
+  const legendsFit =
+    legendsRoom >= MIN_LEGEND_W &&
+    legendsTop >= 16 &&
+    !(sharesColumn && legendsTop < buttonsTop + controlsH + LAYOUT_GAP);
   const threeDActive = useRef(false);
   useEffect(() => {
     threeDActive.current = threeD.active;
@@ -341,8 +387,15 @@ export function MapInner({
                   stay when the panels are hidden: the map still needs its key. */}
               {overlays.choropleth || trafficOn ? (
                 <div
-                  style={{ left: controlsLeft }}
-                  className="pointer-events-none absolute bottom-16 z-[1000] flex flex-col items-start gap-8 transition-[left] duration-300 ease-out"
+                  ref={legendsRef}
+                  style={{
+                    left: controlsLeft,
+                    bottom: legendsBottom,
+                    maxWidth: legendsRoom,
+                  }}
+                  className={`pointer-events-none absolute z-[1000] flex flex-col items-start gap-8 transition-[left,bottom,opacity] duration-[320ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                    legendsFit ? "opacity-100" : "opacity-0 [&_*]:pointer-events-none"
+                  }`}
                 >
                   {trafficOn ? <TrafficLegend status={trafficStatus} usage={trafficUsage} /> : null}
                   {overlays.choropleth ? <ChoroplethLegend /> : null}
@@ -352,8 +405,9 @@ export function MapInner({
               {/* Map buttons: top left of the map, just right of the left panels. Hiding
                   the panels keeps them (3D, zoom, recenter): they slide to the edge. */}
               <div
-                style={{ left: controlsLeft }}
-                className="pointer-events-none absolute top-[84px] z-[1000] transition-[left] duration-300 ease-out"
+                ref={controlsRef}
+                style={{ left: buttonsLeft, top: buttonsTop }}
+                className="pointer-events-none absolute z-[1000] transition-[left,top] duration-[320ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
               >
                 <MapControls orientation="vertical" />
               </div>
@@ -373,6 +427,9 @@ export function MapInner({
                 scenario={scenario}
                 extraDock={extraDock}
                 hidden={hideChrome}
+                width={panelWidth}
+                reserve={dockReserve}
+                onNeedRoom={onDocksNeedRoom}
               />
             </>
           ) : null}

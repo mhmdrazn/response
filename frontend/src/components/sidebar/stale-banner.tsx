@@ -49,7 +49,7 @@ export function StaleBanner({ groups, onRerun, isLoading, compact = false }: Sta
   return (
     <div
       role="alert"
-      className="soft-enter pointer-events-auto flex flex-col gap-[10px] rounded-lg border border-[#fde68a] bg-[#fffbeb] p-[12px]"
+      className="stale-banner soft-enter pointer-events-auto flex flex-col gap-[10px] rounded-lg border border-[#fde68a] bg-[#fffbeb] p-[12px]"
     >
       <div className="flex items-start gap-[10px]">
         <TriangleAlert size={16} strokeWidth={2.2} color="#b45309" className="mt-px flex-shrink-0" />

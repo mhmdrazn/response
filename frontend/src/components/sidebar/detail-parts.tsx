@@ -45,7 +45,7 @@ export function DetailShell({
   return (
     <section
       aria-label={label}
-      className={`@container pointer-events-auto flex max-h-[min(436px,50vh)] w-full flex-col overflow-hidden bg-pure-white ${
+      className={`@container pointer-events-auto flex max-h-[min(436px,50vh,var(--detail-max,100dvh))] w-full flex-col overflow-hidden bg-pure-white ${
         variant === "embedded" ? "border-t border-frost" : "rounded-lg border border-frost"
       }`}
     >

@@ -23,6 +23,9 @@ import { ClosuresNote } from "./closures-note";
 import { TrafficToggle } from "./traffic-toggle";
 
 interface AlgorithmPanelProps {
+  /** Expanded or collapsed; the parent keeps it so the map buttons can follow. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   mode: AppMode;
   isLoading: boolean;
   elapsedSeconds: number;
@@ -55,6 +58,8 @@ interface AlgorithmPanelProps {
 }
 
 export function AlgorithmPanel({
+  open: openProp,
+  onOpenChange,
   mode,
   isLoading,
   elapsedSeconds,
@@ -81,13 +86,18 @@ export function AlgorithmPanel({
   canvas,
   closures,
 }: AlgorithmPanelProps) {
-  const [open, setOpen] = useState(true);
+  const [ownOpen, setOwnOpen] = useState(true);
+  const open = openProp ?? ownOpen;
+  const setOpen = (next: boolean) => {
+    setOwnOpen(next);
+    onOpenChange?.(next);
+  };
 
   return (
     <div className="algo-card border-frost bg-pure-white pointer-events-auto flex max-h-full min-h-0 flex-col rounded-lg border">
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => setOpen(!open)}
         aria-expanded={open}
         className="font-manrope flex w-full cursor-pointer items-center gap-8 border-0 bg-transparent px-[14px] py-12 text-left"
       >
@@ -102,14 +112,18 @@ export function AlgorithmPanel({
         />
       </button>
 
+      {/* Collapses by its real height (a grid row going 1fr <-> 0fr), so the
+          motion starts at once instead of first eating through a max-height
+          larger than the content. */}
       <div
         data-open={open}
-        className={`algo-collapse flex min-h-0 flex-col transition-[max-height,opacity] duration-[320ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
+        className={`algo-collapse grid min-h-0 transition-[grid-template-rows,opacity] duration-[320ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
           open
-            ? "pointer-events-auto max-h-[min(780px,88vh)] opacity-100"
-            : "pointer-events-none max-h-0 overflow-hidden opacity-0"
+            ? "pointer-events-auto grid-rows-[1fr] opacity-100"
+            : "pointer-events-none grid-rows-[0fr] opacity-0"
         }`}
       >
+        <div className="flex min-h-0 flex-col overflow-hidden">
         <div className="algo-scroll scrollbar-hidden flex min-h-0 flex-1 flex-col gap-12 overflow-y-auto px-[14px] pb-[12px]">
           <div
             role="tablist"
@@ -313,6 +327,7 @@ export function AlgorithmPanel({
               {error}
             </div>
           ) : null}
+        </div>
         </div>
       </div>
     </div>

@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
   useSyncExternalStore,
+  type CSSProperties,
   type ReactNode,
 } from "react";
 
@@ -20,7 +21,9 @@ import { usePersistentState } from "../hooks/use-persistent-state";
 import { useMapData } from "../hooks/use-map-data";
 import { useOptimization } from "../hooks/use-optimization";
 import { useFadeThrough } from "../hooks/use-fade-through";
+import { useElementHeight } from "../hooks/use-element-height";
 import { usePresence } from "../hooks/use-presence";
+import { useViewportSize } from "../hooks/use-viewport-size";
 import { usePriority } from "../hooks/use-priority";
 import { BASE_MAP_LAYERS, type BaseMapId, type OverlayLayerId } from "../lib/map-constants";
 import { OVERLAY_LAYERS } from "../lib/map-constants";
@@ -98,9 +101,32 @@ const RESULT_PANEL_WIDTH: Record<string, number> = {
 const SIDEBAR_BOTTOM_CLEARANCE = "calc(var(--left-stack-h, 220px) + 24px)";
 
 // Shared transition for the hide-all-panels animation (smooth in-place fade).
-const PANEL_ANIM = "transition-opacity duration-300 ease-out";
+const PANEL_ANIM = "transition-opacity duration-[320ms] ease-[cubic-bezier(0.4,0,0.2,1)]";
 /** How long the outgoing detail panel takes to fade before the next one comes in. */
 const DETAIL_SWAP_OUT_MS = 160;
+
+// Map buttons in the full-map layout. Beside the open algorithm panel; under its
+// header once it is collapsed (the dock stack keeps that room free); under the
+// "Tampilkan Panel" button while the panels are hidden. Same 10 px gap each time.
+const SHOW_PANELS_BOTTOM = 16 + 36;
+/** Height of the map button column; a detail panel beside it stops below it. */
+const MAP_BUTTONS_H = 215;
+/** Narrowest the detail panel may get between the side columns before it moves
+ *  to the full width below the results column instead. */
+const MIN_DETAIL_W = 520;
+const ALGO_HEADER_BOTTOM = 84 + 43;
+const MAP_BUTTON_GAP = 10;
+/** Height the open algorithm panel keeps above the left docks: its controls in
+ *  Simple mode with room to spare (longer content scrolls inside the card). */
+const ALGO_RESERVE_OPEN = 400;
+/** Collapsed: its header, and under it the map buttons that move up beside it. */
+const ALGO_RESERVE_CLOSED = 270;
+
+function mapButtonsPos(hidden: boolean, algoOpen: boolean, panelW: number) {
+  if (hidden) return { left: 16, top: SHOW_PANELS_BOTTOM + MAP_BUTTON_GAP };
+  if (!algoOpen) return { left: 16, top: ALGO_HEADER_BOTTOM + MAP_BUTTON_GAP };
+  return { left: panelW + 26, top: 84 };
+}
 
 function selectionKey(s: MapSelection): string {
   return `${s.kind}:${s.id}`;
@@ -149,6 +175,11 @@ export function AppShell() {
   );
   const [animating, setAnimating] = useState(false);
   const [panelsHidden, setPanelsHidden] = useState(false);
+  const [algoOpen, setAlgoOpen] = useState(true);
+  const foldAlgorithm = useCallback(() => setAlgoOpen(false), []);
+  const viewport = useViewportSize();
+  const detailRef = useRef<HTMLDivElement>(null);
+  const detailH = useElementHeight(detailRef);
   const [previewDataset, setPreviewDataset] = useState<DatasetKey | null>(null);
   const [scenarios, setScenarios] = useState<ScenarioMeta[]>([]);
   const [scenario, setScenario] = useState<string | undefined>(undefined);
@@ -337,6 +368,11 @@ export function AppShell() {
   const isMobile = bp === "mobile";
   const panelW = PANEL_WIDTH[bp];
   const resultPanelW = RESULT_PANEL_WIDTH[bp];
+  // Too narrow between the side columns: the detail panel takes the full width
+  // and the results column ends above it instead.
+  const detailStacked =
+    result !== null && viewport.w - (panelW + 32) - (resultPanelW + 32) < MIN_DETAIL_W;
+  const detailShown = detailVisible && !panelsHidden;
 
   // A route selection points into one plan, so a new run or a reset drops it.
   const dropRouteSelection = () => setSelection((prev) => (prev?.kind === "route" ? null : prev));
@@ -439,6 +475,8 @@ export function AppShell() {
 
   const algorithmPanelContent = (
     <AlgorithmPanel
+      open={algoOpen}
+      onOpenChange={setAlgoOpen}
       mode={mode}
       isLoading={isLoading}
       elapsedSeconds={elapsedSeconds}
@@ -649,12 +687,16 @@ export function AppShell() {
   // Bottom of the map. Fullscreen fills the gap between the left dock stack and
   // the results column, or to the right edge when there are none. The
   // windowed layout does not overlay the map at all: its panel is a row under it.
-  const detailPanelInset = (extra: { isMobile: boolean }) => {
+  const detailPanelInset = (extra: { isMobile: boolean }): CSSProperties => {
     if (extra.isMobile) return { left: 12, right: 12, bottom: 12 };
     return {
       left: panelW + 32,
-      right: result ? resultPanelW + 32 : 16,
+      right: result && !detailStacked ? resultPanelW + 32 : 16,
       bottom: 16,
+      // Beside the open algorithm panel the map buttons share the column the
+      // detail panel starts in; it stops below them.
+      ["--detail-max" as string]:
+        algoOpen && !panelsHidden ? `calc(100dvh - ${84 + MAP_BUTTONS_H + 26}px)` : "100dvh",
     };
   };
 
@@ -760,6 +802,12 @@ export function AppShell() {
           onMoveDraft={(lat, lon) => setDraft({ lat, lon })}
           layout={extra.variant === "embedded" ? "windowed" : "fullscreen"}
           controlsLeft={panelsHidden ? 16 : panelW + 26}
+          controlsPos={mapButtonsPos(panelsHidden, algoOpen, panelW)}
+          panelWidth={panelW}
+          dockReserve={algoOpen ? ALGO_RESERVE_OPEN : ALGO_RESERVE_CLOSED}
+          onDocksNeedRoom={foldAlgorithm}
+          bottomInset={detailShown ? detailH : 0}
+          rightInset={result && !panelsHidden ? resultPanelW + 16 : 0}
           onToggleLayout={
             extra.isMobile
               ? undefined
@@ -769,7 +817,8 @@ export function AppShell() {
         />
         {floatingDetail ? (
           <div
-            className={`pointer-events-none absolute z-[950] flex justify-center transition-[opacity,transform] duration-300 ease-out ${
+            ref={detailRef}
+            className={`pointer-events-none absolute z-[950] flex justify-center transition-[opacity,transform] duration-[320ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
               panelsHidden || !detailVisible ? "opacity-0 [&_*]:pointer-events-none" : "opacity-100"
             } ${detailVisible ? "translate-y-0" : "translate-y-3"}`}
             style={detailPanelInset(extra)}
@@ -855,6 +904,9 @@ export function AppShell() {
             onModeChange={setMode}
             compact={isMobile}
             onHidePanels={!isMobile ? () => setPanelsHidden(true) : undefined}
+            maxWidth={
+              isMobile ? undefined : viewport.w - 32 - (result ? resultPanelW + 16 : 0)
+            }
             className={`${PANEL_ANIM} ${
               panelsHidden
                 ? "pointer-events-none opacity-0 [&_*]:pointer-events-none"
@@ -891,10 +943,13 @@ export function AppShell() {
 
               {result ? (
                 <div
-                  className={`soft-enter pointer-events-none absolute top-16 right-16 bottom-16 z-[900] flex flex-col gap-[10px] overflow-hidden ${PANEL_ANIM} ${
+                  className={`soft-enter pointer-events-none absolute top-16 right-16 z-[900] flex flex-col gap-[10px] overflow-hidden transition-[opacity,bottom] duration-[320ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
                     panelsHidden ? "opacity-0 [&_*]:pointer-events-none" : "opacity-100"
                   }`}
-                  style={{ width: resultPanelW }}
+                  style={{
+                    width: resultPanelW,
+                    bottom: detailStacked && detailShown ? 16 + detailH + 10 : 16,
+                  }}
                 >
                   {/* Wrapper stays click-through; each card sets pointer-events
                       auto, so the empty area below the cards pans the map. */}

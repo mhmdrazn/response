@@ -551,8 +551,18 @@ button:not(:disabled):active,
   max-height: none;
 }
 
-.windowed-flat .algo-collapse[data-open="true"] {
-  max-height: 1600px;
+/* The stale-result notice joins the column like any other section: flush, square,
+   its hairline in the notice tint, and a button that sizes to its label. */
+.windowed-flat .stale-banner {
+  border-radius: 0;
+  border-width: 1px 0;
+  margin-bottom: 8px;
+  padding: 14px 16px;
+}
+
+.windowed-flat .stale-banner > button {
+  width: auto;
+  align-self: flex-start;
 }
 
 .windowed-flat .algo-scroll {

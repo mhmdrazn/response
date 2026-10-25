@@ -1,5 +1,6 @@
 "use client";
 
+import { DockBody } from "./dock-body";
 import {
   Building2,
   ChevronDown,
@@ -18,6 +19,9 @@ import { useTrafficTilesStatus } from "../../hooks/use-traffic-tiles-status";
 import { BASE_MAP_LAYERS, type BaseMapId, type OverlayLayerId } from "../../lib/map-constants";
 
 interface MapLayerDockProps {
+  /** Controlled open state; the left dock stack sets it so the docks fit. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   overlays: Record<OverlayLayerId, boolean>;
   setOverlay: (id: OverlayLayerId, visible: boolean) => void;
   baseMap: BaseMapId;
@@ -58,9 +62,16 @@ export function MapLayerDock({
   baseMap,
   setBaseMap,
   defaultOpen = false,
+  open: openProp,
+  onOpenChange,
   bare = false,
 }: MapLayerDockProps) {
-  const [open, setOpen] = useState(defaultOpen);
+  const [ownOpen, setOwnOpen] = useState(defaultOpen);
+  const open = openProp ?? ownOpen;
+  const toggle = () => {
+    setOwnOpen(!open);
+    onOpenChange?.(!open);
+  };
   const trafficUsage = useTrafficTilesStatus();
 
   return (
@@ -72,7 +83,7 @@ export function MapLayerDock({
       {bare ? null : (
         <button
           type="button"
-          onClick={() => setOpen((v) => !v)}
+          onClick={toggle}
           aria-expanded={open}
           className="font-manrope flex w-full cursor-pointer items-center gap-[6px] border-0 bg-transparent px-[10px] py-8 text-left"
         >
@@ -88,17 +99,7 @@ export function MapLayerDock({
         </button>
       )}
 
-      <div
-        className={
-          bare
-            ? "scrollbar-hidden flex flex-col gap-[10px]"
-            : `scrollbar-hidden flex flex-col gap-[10px] transition-[max-height,opacity,padding] duration-[280ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
-                open
-                  ? "border-frost pointer-events-auto max-h-[min(420px,60vh)] overflow-auto border-t px-12 pt-[10px] pb-12 opacity-100"
-                  : "pointer-events-none max-h-0 overflow-hidden border-t border-transparent px-12 py-0 opacity-0"
-              }`
-        }
-      >
+      <DockBody open={open} bare={bare} className="flex flex-col gap-[10px]">
         <PanelSection label="Peta Dasar" noWrap>
           <div className="flex w-full gap-[6px]">
             {BASE_MAP_IDS.map((id) => (
@@ -138,7 +139,7 @@ export function MapLayerDock({
             </Pill>
           ))}
         </PanelSection>
-      </div>
+      </DockBody>
     </div>
   );
 }

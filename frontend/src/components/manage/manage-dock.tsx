@@ -1,5 +1,6 @@
 "use client";
 
+import { DockBody } from "../map/dock-body";
 import {
   ChevronDown,
   ChevronRight,
@@ -18,6 +19,9 @@ import type { FleetSummary } from "../../lib/fleet";
 import type { ConfigTab } from "./config-dialog";
 
 interface ManageDockProps {
+  /** Controlled open state; the left dock stack sets it so the docks fit. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   fleetCustom: boolean;
   fleetSummary: FleetSummary;
   priority: PriorityState;
@@ -38,9 +42,16 @@ export function ManageDock({
   onImportCsv,
   onOpenConfig,
   defaultOpen = false,
+  open: openProp,
+  onOpenChange,
   bare = false,
 }: ManageDockProps) {
-  const [open, setOpen] = useState(defaultOpen);
+  const [ownOpen, setOwnOpen] = useState(defaultOpen);
+  const open = openProp ?? ownOpen;
+  const toggle = () => {
+    setOwnOpen(!open);
+    onOpenChange?.(!open);
+  };
 
   const prioritySummary =
     priority.mode === "custom"
@@ -94,7 +105,7 @@ export function ManageDock({
     <div className="manage-dock pointer-events-auto flex flex-col rounded-lg border border-frost bg-pure-white">
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={toggle}
         aria-expanded={open}
         className="font-manrope flex w-full cursor-pointer items-center gap-[6px] border-0 bg-transparent px-[10px] py-8 text-left"
       >
@@ -108,15 +119,9 @@ export function ManageDock({
           className={`transition-transform duration-[220ms] ${open ? "rotate-0" : "-rotate-90"}`}
         />
       </button>
-      <div
-        className={`flex flex-col transition-[max-height,opacity,padding] duration-[280ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
-          open
-            ? "pointer-events-auto max-h-[320px] overflow-auto border-t border-frost px-12 pb-12 pt-[10px] opacity-100"
-            : "pointer-events-none max-h-0 overflow-hidden border-t border-transparent px-12 py-0 opacity-0"
-        }`}
-      >
+      <DockBody open={open} className="flex flex-col">
         {body}
-      </div>
+      </DockBody>
     </div>
   );
 }

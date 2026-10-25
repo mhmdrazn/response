@@ -1,5 +1,6 @@
 "use client";
 
+import { DockBody } from "./dock-body";
 import {
   Building2,
   ChevronDown,
@@ -26,6 +27,9 @@ const META_KEY: Record<DatasetKey, keyof DataMetaResponse> = {
 };
 
 interface DataDockProps {
+  /** Controlled open state; the left dock stack sets it so the docks fit. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   floodCount: number;
   depotCount: number;
   ifCount: number;
@@ -61,12 +65,19 @@ export function DataDock({
   faskesCount,
   onPreviewData,
   defaultOpen = false,
+  open: openProp,
+  onOpenChange,
   onReloadData,
   reloadingData = false,
   scenario,
   bare = false,
 }: DataDockProps) {
-  const [open, setOpen] = useState(defaultOpen);
+  const [ownOpen, setOwnOpen] = useState(defaultOpen);
+  const open = openProp ?? ownOpen;
+  const toggle = () => {
+    setOwnOpen(!open);
+    onOpenChange?.(!open);
+  };
   const [meta, setMeta] = useState<DataMetaResponse | null>(null);
 
   const loadMeta = useCallback(() => {
@@ -111,7 +122,7 @@ export function DataDock({
       {bare ? null : (
         <button
           type="button"
-          onClick={() => setOpen((v) => !v)}
+          onClick={toggle}
           aria-expanded={open}
           className="font-manrope flex w-full cursor-pointer items-center gap-[6px] border-0 bg-transparent px-[10px] py-8 text-left"
         >
@@ -127,13 +138,7 @@ export function DataDock({
         </button>
       )}
 
-      <div
-        className={bare ? "scrollbar-hidden flex flex-col" : `scrollbar-hidden flex flex-col transition-[max-height,opacity,padding] duration-[280ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
-          open
-            ? "pointer-events-auto max-h-[200px] overflow-auto border-t border-frost px-12 pb-12 pt-[10px] opacity-100"
-            : "pointer-events-none max-h-0 overflow-hidden border-t border-transparent px-12 py-0 opacity-0"
-        }`}
-      >
+      <DockBody open={open} bare={bare} className="flex flex-col">
         <div className="flex flex-wrap gap-[4px]">
           {DATA_ITEMS.map(({ key, label, Icon, color }) => {
             const updated = meta ? formatDateTimeId(meta[META_KEY[key]]?.updated_at) : null;
@@ -180,7 +185,7 @@ export function DataDock({
             </button>
           ) : null}
         </div>
-      </div>
+      </DockBody>
     </div>
   );
 }
