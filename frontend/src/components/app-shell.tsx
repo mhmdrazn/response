@@ -431,10 +431,11 @@ export function AppShell() {
     if (isMobile) setMobilePanel("none");
   }
 
-  // Planning on live traffic shows the traffic it plans on.
+  // The traffic layer follows the switch both ways: on shows the traffic the
+  // plan uses, off hides it again.
   function setTrafficRouting(on: boolean) {
     setTrafficWanted(on);
-    if (on) setOverlay("traffic", true);
+    setOverlay("traffic", on);
   }
 
   function handleScenarioChange(id: string) {
