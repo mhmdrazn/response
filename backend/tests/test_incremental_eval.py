@@ -69,3 +69,35 @@ def test_incremental_falls_back_when_the_first_route_changed(s2):
 
     inc = evaluate_incremental(inst, routes, caps, base, 0)
     assert inc.score == base.score
+
+
+def test_incremental_matches_full_evaluation_when_two_routes_change(s2):
+    # Relocate, or-opt and exchange change two routes at once. The volume-match
+    # shortcut must never reuse the stale evaluation of the second one: a stop
+    # moved into a later route changes that route's time (and its overtime)
+    # even when the volume entering it is the same as before.
+    inst = _instance(s2)
+    routes, caps = _a_solution(inst)
+    base = evaluate_solution(inst, routes, caps)
+    rng = random.Random(1)
+    flood = set(inst.flood_indices)
+    checked = 0
+
+    for _ in range(400):
+        a, b = sorted(rng.sample(range(len(routes)), 2))
+        src = [i for i, n in enumerate(routes[a][1:-1], start=1) if n in flood]
+        if not src or len(routes[b]) < 2:
+            continue
+        i = rng.choice(src)
+        j = rng.randrange(1, len(routes[b]))
+        trial = [list(r) for r in routes]
+        node = trial[a].pop(i)
+        trial[b].insert(j, node)
+
+        full = evaluate_solution(inst, trial, caps)
+        inc = evaluate_incremental(inst, trial, caps, base, a, last_changed=b)
+        for f in FIELDS:
+            assert getattr(full, f) == getattr(inc, f), f
+        checked += 1
+
+    assert checked > 50

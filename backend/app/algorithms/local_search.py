@@ -119,7 +119,7 @@ def relocate_between_routes(
                     trial[a] = best_routes[a][:i] + best_routes[a][i + 1 :]
                     trial[b] = best_routes[b][:j] + [node] + best_routes[b][j:]
                     ev = evaluate_incremental(
-                        inst, trial, capacities, best_ev, min(a, b)
+                        inst, trial, capacities, best_ev, min(a, b), last_changed=max(a, b)
                     )
                     if ev.score + 1e-9 < best_score:
                         best_routes = trial
@@ -173,7 +173,7 @@ def or_opt(
                             trial[a] = trial[a][:i] + trial[a][i + seg_len :]
                             trial[b] = trial[b][:j] + seg + trial[b][j:]
                             ev = evaluate_incremental(
-                                inst, trial, capacities, best_ev, min(a, b)
+                                inst, trial, capacities, best_ev, min(a, b), last_changed=max(a, b)
                             )
                             if ev.score + 1e-9 < best_score:
                                 best_routes = trial
@@ -230,7 +230,7 @@ def exchange(
                     trial = [list(r) for r in best_routes]
                     trial[a][i], trial[b][j] = trial[b][j], trial[a][i]
                     ev = evaluate_incremental(
-                        inst, trial, capacities, best_ev, min(a, b)
+                        inst, trial, capacities, best_ev, min(a, b), last_changed=max(a, b)
                     )
                     if ev.score + 1e-9 < best_score:
                         best_routes = trial

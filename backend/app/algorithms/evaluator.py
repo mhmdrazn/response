@@ -91,16 +91,22 @@ def evaluate_incremental(
     capacities: list[int],
     prev: SolutionEval,
     first_changed: int,
+    last_changed: int | None = None,
 ) -> SolutionEval:
     """Re-time only what a local-search move can have disturbed.
 
     Routes are timed independently; they meet only through the volume left for
     the ones after them. So routes before `first_changed` are reused outright,
     and once the running volume state matches what the previous evaluation had
-    at some route, every route from there on is reused too. Most moves reorder
-    stops without changing how much a route pumps, so that shortcut is the
-    common case.
+    at some route past `last_changed`, every route from there on is reused too.
+    Most moves reorder stops without changing how much a route pumps, so that
+    shortcut is the common case.
+
+    A move between two routes changes both: `last_changed` is the later one, so
+    its stale evaluation is never reused just because the volume entering it
+    happens to match. Defaults to `first_changed` (a move within one route).
     """
+    last = first_changed if last_changed is None else max(first_changed, last_changed)
     if not prev.entry_volumes or first_changed <= 0:
         return evaluate_solution(inst, routes, capacities)
 
@@ -109,7 +115,7 @@ def evaluate_incremental(
     volumes_left = prev.entry_volumes[first_changed].copy()
 
     for k in range(first_changed, len(routes)):
-        if k > first_changed and np.array_equal(volumes_left, prev.entry_volumes[k]):
+        if k > last and np.array_equal(volumes_left, prev.entry_volumes[k]):
             route_evals.extend(prev.routes[k:])
             entry_volumes.extend(prev.entry_volumes[k:])
             volumes_left = prev.remaining_volume
