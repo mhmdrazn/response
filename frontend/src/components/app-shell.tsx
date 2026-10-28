@@ -175,6 +175,11 @@ export function AppShell() {
   );
   const [animating, setAnimating] = useState(false);
   const [panelsHidden, setPanelsHidden] = useState(false);
+  // The panels wait for the map: shown over the data loading they would vanish
+  // under the map's own start-up cover and come back. They appear once, together,
+  // as that cover fades out.
+  const [mapReady, setMapReady] = useState(false);
+  const chromeHidden = panelsHidden || !mapReady;
   const [algoOpen, setAlgoOpen] = useState(true);
   const foldAlgorithm = useCallback(() => setAlgoOpen(false), []);
   const viewport = useViewportSize();
@@ -804,6 +809,7 @@ export function AppShell() {
           layout={extra.variant === "embedded" ? "windowed" : "fullscreen"}
           controlsLeft={panelsHidden ? 16 : panelW + 26}
           controlsPos={mapButtonsPos(panelsHidden, algoOpen, panelW)}
+          onReadyChange={setMapReady}
           panelWidth={panelW}
           dockReserve={algoOpen ? ALGO_RESERVE_OPEN : ALGO_RESERVE_CLOSED}
           onDocksNeedRoom={foldAlgorithm}
@@ -909,7 +915,7 @@ export function AppShell() {
               isMobile ? undefined : viewport.w - 32 - (result ? resultPanelW + 16 : 0)
             }
             className={`${PANEL_ANIM} ${
-              panelsHidden
+              chromeHidden
                 ? "pointer-events-none opacity-0 [&_*]:pointer-events-none"
                 : "pointer-events-auto opacity-100"
             }`}
@@ -918,7 +924,9 @@ export function AppShell() {
             <ShowPanelsButton
               onClick={() => setPanelsHidden(false)}
               className={`${PANEL_ANIM} ${
-                panelsHidden ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
+                panelsHidden && mapReady
+                  ? "pointer-events-auto opacity-100"
+                  : "pointer-events-none opacity-0"
               }`}
             />
           ) : null}
@@ -927,13 +935,13 @@ export function AppShell() {
             <>
               <div
                 className={`absolute top-[84px] left-16 z-[900] flex min-h-[200px] flex-col gap-[10px] overflow-hidden ${PANEL_ANIM} ${
-                  panelsHidden ? "pointer-events-none opacity-0" : "pointer-events-none opacity-100"
+                  chromeHidden ? "pointer-events-none opacity-0" : "pointer-events-none opacity-100"
                 }`}
                 style={{ bottom: SIDEBAR_BOTTOM_CLEARANCE, width: panelW }}
               >
                 <div
                   className={`flex max-h-full min-h-0 flex-col gap-[10px] ${
-                    panelsHidden
+                    chromeHidden
                       ? "pointer-events-none [&_*]:pointer-events-none"
                       : "pointer-events-auto"
                   }`}
@@ -945,7 +953,7 @@ export function AppShell() {
               {result ? (
                 <div
                   className={`soft-enter pointer-events-none absolute top-16 right-16 z-[900] flex flex-col gap-[10px] overflow-hidden transition-[opacity,bottom] duration-[320ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
-                    panelsHidden ? "opacity-0 [&_*]:pointer-events-none" : "opacity-100"
+                    chromeHidden ? "opacity-0 [&_*]:pointer-events-none" : "opacity-100"
                   }`}
                   style={{
                     width: resultPanelW,

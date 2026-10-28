@@ -88,6 +88,8 @@ export interface MapInnerProps {
   onSelect?: (selection: MapSelection) => void;
   /** Depots switched off and outlets closed for the next run, toggled from their tooltips. */
   closures?: Closures;
+  /** The map has loaded (true) or gone (false); the page reveals its panels on it. */
+  onReadyChange?: (ready: boolean) => void;
   /** Phone only: extra square buttons stacked under the zoom controls. */
   mobileTools?: ReactNode;
   /** Phone only: fade the tool column out, e.g. while a detail sheet covers the map. */
@@ -184,6 +186,7 @@ export function MapInner({
   onToggleLayout,
   controlsLeft = 16,
   controlsPos,
+  onReadyChange,
   panelWidth = 340,
   dockReserve = 400,
   onDocksNeedRoom,
@@ -216,6 +219,15 @@ export function MapInner({
     return () => window.clearTimeout(t);
   }, [map]);
   const threeD = useThreeD(map, styleVersion);
+  const readyRef = useRef(onReadyChange);
+  useEffect(() => {
+    readyRef.current = onReadyChange;
+  });
+  useEffect(() => {
+    if (!map) return;
+    readyRef.current?.(true);
+    return () => readyRef.current?.(false);
+  }, [map]);
 
   // --- Full-map layout: keep the legends clear of the map buttons and panels ---
   const viewport = useViewportSize();
