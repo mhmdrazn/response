@@ -1,14 +1,13 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
 from fastapi import APIRouter, HTTPException, Query
 
-from app.config import SHARED_FILES, readable_path, scenario_floods_path, writable_path
-from app.data import registry, scenario_edit
+from app.config import SHARED_FILES, scenario_floods_path, writable_path
+from app.data import dataset_dates, registry, scenario_edit
 from app.data.store import store
 from app.preprocessing import workload
 from app.models.data import (
@@ -101,13 +100,10 @@ async def get_data_meta(scenario: str | None = ScenarioQuery) -> dict[str, dict[
     }
     meta: dict[str, dict[str, object]] = {}
     for name in ("floods", "depo", "if", "faskes"):
-        path = readable_path(_dataset_path(sid, name))
-        updated = (
-            datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc).isoformat()
-            if path.exists()
-            else None
-        )
-        meta[name] = {"updated_at": updated, "rows": counts[name]}
+        meta[name] = {
+            "updated_at": dataset_dates.updated_at(_dataset_path(sid, name)),
+            "rows": counts[name],
+        }
     return meta
 
 

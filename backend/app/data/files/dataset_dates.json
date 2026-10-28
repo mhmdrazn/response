@@ -1,0 +1,26 @@
+{
+  "shared/depo.csv": {
+    "updated_at": "2026-10-13T19:42:27+07:00",
+    "sha256": "d5243a0fd60b7070da97cd17d44eab808f78d9c4e2533f8c22b9de47daf1e840"
+  },
+  "shared/if.csv": {
+    "updated_at": "2026-09-23T17:21:17+07:00",
+    "sha256": "d2235a97bb15888f202179e2abf3f80f118ecb037d83a79299f658679aa56edc"
+  },
+  "shared/faskes.csv": {
+    "updated_at": "2026-09-23T17:21:17+07:00",
+    "sha256": "a001d6287f57acfef67f4d45e47a095c3af5c98954192482bc165b12487a5c38"
+  },
+  "scenarios/s1-jan/floods.csv": {
+    "updated_at": "2026-09-26T16:29:52+07:00",
+    "sha256": "9a8ae962117ea69333eb671ce4197650100b1aff23f25e155e5b9544935caf43"
+  },
+  "scenarios/s2-jun/floods.csv": {
+    "updated_at": "2026-09-26T16:29:52+07:00",
+    "sha256": "eec35d1026af9ea8f1fc4a9cda924b0d9684ae3b9eba77dcb1c82f5bfd41b36d"
+  },
+  "scenarios/s3-nov/floods.csv": {
+    "updated_at": "2026-09-26T16:29:52+07:00",
+    "sha256": "c73fd68d173e150731b3cc6be9351246d8cbb078554440805a7d7808110f1a34"
+  }
+}
