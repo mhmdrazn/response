@@ -5,7 +5,7 @@ import pytest
 from app import config
 from app.data import canvas
 from app.data.store import store
-from app.preprocessing import enrich
+from app.preprocessing import enrich, matrix
 from app.traffic import live as traffic
 
 RUN = {"max_iterations": 3, "time_limit_s": 3, "seed": 1}
@@ -131,6 +131,8 @@ def canvas_with_points(tmp_path, monkeypatch):
         return d, d, d / 8.0, d / 8.0
 
     monkeypatch.setattr(enrich, "node_vectors", vectors)
+    monkeypatch.setattr(matrix, "osrm_table", lambda *a, **k: (None, None))
+    canvas.clear_caches()
     store.invalidate(canvas.CANVAS_ID)
     canvas.reset()
     from fastapi.testclient import TestClient
@@ -138,16 +140,22 @@ def canvas_with_points(tmp_path, monkeypatch):
     from app.main import app
 
     c = TestClient(app)
+    points: list[dict] = []
     for lat, lon in [(-7.2650, 112.7378), (-7.2900, 112.7500)]:
-        r = c.post("/api/data/floods?scenario=kanvas", json={"lat": lat, "lon": lon, "ketinggian_cm": 30})
-        assert r.status_code in (200, 201), r.text
-    yield c
+        r = c.post(
+            "/api/data/floods/enrich",
+            json={"point": {"lat": lat, "lon": lon, "ketinggian_cm": 30}, "others": points},
+        )
+        assert r.status_code == 200, r.text
+        points.append({**r.json(), "id": f"K_{len(points) + 1:03d}"})
+    yield c, {**RUN, "data": {"floods": points}}
     store.invalidate(canvas.CANVAS_ID)
 
 
 def test_canvas_run_without_a_key_falls_back_to_free_flow(canvas_with_points, monkeypatch):
+    client, run = canvas_with_points
     monkeypatch.setattr(config, "TOMTOM_API_KEY", "")
-    r = canvas_with_points.post("/api/optimize/vns?scenario=kanvas", json={**RUN, "use_traffic": True})
+    r = client.post("/api/optimize/vns?scenario=kanvas", json={**run, "use_traffic": True})
     assert r.status_code == 200, r.text
     info = r.json()["traffic"]
     assert info["requested"] is True and info["applied"] is False
@@ -160,9 +168,10 @@ def test_canvas_run_with_traffic_plans_on_slower_roads(canvas_with_points, monke
     monkeypatch.setattr(
         traffic, "fetch_factors", lambda coords, nodes, key, transport=None: {n: 1.5 for n in nodes}
     )
-    free = canvas_with_points.post("/api/optimize/vns?scenario=kanvas", json=RUN).json()
-    jammed = canvas_with_points.post(
-        "/api/optimize/vns?scenario=kanvas", json={**RUN, "use_traffic": True}
+    client, run = canvas_with_points
+    free = client.post("/api/optimize/vns?scenario=kanvas", json=run).json()
+    jammed = client.post(
+        "/api/optimize/vns?scenario=kanvas", json={**run, "use_traffic": True}
     ).json()
 
     assert free["traffic"] is None

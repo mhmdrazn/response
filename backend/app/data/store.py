@@ -35,6 +35,10 @@ class ScenarioStore:
         self._bundles: dict[str, Bundle] = {}
         self._shared: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame] | None = None
 
+    def shared(self) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        """Depots, outlets and clinics: the datasets every scenario uses."""
+        return self._shared_data()
+
     def _shared_data(self) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         if self._shared is None:
             self._shared = (
@@ -91,6 +95,8 @@ class ScenarioStore:
         # cached bundle is now stale.
         self._shared = None
         self._bundles.clear()
+        canvas.clear_caches()
 
 
 store = ScenarioStore()
+

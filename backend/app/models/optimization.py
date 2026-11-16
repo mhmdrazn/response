@@ -4,6 +4,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from app.models.data import DataOverrides
+
 
 class _Base(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -42,6 +44,9 @@ class _RunContext(_Base):
     # outlets that cannot take water (an overflowing river, a blocked access road).
     disabled_depots: list[str] = Field(default_factory=list, max_length=500)
     closed_ifs: list[str] = Field(default_factory=list, max_length=5000)
+    # Datasets the browser has edited (the canvas's points, an edited study area,
+    # edited depots/outlets/clinics); the server keeps no edits. See app.data.overlay.
+    data: DataOverrides | None = None
 
     @field_validator("remaining_volumes")
     @classmethod

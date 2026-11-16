@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 from fastapi import APIRouter, HTTPException, Query
 
-from app.data.store import store
+from app.data.overlay import bundle_for_request
 from app.algorithms.acs import ACSParams, HybridACS
 from app.algorithms.vns import VNS, VNSParams
 from app.algorithms.evaluator import (
@@ -34,6 +34,7 @@ from app.algorithms.instance import (
     Instance,
     build_instance,
 )
+from app.models.data import overrides_rows
 from app.models.optimization import (
     ACSRequest,
     VNSRequest,
@@ -98,9 +99,10 @@ def _build_ready_instance(
     use_traffic: bool = False,
     disabled_depots: list[str] | None = None,
     closed_ifs: list[str] | None = None,
+    data: dict | None = None,
 ) -> tuple[Instance, TrafficOut | None]:
     try:
-        bundle = store.get(scenario)
+        bundle = bundle_for_request(scenario, data)
     except KeyError:
         raise HTTPException(status_code=404, detail=f"Skenario '{scenario}' tidak ditemukan.")
     if len(bundle.floods) == 0 and len(bundle.depots) > 0 and len(bundle.ifs) > 0:
@@ -221,7 +223,9 @@ def _with_live_traffic(
     )
     try:
         snap = traffic.snapshot_for(
-            f"{cache_key}:{inst.n_total}",
+            # The browser's edits move nodes, so the node set is part of the key.
+            f"{cache_key}:{inst.n_total}:"
+            + canvas.points_key([{"lat": a, "lon": b} for a, b in coords]),
             coords,
             inst.time_matrix,
             inst.n_depots,
@@ -431,6 +435,7 @@ async def run_acs(
             request.use_traffic,
             request.disabled_depots,
             request.closed_ifs,
+            overrides_rows(request.data),
         )
         params = ACSParams(
             iterations=request.iterations,
@@ -482,6 +487,7 @@ async def run_vns(
             request.use_traffic,
             request.disabled_depots,
             request.closed_ifs,
+            overrides_rows(request.data),
         )
         params = VNSParams(
             max_iterations=request.max_iterations,

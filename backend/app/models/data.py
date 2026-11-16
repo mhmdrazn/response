@@ -103,6 +103,98 @@ class FloodPointCreate(_CoordMixin, _Base):
     volume_l: Optional[float] = Field(None, ge=0, le=MAX_VOLUME_L)
 
 
+class CanvasLegs(_Base):
+    """A canvas point's road legs to and from the depots and outlets.
+
+    Worked out once when the point is placed and kept by the browser with it, so a
+    run does not ask OSRM again (a serverless instance may be new). `key` names
+    the depot/outlet set they were measured against; legs for another set are
+    measured afresh.
+    """
+
+    key: str = Field(max_length=40)
+    to_m: list[float] = Field(max_length=2000)
+    from_m: list[float] = Field(max_length=2000)
+    to_s: list[float] = Field(max_length=2000)
+    from_s: list[float] = Field(max_length=2000)
+
+
+class CanvasPoint(_CoordMixin, _Base):
+    """A flood point as the browser holds it: on the blank canvas, or an edited study area.
+
+    Edits are not stored on the server (see app.data.overlay), so requests that
+    need them carry them, each point already enriched by POST /api/data/floods/enrich.
+    """
+
+    id: str = Field(min_length=1, max_length=40)
+    lat: float
+    lon: float
+    datetime: Optional[str] = None
+    deskripsi: Optional[str] = Field(None, max_length=200)
+    ketinggian_cm: Optional[float] = Field(None, ge=0, le=MAX_DEPTH_CM)
+    road_class: Optional[float] = None
+    dist_faskes_m: Optional[float] = None
+    volume_l: Optional[float] = Field(None, ge=0, le=MAX_VOLUME_L)
+    legs: Optional[CanvasLegs] = None
+
+
+class CanvasPointOut(FloodPoint):
+    """An enriched canvas point, with the legs the browser keeps for later runs."""
+
+    legs: Optional[CanvasLegs] = None
+
+
+# A canvas is planned by hand: this many points is far past any real use.
+MAX_CANVAS_POINTS = 300
+
+
+class LocalDepot(_CoordMixin, Depot):
+    pass
+
+
+class LocalIF(_CoordMixin, IntermediateFacility):
+    pass
+
+
+class LocalFaskes(_CoordMixin, Faskes):
+    pass
+
+
+class DataOverrides(_Base):
+    """Datasets the browser has edited, sent in place of the server's (see app.data.overlay).
+
+    `floods` are the scenario's points (all of them, on the canvas always); the
+    others are the full edited depot, outlet and clinic lists. A dataset left out
+    is the server's own.
+    """
+
+    model_config = ConfigDict(extra="ignore", populate_by_name=True)
+
+    floods: Optional[list[CanvasPoint]] = Field(None, max_length=MAX_CANVAS_POINTS)
+    depo: Optional[list[LocalDepot]] = Field(None, max_length=500)
+    ifs: Optional[list[LocalIF]] = Field(None, alias="if", max_length=3000)
+    faskes: Optional[list[LocalFaskes]] = Field(None, max_length=5000)
+
+    def as_rows(self) -> dict[str, list[dict]]:
+        out: dict[str, list[dict]] = {}
+        for key, rows in (("floods", self.floods), ("depo", self.depo), ("if", self.ifs), ("faskes", self.faskes)):
+            if rows is not None:
+                out[key] = [r.model_dump() for r in rows]
+        return out
+
+
+def overrides_rows(data: Optional[DataOverrides]) -> Optional[dict[str, list[dict]]]:
+    return None if data is None else data.as_rows()
+
+
+class CanvasEnrichRequest(_Base):
+    point: FloodPointCreate
+    # The scenario's other points, to refuse one dropped on top of an existing puddle.
+    others: list[CanvasPoint] = Field(default_factory=list, max_length=MAX_CANVAS_POINTS)
+    # Depots, outlets and clinics the browser has edited (its floods are ignored).
+    data: Optional[DataOverrides] = None
+
+
 class FloodPointUpdate(_Base):
     lat: Optional[float] = None
     lon: Optional[float] = None

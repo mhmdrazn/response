@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+from app.models.data import DataOverrides
 
 
 class _Base(BaseModel):
@@ -31,6 +33,8 @@ class SeverityPreviewRequest(_Base):
     """Weights for [flood depth, road class, distance to a clinic]; None = default."""
 
     weights: list[float] | None = None
+    # Datasets the browser has edited; see app.data.overlay.
+    data: DataOverrides | None = None
 
     @field_validator("weights")
     @classmethod

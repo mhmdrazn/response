@@ -39,7 +39,7 @@ def _write_floods(sid: str, floods: pd.DataFrame) -> None:
     )
 
 
-def _workload_l(depth_cm: Any, road_class: Any) -> float:
+def workload_l(depth_cm: Any, road_class: Any) -> float:
     """Pumping workload for an intake point, from its depth and road width."""
     depth = pd.to_numeric(depth_cm, errors="coerce")
     rc = pd.to_numeric(road_class, errors="coerce")
@@ -63,7 +63,7 @@ def _row_index(floods: pd.DataFrame, flood_id: str) -> int:
 DUPLICATE_RADIUS_M = 10.0
 
 
-def _reject_duplicate(floods: pd.DataFrame, lat: float, lon: float) -> None:
+def reject_duplicate(floods: pd.DataFrame, lat: float, lon: float) -> None:
     if len(floods) == 0:
         return
     lat_r, lon_r = np.deg2rad(float(lat)), np.deg2rad(float(lon))
@@ -88,7 +88,7 @@ def add_flood(sid: str, payload: dict[str, Any]) -> dict[str, Any]:
     floods = b.floods
     payload = {k: v for k, v in payload.items() if v is not None}
     if "lat" in payload and "lon" in payload:
-        _reject_duplicate(floods, payload["lat"], payload["lon"])
+        reject_duplicate(floods, payload["lat"], payload["lon"])
     row: dict[str, Any] = {"id": f"F_{len(floods):04d}", **payload}
 
     lat, lon = payload.get("lat"), payload.get("lon")
@@ -108,7 +108,7 @@ def add_flood(sid: str, payload: dict[str, Any]) -> dict[str, Any]:
             )
 
         row.setdefault(
-            "volume_l", _workload_l(row.get("ketinggian_cm"), row.get("road_class"))
+            "volume_l", workload_l(row.get("ketinggian_cm"), row.get("road_class"))
         )
 
     _write_floods(sid, pd.concat([floods, pd.DataFrame([row])], ignore_index=True))
@@ -146,7 +146,7 @@ def update_flood(sid: str, flood_id: str, payload: dict[str, Any]) -> dict[str, 
     if (coords_changed or "ketinggian_cm" in updates) and "volume_l" not in updates:
         if "volume_l" not in floods.columns:
             floods["volume_l"] = np.nan
-        floods.at[i, "volume_l"] = _workload_l(
+        floods.at[i, "volume_l"] = workload_l(
             floods.at[i, "ketinggian_cm"], floods.at[i, "road_class"]
         )
 

@@ -143,9 +143,9 @@ export function DataTableModal({
     try {
       const payload = buildPayload(editForm);
       if (datasetKey === "floods") await api.updateFlood(editingId, payload, scenario);
-      else if (datasetKey === "depots") await api.updateDepot(editingId, payload, scenario);
-      else if (datasetKey === "ifs") await api.updateIF(editingId, payload, scenario);
-      else await api.updateFaskes(editingId, payload, scenario);
+      else if (datasetKey === "depots") await api.updateDepot(editingId, payload);
+      else if (datasetKey === "ifs") await api.updateIF(editingId, payload);
+      else await api.updateFaskes(editingId, payload);
       setEditingId(null);
       onReload();
       toast.success("Perubahan tersimpan");
@@ -163,10 +163,10 @@ export function DataTableModal({
       if (datasetKey === "floods")
         await api.createFlood(payload as Parameters<typeof api.createFlood>[0], scenario);
       else if (datasetKey === "depots")
-        await api.createDepot(payload as Parameters<typeof api.createDepot>[0], scenario);
+        await api.createDepot(payload as Parameters<typeof api.createDepot>[0]);
       else if (datasetKey === "ifs")
-        await api.createIF(payload as Parameters<typeof api.createIF>[0], scenario);
-      else await api.createFaskes(payload as Parameters<typeof api.createFaskes>[0], scenario);
+        await api.createIF(payload as Parameters<typeof api.createIF>[0]);
+      else await api.createFaskes(payload as Parameters<typeof api.createFaskes>[0]);
       setIsAdding(false);
       onReload();
       toast.success("Data ditambahkan");
@@ -188,9 +188,9 @@ export function DataTableModal({
     setBusy(true);
     try {
       if (datasetKey === "floods") await api.deleteFlood(id, scenario);
-      else if (datasetKey === "depots") await api.deleteDepot(id, scenario);
-      else if (datasetKey === "ifs") await api.deleteIF(id, scenario);
-      else await api.deleteFaskes(id, scenario);
+      else if (datasetKey === "depots") await api.deleteDepot(id);
+      else if (datasetKey === "ifs") await api.deleteIF(id);
+      else await api.deleteFaskes(id);
       onReload();
       toast.success("Data dihapus");
     } catch (e) {

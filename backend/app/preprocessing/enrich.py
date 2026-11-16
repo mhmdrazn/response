@@ -29,7 +29,10 @@ def enrich_attrs(lat: float, lon: float, *, faskes_df=None, roads_utm=None) -> t
     except Exception as exc:  # noqa: BLE001 — geopandas missing / no cached network
         _log.warning("road_class enrichment unavailable (%s); using default %d", exc, DEFAULT_ROAD_CLASS)
         road_class = DEFAULT_ROAD_CLASS
-    dist_faskes = float(faskes.dist_to_faskes(one, faskes_df)[0])
+    if faskes_df is None:
+        dist_faskes = float(faskes.dist_to_faskes(one, faskes_df)[0])
+    else:
+        dist_faskes = faskes.dist_to_faskes_one(lat, lon, faskes_df)
     return road_class, dist_faskes
 
 
@@ -40,14 +43,17 @@ def _manhattan_vec(nlat: float, nlon: float, lats: np.ndarray, lons: np.ndarray)
     return EARTH_RADIUS_M * (np.abs(lat_r[0] - lat_r[1:]) + np.abs(lon_r[0] - lon_r[1:]) * cos_avg)
 
 
-def _osrm_one_to_many(nlat, nlon, lats, lons, retries: int = 3):
-    """OSRM row (new->each) and col (each->new) distances + durations, or None."""
+# The public OSRM server refuses a table of more than 100 coordinates ("TooBig"),
+# so the new point is asked against the existing nodes in chunks of this many.
+OSRM_TABLE_MAX_COORDS = 100
+
+
+def _osrm_chunk(nlat, nlon, lats, lons, retries: int):
     import httpx
 
     pts = [(nlat, nlon)] + list(zip(lats, lons))
     coords = ";".join(f"{lo:.6f},{la:.6f}" for la, lo in pts)
-    n = len(lats)
-    dst = ";".join(str(i) for i in range(1, n + 1))
+    dst = ";".join(str(i) for i in range(1, len(lats) + 1))
     url = f"{OSRM_URL}/table/v1/driving/{coords}?sources=0;{dst}&destinations=0;{dst}&annotations=distance,duration"
     for _ in range(retries):
         try:
@@ -60,6 +66,26 @@ def _osrm_one_to_many(nlat, nlon, lats, lons, retries: int = 3):
         except Exception:
             pass
     return None
+
+
+def _osrm_one_to_many(nlat, nlon, lats, lons, retries: int = 3):
+    """OSRM row (new->each) and col (each->new) distances + durations, or None.
+
+    Cells of a chunk OSRM did not answer are NaN, for the caller to fill.
+    """
+    lats, lons = np.asarray(lats, dtype=float), np.asarray(lons, dtype=float)
+    n = len(lats)
+    out = [np.full(n, np.nan) for _ in range(4)]
+    step = OSRM_TABLE_MAX_COORDS - 1  # one slot is the new point
+    answered = False
+    for start in range(0, n, step):
+        part = _osrm_chunk(nlat, nlon, lats[start : start + step], lons[start : start + step], retries)
+        if part is None:
+            continue
+        answered = True
+        for full, chunk in zip(out, part):
+            full[start : start + len(chunk)] = chunk
+    return tuple(out) if answered else None
 
 
 def node_vectors(

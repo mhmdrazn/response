@@ -65,3 +65,34 @@ def dist_to_faskes(
             time.sleep(delay_s)
         out.append(round(float(hav[cand].min() if best == np.inf else best), 2))
     return out
+
+
+def dist_to_faskes_one(lat: float, lon: float, faskes: pd.DataFrame) -> float:
+    """dist_faskes_m for one point, asked of OSRM in a single table request.
+
+    Same answer as `dist_to_faskes` (the shortest driving distance to the K nearest
+    clinics, Haversine if OSRM fails), but one request instead of K paced ones, so
+    a point placed by hand is enriched in about a second. The batch build keeps
+    `dist_to_faskes`.
+    """
+    import httpx
+
+    flat = faskes["lat"].to_numpy(dtype=float)
+    flon = faskes["lon"].to_numpy(dtype=float)
+    hav = _haversine(lat, lon, flat, flon)
+    cand = np.argsort(hav)[:FASKES_K_CANDIDATES]
+    coords = ";".join(
+        [f"{lon:.6f},{lat:.6f}"] + [f"{flon[j]:.6f},{flat[j]:.6f}" for j in cand]
+    )
+    dst = ";".join(str(i) for i in range(1, len(cand) + 1))
+    url = f"{OSRM_URL}/table/v1/driving/{coords}?sources=0&destinations={dst}&annotations=distance"
+    for _ in range(2):
+        try:
+            data = httpx.get(url, timeout=30).json()
+            if data.get("code") == "Ok":
+                row = [d for d in data["distances"][0] if d is not None]
+                if row:
+                    return round(float(min(row)), 2)
+        except Exception:
+            pass
+    return round(float(hav[cand].min()), 2)

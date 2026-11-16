@@ -3,7 +3,8 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException, Query
 
 from app.data import registry
-from app.data.store import store
+from app.data.overlay import bundle_for_request
+from app.models.data import overrides_rows
 from app.models.severity import (
     SeverityFloodPoint,
     SeverityIndexResponse,
@@ -15,9 +16,13 @@ from app.severity.index import CRITERIA, compute_severity_index
 router = APIRouter(tags=["severity"])
 
 
-def _respond(scenario: str | None, weights: list[float] | None) -> SeverityIndexResponse:
+def _respond(
+    scenario: str | None,
+    weights: list[float] | None,
+    data: dict | None = None,
+) -> SeverityIndexResponse:
     try:
-        bundle = store.get(scenario)
+        bundle = bundle_for_request(scenario, data)
     except KeyError:
         raise HTTPException(status_code=404, detail=f"Skenario '{scenario}' tidak ditemukan.")
     if registry.default_id() == "" and len(bundle.floods) == 0:
@@ -59,4 +64,4 @@ async def preview_severity_index(
     scenario: str | None = Query(default=None),
 ) -> SeverityIndexResponse:
     """The index under user-set priority weights, without changing any stored data."""
-    return _respond(scenario, body.weights)
+    return _respond(scenario, body.weights, overrides_rows(body.data))

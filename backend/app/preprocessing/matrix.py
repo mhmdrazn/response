@@ -21,7 +21,7 @@ def _node_coords(depots: pd.DataFrame, floods: pd.DataFrame, ifs: pd.DataFrame) 
     return lats.astype(float), lons.astype(float)
 
 
-def _osrm_table(coord_str: str, src: list[int], dst: list[int], retries: int = 3):
+def osrm_table(coord_str: str, src: list[int], dst: list[int], retries: int = 3):
     import httpx
 
     url = (
@@ -40,7 +40,7 @@ def _osrm_table(coord_str: str, src: list[int], dst: list[int], retries: int = 3
     return None, None
 
 
-def _manhattan(lats: np.ndarray, lons: np.ndarray) -> np.ndarray:
+def manhattan(lats: np.ndarray, lons: np.ndarray) -> np.ndarray:
     lat_r, lon_r = np.deg2rad(lats), np.deg2rad(lons)
     cos_avg = np.cos(lat_r.mean())
     return EARTH_RADIUS_M * (
@@ -60,7 +60,7 @@ def build_matrices(
     blocks = [list(range(i, min(i + OSRM_BLOCK_SIZE, n))) for i in range(0, n, OSRM_BLOCK_SIZE)]
     for sb in blocks:
         for db in blocks:
-            ds, du = _osrm_table(coord_str, sb, db)
+            ds, du = osrm_table(coord_str, sb, db)
             if ds is not None:
                 for si, s in enumerate(sb):
                     for di, d in enumerate(db):
@@ -68,7 +68,7 @@ def build_matrices(
                         time_m[s, d] = du[si][di]
             time.sleep(delay_s)
 
-    man = _manhattan(lats, lons)
+    man = manhattan(lats, lons)
     dist[np.isnan(dist)] = man[np.isnan(dist)]
     time_m[np.isnan(time_m)] = (man / (30_000 / 3600))[np.isnan(time_m)]  # 30 km/h fallback
     np.fill_diagonal(dist, 0.0)

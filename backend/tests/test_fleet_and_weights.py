@@ -7,7 +7,7 @@ from pydantic import ValidationError
 from app.algorithms.acs import ACSParams, HybridACS
 from app.algorithms.evaluator import validate_hard_constraints
 from app.algorithms.instance import DepotFleet, build_instance
-from app.data.scenario_edit import DUPLICATE_RADIUS_M, _reject_duplicate
+from app.data.scenario_edit import DUPLICATE_RADIUS_M, reject_duplicate
 from app.models.data import FloodPointCreate
 from app.models.optimization import ACSRequest, DepotFleetIn, TankUnits
 from app.severity.index import compute_severity_index
@@ -166,10 +166,10 @@ def test_flood_input_bounds():
 def test_a_point_on_top_of_an_existing_one_is_a_duplicate(s2):
     row = s2.floods.iloc[0]
     with pytest.raises(HTTPException) as exc:
-        _reject_duplicate(s2.floods, float(row["lat"]), float(row["lon"]))
+        reject_duplicate(s2.floods, float(row["lat"]), float(row["lon"]))
     assert exc.value.status_code == 409
 
     # a few hundred metres away is a different puddle
-    _reject_duplicate(s2.floods, float(row["lat"]) + 0.004, float(row["lon"]))
+    reject_duplicate(s2.floods, float(row["lat"]) + 0.004, float(row["lon"]))
     assert DUPLICATE_RADIUS_M < 100
-    _reject_duplicate(pd.DataFrame(columns=["id", "lat", "lon"]), -7.25, 112.75)
+    reject_duplicate(pd.DataFrame(columns=["id", "lat", "lon"]), -7.25, 112.75)

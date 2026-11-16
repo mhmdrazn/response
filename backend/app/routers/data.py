@@ -10,7 +10,11 @@ from app.config import SHARED_FILES, scenario_floods_path, writable_path
 from app.data import dataset_dates, registry, scenario_edit
 from app.data.store import store
 from app.preprocessing import workload
+from app.data import canvas, overlay
 from app.models.data import (
+    CanvasEnrichRequest,
+    CanvasPointOut,
+    overrides_rows,
     Depot,
     DepotCreate,
     DepotUpdate,
@@ -141,6 +145,42 @@ async def get_faskes(scenario: str | None = ScenarioQuery) -> list[Faskes]:
     return [Faskes(**row) for row in _rows(_df(_sid(scenario), "faskes"))]
 
 
+# --- Edits held by the browser ------------------------------------------
+# On a serverless deployment the server cannot keep edits (see app.data.overlay),
+# so the browser keeps them. These endpoints only check and enrich a row; nothing
+# is stored. The browser gives flood and outlet ids itself.
+
+
+@router.post("/floods/enrich", response_model=CanvasPointOut)
+async def enrich_flood_point(body: CanvasEnrichRequest) -> CanvasPointOut:
+    """A new or moved flood point with its road class, clinic distance and workload filled."""
+    shared = overrides_rows(body.data) or {}
+    row = canvas.enrich_point(
+        body.point.model_dump(),
+        [p.model_dump() for p in body.others],
+        depots=overlay.shared_frame("depo", shared["depo"]) if "depo" in shared else None,
+        ifs=overlay.shared_frame("if", shared["if"]) if "if" in shared else None,
+        faskes=overlay.shared_frame("faskes", shared["faskes"]) if "faskes" in shared else None,
+    )
+    legs = row.pop("legs")
+    return CanvasPointOut(**_flood_out({"id": "", **row}).model_dump(), legs=legs)
+
+
+@router.post("/depo/check", response_model=Depot)
+async def check_depot(body: DepotCreate) -> Depot:
+    return Depot(id=f"D_{body.osm_id}", **body.model_dump())
+
+
+@router.post("/if/check", response_model=IntermediateFacility)
+async def check_if(body: IFCreate) -> IntermediateFacility:
+    return IntermediateFacility(id="", **body.model_dump())
+
+
+@router.post("/faskes/check", response_model=Faskes)
+async def check_faskes(body: FaskesCreate) -> Faskes:
+    return Faskes(id=f"H_{body.osm_id}", **body.model_dump())
+
+
 # --- CRUD helpers --------------------------------------------------------
 
 
@@ -174,11 +214,22 @@ def _delete(sid: str, name: str, row_id: str, label: str) -> None:
 # road_class + dist_faskes filled and its OSRM matrix row/col maintained.
 
 
+def _stored_sid(scenario: str | None) -> str:
+    """A scenario whose floods are kept on the server: every one but the canvas."""
+    sid = _sid(scenario)
+    if canvas.is_canvas(sid):
+        raise HTTPException(
+            status_code=409,
+            detail="Titik di Kanvas Baru disimpan di browser, bukan di server.",
+        )
+    return sid
+
+
 @router.post("/floods", response_model=FloodPoint, status_code=201)
 async def create_flood(
     body: FloodPointCreate, scenario: str | None = ScenarioQuery
 ) -> FloodPoint:
-    row = scenario_edit.add_flood(_sid(scenario), body.model_dump())
+    row = scenario_edit.add_flood(_stored_sid(scenario), body.model_dump())
     return _flood_out(row)
 
 
@@ -186,13 +237,13 @@ async def create_flood(
 async def update_flood(
     flood_id: str, body: FloodPointUpdate, scenario: str | None = ScenarioQuery
 ) -> FloodPoint:
-    row = scenario_edit.update_flood(_sid(scenario), flood_id, body.model_dump())
+    row = scenario_edit.update_flood(_stored_sid(scenario), flood_id, body.model_dump())
     return _flood_out(row)
 
 
 @router.delete("/floods/{flood_id}", status_code=204)
 async def delete_flood(flood_id: str, scenario: str | None = ScenarioQuery) -> None:
-    scenario_edit.delete_flood(_sid(scenario), flood_id)
+    scenario_edit.delete_flood(_stored_sid(scenario), flood_id)
 
 
 # --- Depots (shared) -----------------------------------------------------
