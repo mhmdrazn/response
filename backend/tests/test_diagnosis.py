@@ -131,7 +131,7 @@ def test_response_carries_diagnosis_fields(client):
     ).json()
     assert isinstance(body["unserved"], list)
     assert isinstance(body["suggestions"], list)
-    assert body["balance"]["vehicles_total"] == 24
+    assert body["balance"]["vehicles_total"] == 38  # 19 depots x 2 tank sizes
     assert all(r["shift_limit_s"] > 0 for r in body["routes"])
     assert body["unserved"] == sorted(
         body["unserved"], key=lambda u: (-u["si_value"] * u["remaining_l"], u["flood_id"])

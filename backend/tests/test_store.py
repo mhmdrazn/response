@@ -15,7 +15,7 @@ def test_resolve_unknown_raises():
 
 def test_bundle_shapes_consistent(s2):
     assert len(s2.floods) == 34
-    assert len(s2.depots) == 12
+    assert len(s2.depots) == 19
     n = len(s2.depots) + len(s2.floods) + len(s2.ifs)
     assert s2.distance_matrix is not None
     assert s2.distance_matrix.shape == (n, n)

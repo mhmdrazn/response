@@ -24,7 +24,7 @@ def test_floods_unknown_scenario_is_404(client):
 def test_shared_datasets_are_scenario_independent(client):
     a = len(client.get("/api/data/depo?scenario=s1-jan").json())
     b = len(client.get("/api/data/depo?scenario=s2-jun").json())
-    assert a == b == 12
+    assert a == b == 19
 
 
 def test_severity(client):

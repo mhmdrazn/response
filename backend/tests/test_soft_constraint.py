@@ -60,7 +60,7 @@ def test_full_coverage_has_no_penalty(s2):
 
 
 def test_solvers_survive_undeliverable_demand(s2):
-    # Demand well past what 24 vehicles can move inside one deployment. Under
+    # Demand well past what the fleet (38 vehicles) can move in one deployment. Under
     # the old hard constraint both solvers raised; now they return a partial plan.
     inst = _instance(s2, volume_scale=10.0)
 

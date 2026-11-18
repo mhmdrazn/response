@@ -2,12 +2,19 @@ osm_id,type,lat,lon,name,address,id
 449150188,way,-7.231616315153376, 112.78542700033663,Dinas Pemadam Kebakaran Pos Bulak,"Jl. Kyai Tambak Deres No.252, Bulak, Kec. Bulak, Surabaya",D_449150188
 449809850,way,-7.2952940515543965, 112.80164124810776,Dinas Pemadam Kebakaran Pos Keputih,"Jl. Keputih Tegal Timur II No.26, Keputih, Kec. Sukolilo, Surabaya",D_449809850
 451291149,way,-7.322130932810979, 112.71367986804984,Dinas Pemadam Kebakaran Pos Jambangan,"Jl. Jambangan Sawah No.2, Jambangan, Kec. Jambangan, Surabaya",D_451291149
-451504869,way,-7.336773524768115, 112.75403267331724,Dinas Pemadam Kebakaran UPTD III Surabaya,"Jl. Rungkut Industri XIV No.8, Kutisari, Kec. Tenggilis Mejoyo, Surabaya",D_451504869
-451981973,way,-7.242994207510075, 112.75964491106842,Dinas Pemadam Kebakaran UPTD II,"Jl. Kenjeran No.120, Tambakrejo, Kec. Simokerto, Surabaya",D_451981973
+451504869,way,-7.336773524768115, 112.75403267331724,Dinas Pemadam Kebakaran Rayon Timur,"Jl. Rungkut Industri XIV No.8, Kutisari, Kec. Tenggilis Mejoyo, Surabaya",D_451504869
+451981973,way,-7.242994207510075, 112.75964491106842,Dinas Pemadam Kebakaran Rayon Utara,"Jl. Kenjeran No.120, Tambakrejo, Kec. Simokerto, Surabaya",D_451981973
 452387333,way,-7.303829122810813, 112.63405945785945,Dinas Pemadam Kebakaran Pos Lakarsantri,"Jl. Lakarsantri No.26, Lakarsantri, Kec. Lakarsantri, Surabaya",D_452387333
-452582470,way,-7.314159543954375, 112.69584722300063,Dinas Pemadam Kebakaran Surabaya UPTD IV,"Jl. Raya Menganti No.247, Wiyung, Kec. Wiyung, Surabaya",D_452582470
+452582470,way,-7.314159543954375, 112.69584722300063,Dinas Pemadam Kebakaran Rayon Selatan,"Jl. Raya Menganti No.247, Wiyung, Kec. Wiyung, Surabaya",D_452582470
 457996476,way,-7.340455252813482, 112.66616246110088,Dinas Pemadam Kebakaran Pos Warugunung,"Jl. Mastrip IX No.182, Warugunung, Kec. Karangpilang, Surabaya",D_457996476
 459270806,way,-7.252182562974282, 112.6527897715125,Dinas Pemadam Kebakaran Pos Kandangan,"Jl. Raya Kandangan No.18, Kandangan, Kec. Benowo, Surabaya",D_459270806
-460507505,way,-7.240419141545584, 112.68592317347965,Dinas Pemadam Kebakaran UPTD Surabaya V,"Jl. Margomulyo Industri Raya, Greges, Kec. Asem Rowo, Surabaya",D_460507505
+460507505,way,-7.240419141545584, 112.68592317347965,Dinas Pemadam Kebakaran Rayon Barat,"Jl. Margomulyo Industri Raya, Greges, Kec. Asem Rowo, Surabaya",D_460507505
 467117596,way,-7.322182243928715, 112.76998090882994,Dinas Pemadam Kebakaran Pos Kali Rungkut,"Jl. Raya Kalirungkut No.35, Kali Rungkut, Kec. Rungkut, Surabaya",D_467117596
-487570882,way,-7.2451191317412915, 112.73639474401253,Dinas Pemadam Kebakaran Kota Surabaya,"Jl. Pasar Turi No.21, Bubutan, Kec. Bubutan, Surabaya",D_487570882
+487570882,way,-7.2451191317412915, 112.73639474401253,Dinas Pemadam Kebakaran Kota Surabaya Rayon Pusat,"Jl. Pasar Turi No.21, Bubutan, Kec. Bubutan, Surabaya",D_487570882
+9000000001,manual,-7.262576098436146,112.78549608838092,Dinas Pemadam Kebakaran Pos Mulyorejo,"Jl. Mulyorejo No. 184, Dukuh Sutorejo, Kec. Mulyorejo, Surabaya",D_9000000001
+9000000002,manual,-7.27820281752208,112.76267217812538,Dinas Pemadam Kebakaran Pos Menur,"Jl. Raya Menur No.31 A, Manyar Sabrangan, Kec. Mulyorejo, Surabaya",D_9000000002
+9000000003,manual,-7.274092512467956,112.80629000869307,Dinas Pemadam Kebakaran Pos Pakuwon City,"Jl. Laguna Raya KJW Putih Barat, Kejawaan Putih Tambak, Kec. Mulyorejo, Surabaya",D_9000000003
+9000000004,manual,-7.299678901551847,112.770293445252,Dinas Pemadam Kebakaran Pos Sukolilo,"Jl. Nginden Semolo No.89, Menur Pumpungan, Kec. Sukolilo, Surabaya",D_9000000004
+9000000005,manual,-7.229725243616608,112.74597871318448,Dinas Pemadam Kebakaran Pos Pegirian,"Jalan Mayjen Sungkono No.124 Pakis, Dukuh Pakis, Kec. Sawahan, Surabaya",D_9000000005
+9000000006,manual,-7.290027028384447,112.71440081853848,Dinas Pemadam Kebakaran Pos TVRI,"Jalan Mayjen Sungkono No.124 Pakis, Dukuh Pakis, Kec. Sawahan, Surabaya, Jawa Timur 60224",D_9000000006
+9000000007,manual,-7.27776871983194,112.73626340324724,Dinas Pemadam Kebakaran Pos Demak Grudo,"Jl. Grudo VI No.10B, DR. Soetomo, Kec. Tegalsari, Surabaya, Jawa Timur 60264",D_9000000007
