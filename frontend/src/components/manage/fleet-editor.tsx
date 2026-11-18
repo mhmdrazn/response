@@ -161,7 +161,7 @@ export function FleetEditor({ depots, value, defaults, problems, onChange }: Fle
                         <Warehouse size={14} strokeWidth={2} color="var(--color-depot-accent)" aria-hidden />
                         <div className="min-w-0">
                           <div
-                            className="max-w-[120px] truncate text-[12.5px] sm:max-w-[230px] font-bold text-midnight-ink"
+                            className="text-[12.5px] leading-[1.35] font-bold text-pretty text-midnight-ink"
                             title={d.address ? `${d.name ?? d.id}
 ${d.address}` : (d.name ?? d.id)}
                           >
