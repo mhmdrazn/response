@@ -13,15 +13,27 @@ from app.severity.entropy import entropy_weights
 
 CRITERIA = ["depth_cm", "road_class", "dist_faskes_m"]
 
-# PLACEHOLDER pairwise matrix — ratio depth:road_class:faskes = 3:2:1.
-# Replace with AHP weights from expert interviews when available.
-PAIRWISE = np.array(
-    [
-        [1.0, 1.5, 3.0],
-        [1 / 1.5, 1.0, 2.0],
-        [1 / 3.0, 1 / 2.0, 1.0],
-    ]
+# Pairwise comparisons of [depth, road class, distance to a clinic] from the two
+# expert interviews (revised answers). Each is consistent on its own (CR 0.046 and
+# 0.066); they are combined by the element-wise geometric mean, the usual AHP
+# group aggregation, which keeps the reciprocal structure.
+EXPERT_MATRICES: tuple[np.ndarray, ...] = (
+    np.array(  # expert 1
+        [
+            [1.0, 1 / 7, 1 / 7],
+            [7.0, 1.0, 1 / 2],
+            [7.0, 2.0, 1.0],
+        ]
+    ),
+    np.array(  # expert 2
+        [
+            [1.0, 7.0, 4.0],
+            [1 / 7, 1.0, 1 / 4],
+            [1 / 4, 4.0, 1.0],
+        ]
+    ),
 )
+PAIRWISE = np.sqrt(EXPERT_MATRICES[0] * EXPERT_MATRICES[1])
 
 
 @dataclass
