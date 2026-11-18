@@ -54,8 +54,19 @@ class VNSParams:
 class VNSTrace:
     best_score: list[float] = field(default_factory=list)
     iter_best_score: list[float] = field(default_factory=list)
+    # Parallel to best_score, for convergence plots over time: seconds since
+    # solve() started, and Z of the best solution at that point (NaN before one
+    # exists). Recording them does not change the search.
+    t: list[float] = field(default_factory=list)
+    best_z: list[float] = field(default_factory=list)
     # Shake-and-polish cycles completed (the trace also holds the closing steps).
     iterations: int = 0
+
+
+def _mark(trace: VNSTrace, start: float, best: SolutionEval | None) -> None:
+    """Time and Z beside the best_score just appended to the trace."""
+    trace.t.append(time.perf_counter() - start)
+    trace.best_z.append(float(best.objective_z) if best is not None else float("nan"))
 
 
 @dataclass
@@ -442,6 +453,7 @@ class VNS:
 
             trace.iter_best_score.append(float(min(cand_score, best_score)))
             trace.best_score.append(float(best_score))
+            _mark(trace, start, best_eval)
             trace.iterations += 1
 
             if search_deadline is not None and time.perf_counter() >= search_deadline:
@@ -461,6 +473,7 @@ class VNS:
                     best_routes, best_score, best_eval = deep_routes, deep_score, deep_eval
                     trace.best_score.append(float(best_score))
                     trace.iter_best_score.append(float(best_score))
+                    _mark(trace, start, best_eval)
 
         # Always close on a repair: the search may have spent its whole budget,
         # leaving shaking and polish free to strand volume.
@@ -474,6 +487,7 @@ class VNS:
         if not trace.best_score or trace.best_score[-1] != best_score:
             trace.best_score.append(float(best_score))
             trace.iter_best_score.append(float(best_score))
+            _mark(trace, start, best_eval)
 
         elapsed = time.perf_counter() - start
         return VNSSolution(

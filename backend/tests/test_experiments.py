@@ -121,3 +121,117 @@ def test_acs_summary_counts_the_default_runs_in_every_group():
     assert by[("n_ants", "10")]["is_default"] is False
     # Settings with no runs yet are left out rather than reported empty.
     assert ("q0", "0.9") not in by
+
+
+# --- Bab 6 additions: extra experiments, traces, best solutions, reports ---------
+
+
+def _ns(**kw):
+    from argparse import Namespace
+
+    base = dict(
+        seeds=30, sensitivity_seeds=30, time_limit=45.0,
+        scenarios=["s1-jan", "s2-jun", "s3-nov"], only=experiments.EXPERIMENTS,
+    )
+    return Namespace(**{**base, **kw})
+
+
+def test_trace_file_names_name_the_setting():
+    J = experiments.Job
+    assert J("main", "s2-jun", "acs", 3, 281, 7, 45).trace_name() == "main_s2-jun_acs_default_0_s3.json"
+    assert J("horizon", "s2-jun", "vns", 1, 240, 7, 45).trace_name() == "horizon_s2-jun_vns_horizon_min_240_s1.json"
+    assert (
+        J("polish_slice", "s2-jun", "acs", 2, 281, 7, 45, "polish_slice_s", 0.5).trace_name()
+        == "polish_slice_s2-jun_acs_polish_slice_s_0.5_s2.json"
+    )
+
+
+def _run(algo, seed, z, cov=100.0, exp="main"):
+    return {
+        "experiment": exp, "scenario": "s2-jun", "algorithm": algo, "seed": str(seed),
+        "horizon_min": "281", "dispatch_min": "7", "param": "", "param_value": "0",
+        "objective_z": str(z), "score": str(z), "coverage_pct": str(cov),
+        "total_distance_m": "1000", "vehicles_used": "10", "if_visits": "20",
+        "excess_visits": "0", "runtime_s": "45", "iterations": "30",
+        "unserved_l": "0", "makespan_s": "600", "violations": "0", "best_found_s": "12",
+    }
+
+
+def test_summary_reports_best_and_worst_of_every_metric():
+    runs = [_run("acs", s, 100 + s) for s in (1, 2, 3)]
+    (row,) = experiments.summarise(runs)
+    assert row["objective_z_min"] == 101 and row["objective_z_max"] == 103
+    assert row["objective_z_median"] == 102
+    for m in experiments.SUMMARY_METRICS:
+        assert {f"{m}_{k}" for k in ("mean", "std", "median", "min", "max")} <= set(row)
+
+
+def test_summary_reads_runs_written_before_the_new_columns():
+    old = _run("acs", 1, 100)
+    del old["if_visits"], old["best_found_s"]
+    (row,) = experiments.summarise([old])
+    assert row["if_visits_mean"] == "" and row["objective_z_mean"] == 100
+
+
+def test_wilcoxon_tests_every_metric_and_names_the_better_solver():
+    runs = [_run("acs", s, 100 + s, cov=99.0) for s in range(1, 13)]
+    runs += [_run("vns", s, 200 + s, cov=98.0) for s in range(1, 13)]
+    rows = {r["metric"]: r for r in experiments.compare(runs)}
+    assert set(rows) == set(experiments.TEST_METRICS)
+    assert rows["objective_z"]["better"] == "acs"          # lower Z wins
+    assert rows["coverage_pct"]["better"] == "acs"         # higher coverage wins
+    assert rows["total_distance_m"]["better"] == "tie"     # no difference at all
+    assert rows["objective_z"]["n"] == 12 and rows["objective_z"]["p_value"] < 0.05
+    expected = ["experiment", "scenario", "setting", "metric", "n", "mean_acs", "mean_vns",
+                "median_diff", "W", "p_value", "effect_size_r", "better"]
+    assert list(rows["objective_z"]) == expected
+
+
+def test_old_runs_csv_is_migrated_to_the_new_columns(tmp_path):
+    import csv
+
+    path = tmp_path / "runs.csv"
+    old_fields = [f for f in experiments.RUN_FIELDS if f not in ("if_visits", "best_found_s")]
+    with path.open("w", newline="", encoding="utf-8") as fh:
+        w = csv.DictWriter(fh, fieldnames=old_fields)
+        w.writeheader()
+        w.writerow({f: "1" for f in old_fields})
+    experiments._migrate_runs(path)
+    rows = experiments._read_runs(path)
+    assert list(rows[0]) == experiments.RUN_FIELDS and rows[0]["if_visits"] == ""
+
+
+def test_best_solution_is_only_replaced_by_a_better_run(tmp_path):
+    def row(score, seed):
+        r = {k: 0 for k in experiments.BEST_METRICS}
+        return {**r, "scenario": "s2-jun", "algorithm": "acs", "seed": seed,
+                "time_limit_s": 45, "score": score}
+
+    import json
+
+    assert experiments.keep_if_best(tmp_path, row(500.0, 1), [])
+    assert not experiments.keep_if_best(tmp_path, row(600.0, 2), [])
+    assert experiments.keep_if_best(tmp_path, row(400.0, 3), [])
+    held = json.loads((tmp_path / "best" / "s2-jun_acs.json").read_text(encoding="utf-8"))
+    assert held["seed"] == 3
+
+
+def test_default_workers_stay_at_or_below_six():
+    assert 1 <= experiments.default_workers() <= 6
+
+
+@pytest.mark.parametrize("algo", ["acs", "vns"])
+def test_a_run_returns_its_trace_and_routes(algo):
+    job = experiments.Job("main", "s2-jun", algo, 1, 281, 7, 6.0)
+    row = experiments.run_job(job)
+    trace, routes = row["_trace"], row["_routes"]
+    assert trace and set(trace[0]) == {"iter", "t", "best_score", "best_z", "iter_best_score"}
+    assert trace[-1]["best_score"] == pytest.approx(row["score"], rel=1e-6)
+    assert trace[-1]["best_z"] == pytest.approx(row["objective_z"], rel=1e-6)
+    assert all(a["t"] <= b["t"] for a, b in zip(trace, trace[1:]))
+    assert 0 <= row["best_found_s"] <= trace[-1]["t"] + 1e-6
+    assert row["if_visits"] == sum(r["if_visits"] for r in routes)
+    assert len(routes) == row["vehicles_used"]
+    first = routes[0]
+    assert {"vehicle", "depot_id", "capacity_l", "distance_m", "time_s", "if_visits", "visits"} <= set(first)
+    assert {v["type"] for v in first["visits"]} <= {"flood", "if"}
