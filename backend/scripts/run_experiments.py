@@ -6,6 +6,11 @@ Wilcoxon signed-rank test:
   main             every scenario, --seeds seeds (30), at the defaults (281 min, 7 min)
   horizon          s2-jun, route duration limit 240 / 281 / 360 / 517 minutes
   dispatch         s2-jun, dispatch reach 5 / 7 / 10 / 15 minutes
+  polish_slice     s2-jun, --extra-seeds seeds (15): seconds one iteration may
+                   polish, 0.1 / 0.3 / 0.5 / 1.0 / 2.0 for both solvers (defaults
+                   ACS 0.3, VNS 0.5); the preliminary test behind Tables 4.11-4.12
+  unserved_penalty s2-jun, --extra-seeds seeds: weight on unserved work lambda_u
+                   100 / 250 / 500 / 1000 (default 500)
 
 and one tunes Hybrid ACS alone, one parameter at a time, the others at default:
 
@@ -21,6 +26,7 @@ Output in --out (default backend/experiments/):
   wilcoxon.csv         ACS vs VNS per metric per group (paired by seed)
   sensitivity.csv      the horizon and dispatch groups of summary.csv
   sensitivity_acs.csv  mean / std / median per ACS parameter setting
+  sensitivity_extra.csv  the polish_slice and unserved_penalty groups
   traces/<experiment>_<scenario>_<algorithm>_<param>_<value>_s<seed>.json
                        convergence of every run: iter, t, best_score, best_z, iter_best_score
   best/<scenario>_<algorithm>.json
@@ -35,7 +41,7 @@ most 6. --resume skips the runs runs.csv already holds.
     python scripts/run_experiments.py                    # everything
     python scripts/run_experiments.py --only main --seeds 5 --time-limit 10
     python scripts/run_experiments.py --resume
-    python scripts/run_experiments.py --only acs_params --resume
+    python scripts/run_experiments.py --only polish_slice unserved_penalty --resume
 """
 
 from __future__ import annotations
@@ -66,7 +72,7 @@ DISPATCH_MIN = [5, 7, 10, 15]
 DEFAULT_HORIZON_MIN = 281
 DEFAULT_DISPATCH_MIN = 7
 ALGORITHMS = ["acs", "vns"]
-EXPERIMENTS = ["main", "horizon", "dispatch", "acs_params"]
+EXPERIMENTS = ["main", "horizon", "dispatch", "acs_params", "polish_slice", "unserved_penalty"]
 
 # ACS parameter sweep: each varied alone, the rest at the ACSParams defaults.
 ACS_SWEEP: dict[str, list[float]] = {
@@ -74,6 +80,10 @@ ACS_SWEEP: dict[str, list[float]] = {
     "q0": [0.5, 0.7, 0.9],
     "rho": [0.10, 0.15, 0.30],
 }
+# Seconds one iteration may polish, for both solvers.
+POLISH_SLICES_S = [0.1, 0.3, 0.5, 1.0, 2.0]
+# Weight on severity-weighted unserved work (UNSERVED_PENALTY = 500).
+UNSERVED_PENALTIES = [100, 250, 500, 1000]
 MAX_SENSIBLE_WORKERS = 6
 
 OUT_DEFAULT = Path(__file__).resolve().parents[1] / "experiments"
@@ -130,8 +140,9 @@ class Job:
     horizon_min: float
     dispatch_min: float
     time_limit_s: float
-    # acs_params only: the ACSParams field set away from its default ("default"
-    # for the all-default setting), and its value.
+    # The setting a sensitivity experiment varies: an ACSParams field (acs_params;
+    # "default" for the all-default setting), "polish_slice_s" or
+    # "unserved_penalty"; empty for main / horizon / dispatch.
     param: str = ""
     param_value: float = 0.0
 
@@ -250,6 +261,9 @@ def run_job(job: Job) -> dict[str, object]:
 
     bundle = store.get(job.scenario)
     sev = compute_severity_index(bundle.floods, bundle.faskes)
+    extra: dict[str, object] = {}
+    if job.param == "unserved_penalty":
+        extra["unserved_penalty"] = float(job.param_value)
     inst = build_instance(
         depots_df=bundle.depots,
         floods_df=bundle.floods,
@@ -259,18 +273,23 @@ def run_job(job: Job) -> dict[str, object]:
         si_values=sev.si_values,
         route_horizon_s=job.horizon_min * 60.0,
         dispatch_limit_s=job.dispatch_min * 60.0,
+        **extra,  # type: ignore[arg-type]
     )
+
+    polish: dict[str, object] = {}
+    if job.param == "polish_slice_s":
+        polish["polish_slice_s"] = float(job.param_value)
 
     t0 = time.perf_counter()
     if job.algorithm == "acs":
-        overrides: dict[str, object] = {}
+        overrides: dict[str, object] = dict(polish)
         if job.experiment == "acs_params" and job.param != "default":
             value = job.param_value
             overrides[job.param] = int(value) if job.param == "n_ants" else float(value)
         params = ACSParams(seed=job.seed, time_limit_s=job.time_limit_s, **overrides)
         sol = HybridACS(inst, params).solve()
     else:
-        sol = VNS(inst, VNSParams(seed=job.seed, time_limit_s=job.time_limit_s)).solve()
+        sol = VNS(inst, VNSParams(seed=job.seed, time_limit_s=job.time_limit_s, **polish)).solve()
     runtime = time.perf_counter() - t0
 
     ev = sol.evaluation
@@ -427,6 +446,7 @@ def write_metadata(out: Path, args: argparse.Namespace, n_jobs: int) -> None:
         "time_limit_s": args.time_limit,
         "seeds": args.seeds,
         "sensitivity_seeds": args.sensitivity_seeds,
+        "extra_seeds": args.extra_seeds,
         "experiments": list(args.only),
         "scenarios": list(args.scenarios),
         "resume": bool(args.resume),
@@ -516,6 +536,7 @@ def plan(args: argparse.Namespace) -> list[Job]:
     jobs: list[Job] = []
     seeds = range(1, args.seeds + 1)
     sens_seeds = range(1, args.sensitivity_seeds + 1)
+    extra_seeds = range(1, getattr(args, "extra_seeds", 15) + 1)
     tl = args.time_limit
     h0, d0, sc0 = DEFAULT_HORIZON_MIN, DEFAULT_DISPATCH_MIN, SENSITIVITY_SCENARIO
     if "main" in args.only:
@@ -537,6 +558,16 @@ def plan(args: argparse.Namespace) -> list[Job]:
         for param, value in acs_settings():
             for s in sens_seeds:
                 jobs.append(Job("acs_params", sc0, "acs", s, h0, d0, tl, param, value))
+    if "polish_slice" in args.only:
+        for v in POLISH_SLICES_S:
+            for algo in ALGORITHMS:
+                for s in extra_seeds:
+                    jobs.append(Job("polish_slice", sc0, algo, s, h0, d0, tl, "polish_slice_s", float(v)))
+    if "unserved_penalty" in args.only:
+        for v in UNSERVED_PENALTIES:
+            for algo in ALGORITHMS:
+                for s in extra_seeds:
+                    jobs.append(Job("unserved_penalty", sc0, algo, s, h0, d0, tl, "unserved_penalty", float(v)))
     return jobs
 
 
@@ -734,6 +765,20 @@ def summarise_acs(runs: list[dict[str, str]]) -> list[dict[str, object]]:
     return out
 
 
+def summarise_extra(summary: list[dict[str, object]]) -> list[dict[str, object]]:
+    """The polish_slice and unserved_penalty groups: coverage, Z and score per setting."""
+    keep = [
+        "experiment", "scenario", "param", "param_value", "algorithm", "n_runs",
+        "coverage_pct_mean", "coverage_pct_std", "coverage_pct_min",
+        "objective_z_mean", "objective_z_std", "objective_z_median",
+        "score_mean", "score_std", "score_median",
+        "iterations_mean", "unserved_mean_l", "best_found_mean_s",
+    ]
+    rows = [r for r in summary if r["experiment"] in ("polish_slice", "unserved_penalty")]
+    rows.sort(key=lambda r: (str(r["experiment"]), str(r["algorithm"]), float(str(r["param_value"]))))
+    return [{k: r.get(k, "") for k in keep} for r in rows]
+
+
 def _migrate_runs(path: Path) -> None:
     """Rewrite runs.csv under the current columns if it was written with older ones."""
     if not path.exists():
@@ -767,6 +812,8 @@ def main() -> None:
     ap.add_argument("--seeds", type=int, default=30, help="seeds per scenario in the main experiment")
     ap.add_argument("--sensitivity-seeds", type=int, default=30,
                     help="seeds per setting in horizon, dispatch and acs_params")
+    ap.add_argument("--extra-seeds", type=int, default=15,
+                    help="seeds per setting in polish_slice and unserved_penalty")
     ap.add_argument("--time-limit", type=float, default=45.0, help="seconds per solver run")
     ap.add_argument("--scenarios", nargs="+", default=SCENARIOS)
     ap.add_argument("--only", nargs="+", default=EXPERIMENTS, choices=EXPERIMENTS)
@@ -838,6 +885,7 @@ def main() -> None:
         [r for r in summary if r["experiment"] in ("horizon", "dispatch")],
     )
     _write(args.out / "sensitivity_acs.csv", summarise_acs(runs))
+    _write(args.out / "sensitivity_extra.csv", summarise_extra(summary))
     print(f"results in {args.out}")
 
 

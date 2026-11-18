@@ -130,10 +130,21 @@ def _ns(**kw):
     from argparse import Namespace
 
     base = dict(
-        seeds=30, sensitivity_seeds=30, time_limit=45.0,
+        seeds=30, sensitivity_seeds=30, extra_seeds=15, time_limit=45.0,
         scenarios=["s1-jan", "s2-jun", "s3-nov"], only=experiments.EXPERIMENTS,
     )
     return Namespace(**{**base, **kw})
+
+
+def test_plan_has_the_polish_slice_and_unserved_penalty_experiments():
+    jobs = experiments.plan(_ns(only=["polish_slice", "unserved_penalty"]))
+    polish = [j for j in jobs if j.experiment == "polish_slice"]
+    penalty = [j for j in jobs if j.experiment == "unserved_penalty"]
+    assert len(polish) == 5 * 2 * 15 and len(penalty) == 4 * 2 * 15
+    assert {j.param_value for j in polish} == {0.1, 0.3, 0.5, 1.0, 2.0}
+    assert {j.param_value for j in penalty} == {100.0, 250.0, 500.0, 1000.0}
+    assert {j.scenario for j in jobs} == {"s2-jun"}
+    assert {j.algorithm for j in jobs} == {"acs", "vns"}
 
 
 def test_trace_file_names_name_the_setting():
@@ -235,3 +246,19 @@ def test_a_run_returns_its_trace_and_routes(algo):
     first = routes[0]
     assert {"vehicle", "depot_id", "capacity_l", "distance_m", "time_s", "if_visits", "visits"} <= set(first)
     assert {v["type"] for v in first["visits"]} <= {"flood", "if"}
+
+
+def test_unserved_penalty_and_polish_slice_reach_the_solver(monkeypatch):
+    from app.algorithms import instance as inst_mod
+
+    seen = {}
+    real = inst_mod.build_instance
+
+    def spy(**kw):
+        seen["penalty"] = kw.get("unserved_penalty")
+        return real(**kw)
+
+    monkeypatch.setattr(inst_mod, "build_instance", spy)
+    job = experiments.Job("unserved_penalty", "s2-jun", "vns", 1, 281, 7, 4.0, "unserved_penalty", 250.0)
+    experiments.run_job(job)
+    assert seen["penalty"] == 250.0
