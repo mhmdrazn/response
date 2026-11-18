@@ -8,3 +8,6 @@ pytest>=8.0
 # without them road_class falls back to a default at intake.
 geopandas>=1.0
 shapely>=2.0
+
+# Figures for the thesis (scripts/make_figures.py)
+matplotlib>=3.8
