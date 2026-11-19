@@ -34,3 +34,14 @@ def test_traces_resample_as_a_step_function():
 def test_route_ids_are_shortened_for_the_table():
     assert figures.short_id("if", "IF_012") == "IF12"
     assert figures.short_id("flood", "F_0028") == "F_0028"
+
+
+def test_extra_results_are_split_per_scenario():
+    rows = [
+        {"experiment": "unserved_penalty", "scenario": "s1-jan"},
+        {"experiment": "unserved_penalty", "scenario": "s2-jun"},
+        {"experiment": "polish_slice", "scenario": "s2-jun"},
+    ]
+    got = [(e, s, len(g)) for e, s, g in figures._by_scenario(rows, ["polish_slice", "unserved_penalty"])]
+    assert got == [("polish_slice", "s2-jun", 1), ("unserved_penalty", "s1-jan", 1), ("unserved_penalty", "s2-jun", 1)]
+    assert figures._suffix("s2-jun") == "" and figures._suffix("s1-jan") == "_s1-jan"

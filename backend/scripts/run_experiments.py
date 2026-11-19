@@ -9,8 +9,8 @@ Wilcoxon signed-rank test:
   polish_slice     s2-jun, --extra-seeds seeds (15): seconds one iteration may
                    polish, 0.1 / 0.3 / 0.5 / 1.0 / 2.0 for both solvers (defaults
                    ACS 0.3, VNS 0.5); the preliminary test behind Tables 4.11-4.12
-  unserved_penalty s2-jun, --extra-seeds seeds: weight on unserved work lambda_u
-                   100 / 250 / 500 / 1000 (default 500)
+  unserved_penalty --penalty-scenarios (s2-jun), --extra-seeds seeds: weight on
+                   unserved work lambda_u 100 / 250 / 500 / 1000 (default 500)
 
 and one tunes Hybrid ACS alone, one parameter at a time, the others at default:
 
@@ -564,10 +564,13 @@ def plan(args: argparse.Namespace) -> list[Job]:
                 for s in extra_seeds:
                     jobs.append(Job("polish_slice", sc0, algo, s, h0, d0, tl, "polish_slice_s", float(v)))
     if "unserved_penalty" in args.only:
-        for v in UNSERVED_PENALTIES:
-            for algo in ALGORITHMS:
-                for s in extra_seeds:
-                    jobs.append(Job("unserved_penalty", sc0, algo, s, h0, d0, tl, "unserved_penalty", float(v)))
+        # S2 is fully covered at every lambda_u, so the weight never binds there;
+        # S1 is where coverage falls short and the trade-off shows.
+        for sc in getattr(args, "penalty_scenarios", None) or [sc0]:
+            for v in UNSERVED_PENALTIES:
+                for algo in ALGORITHMS:
+                    for s in extra_seeds:
+                        jobs.append(Job("unserved_penalty", sc, algo, s, h0, d0, tl, "unserved_penalty", float(v)))
     return jobs
 
 
@@ -814,6 +817,8 @@ def main() -> None:
                     help="seeds per setting in horizon, dispatch and acs_params")
     ap.add_argument("--extra-seeds", type=int, default=15,
                     help="seeds per setting in polish_slice and unserved_penalty")
+    ap.add_argument("--penalty-scenarios", nargs="+", default=[SENSITIVITY_SCENARIO],
+                    help="scenarios for unserved_penalty (S1 is the one not fully covered)")
     ap.add_argument("--time-limit", type=float, default=45.0, help="seconds per solver run")
     ap.add_argument("--scenarios", nargs="+", default=SCENARIOS)
     ap.add_argument("--only", nargs="+", default=EXPERIMENTS, choices=EXPERIMENTS)

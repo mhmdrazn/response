@@ -262,3 +262,9 @@ def test_unserved_penalty_and_polish_slice_reach_the_solver(monkeypatch):
     job = experiments.Job("unserved_penalty", "s2-jun", "vns", 1, 281, 7, 4.0, "unserved_penalty", 250.0)
     experiments.run_job(job)
     assert seen["penalty"] == 250.0
+
+
+def test_unserved_penalty_can_run_on_other_scenarios():
+    jobs = experiments.plan(_ns(only=["unserved_penalty"], penalty_scenarios=["s1-jan", "s2-jun"]))
+    assert {j.scenario for j in jobs} == {"s1-jan", "s2-jun"}
+    assert len(jobs) == 2 * 4 * 2 * 15

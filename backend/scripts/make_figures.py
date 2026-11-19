@@ -200,7 +200,7 @@ def convergence(out: Path, figs: Path, time_limit: float, made: list[Path], note
             _number_axis(ax)
             handles, labels = ax.get_legend_handles_labels()
             band = plt.Rectangle((0, 0), 1, 1, color=MUTED, alpha=0.18, linewidth=0)
-            ax.legend([*handles, band], [*labels, "Rentang interkuartil"], loc="upper right")
+            ax.legend([*handles, band], [*labels, "Rentang interkuartil"], loc="center right")
             _save(fig, figs / name, made)
 
 
@@ -310,11 +310,8 @@ def extra_figures(rows: list[dict[str, str]], figs: Path, made: list[Path], note
             [("coverage_pct", "Cakupan (%)"), ("objective_z", "Z"), ("score", "Skor")],
         ),
     }
-    for exp, (xlabel, panels) in specs.items():
-        group = [r for r in rows if r["experiment"] == exp]
-        if not group:
-            notes.append(f"{exp}: not run")
-            continue
+    for exp, sc, group in _by_scenario(rows, list(specs)):
+        xlabel, panels = specs[exp]
         fig, axes = plt.subplots(1, len(panels), figsize=FIG_SIZE)
         for ax, (key, ylabel) in zip(axes, panels):
             for a in ALGOS:
@@ -341,7 +338,23 @@ def extra_figures(rows: list[dict[str, str]], figs: Path, made: list[Path], note
         axes[0].legend(loc="best")
         if len(panels) == 3:
             fig.supxlabel(xlabel, fontsize=10)
-        _save(fig, figs / f"{exp}.png", made)
+        _save(fig, figs / f"{exp}{_suffix(sc)}.png", made)
+    for exp in specs:
+        if not any(r["experiment"] == exp for r in rows):
+            notes.append(f"{exp}: not run")
+
+
+def _suffix(scenario: str) -> str:
+    """No suffix for S2, where these experiments run by default; else _<scenario>."""
+    return "" if scenario == "s2-jun" else f"_{scenario}"
+
+
+def _by_scenario(rows: list[dict[str, str]], experiments: list[str]):
+    """(experiment, scenario, rows) for every scenario an experiment was run on."""
+    for exp in experiments:
+        scenarios = sorted({r.get("scenario", "s2-jun") for r in rows if r["experiment"] == exp})
+        for sc in scenarios:
+            yield exp, sc, [r for r in rows if r["experiment"] == exp and r.get("scenario", "s2-jun") == sc]
 
 
 # --- Tables ----------------------------------------------------------------------
@@ -466,13 +479,9 @@ def table_sensitivity(rows: list[dict[str, str]], tables: Path, made: list[Path]
 
 
 def table_extra(rows: list[dict[str, str]], tables: Path, made: list[Path]) -> None:
-    for exp, name, label in (
-        ("polish_slice", "tabel_polish_slice.csv", "Batas polish (detik)"),
-        ("unserved_penalty", "tabel_unserved_penalty.csv", "λu"),
-    ):
-        group = [r for r in rows if r["experiment"] == exp]
-        if not group:
-            continue
+    labels = {"polish_slice": "Batas polish (detik)", "unserved_penalty": "λu"}
+    for exp, sc, group in _by_scenario(rows, list(labels)):
+        name, label = f"tabel_{exp}{_suffix(sc)}.csv", labels[exp]
         group.sort(key=lambda r: (r["algorithm"], float(r["param_value"])))
         out = [[
             ALGO_LABEL.get(r["algorithm"], r["algorithm"]),
