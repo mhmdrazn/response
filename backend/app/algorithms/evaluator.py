@@ -300,6 +300,61 @@ def prune_idle_stops(
     return pruned
 
 
+def _redundant_if_positions(r_eval: RouteEval, tol: float = 1e-6) -> set[int]:
+    """Visit positions of outlet stops reached with an already empty tank.
+
+    Draining an empty tank does nothing but cost drive and drain time: an outlet
+    right after another outlet, or one before the return to the depot after the
+    tank was already emptied. The first outlet of a route is never one of them,
+    since a crew leaves the depot with a full tank.
+    """
+    out: set[int] = set()
+    tank_before = None
+    for i, v in enumerate(r_eval.visits):
+        if v.node_type == "if" and tank_before is not None and tank_before <= tol:
+            out.add(i)
+            continue  # the tank stays empty for the next stop
+        tank_before = v.tank_load_after
+    return out
+
+
+def count_redundant_if_stops(ev: SolutionEval) -> int:
+    """Outlet stops in the solution that drain an already empty tank (should be 0)."""
+    return sum(len(_redundant_if_positions(r)) for r in ev.routes)
+
+
+def drop_redundant_if_stops(
+    inst: Instance,
+    routes: list[list[int]],
+    capacities: list[int],
+    ev: SolutionEval | None = None,
+) -> list[list[int]]:
+    """Remove outlet stops that drain an already empty tank.
+
+    The tank is 0 before and after such a stop, so every volume pumped stays the
+    same; only its drive and drain time go, and later stops are reached sooner.
+    Should the road matrix make the direct leg slower than the detour (it is not
+    guaranteed to obey the triangle inequality), the original routes are kept,
+    so the score never rises. Shared by Hybrid ACS and VNS, alongside
+    prune_idle_stops.
+    """
+    ev = ev if ev is not None else evaluate_solution(inst, routes, capacities)
+    cleaned: list[list[int]] = []
+    changed = False
+    for route, r_eval in zip(routes, ev.routes):
+        drop = _redundant_if_positions(r_eval)
+        if drop:
+            changed = True
+            cleaned.append([n for i, n in enumerate(route) if i not in drop])
+        else:
+            cleaned.append(route)
+    if not changed:
+        return routes
+    if evaluate_solution(inst, cleaned, capacities).score > ev.score + 1e-9:
+        return routes
+    return cleaned
+
+
 def coverage_ratio(inst: Instance, ev: SolutionEval) -> float:
     """Fraction of total pumping work completed, in [0, 1]."""
     total = float(inst.volumes.sum())

@@ -16,6 +16,7 @@ from app.algorithms.evaluator import (
     SolutionEval,
     all_floods_served,
     evaluate_solution,
+    drop_redundant_if_stops,
     prune_idle_stops,
 )
 from app.algorithms.instance import PUMP_RATE_LPS, SERVICE_SETUP_S, Instance
@@ -444,8 +445,15 @@ class HybridACS:
                 )
 
             # Polish reorders stops, which can strand volume again, so repair
-            # once more on what it produced.
+            # once more on what it produced, then drop outlet stops that only
+            # drain an already empty tank.
             ev = self._repair(iter_best_routes, iter_best_caps or [], search_deadline)
+            cleaned = drop_redundant_if_stops(
+                self.inst, iter_best_routes, iter_best_caps or [], ev
+            )
+            if cleaned is not iter_best_routes:
+                iter_best_routes = cleaned
+                ev = evaluate_solution(self.inst, iter_best_routes, iter_best_caps or [])
             iter_best_score = ev.score
 
             if iter_best_score < best_score:
@@ -490,6 +498,7 @@ class HybridACS:
         # had, leaving the in-loop repairs to bail out on the deadline.
         best_eval = self._repair(best_routes, best_caps, deadline)
         best_routes = prune_idle_stops(self.inst, best_routes, best_eval)
+        best_routes = drop_redundant_if_stops(self.inst, best_routes, best_caps)
         best_eval = evaluate_solution(self.inst, best_routes, best_caps)
         best_score = best_eval.score
 

@@ -105,6 +105,7 @@ RUN_FIELDS = [
     "vehicles_total",
     "flood_visits",
     "if_visits",
+    "redundant_if",
     "excess_visits",
     "total_distance_m",
     "total_time_s",
@@ -253,7 +254,11 @@ def run_job(job: Job) -> dict[str, object]:
     """
     warnings.filterwarnings("ignore")
     from app.algorithms.acs import ACSParams, HybridACS
-    from app.algorithms.evaluator import coverage_ratio, validate_hard_constraints
+    from app.algorithms.evaluator import (
+        count_redundant_if_stops,
+        coverage_ratio,
+        validate_hard_constraints,
+    )
     from app.algorithms.instance import build_instance
     from app.algorithms.vns import VNS, VNSParams
     from app.data.store import store
@@ -295,6 +300,9 @@ def run_job(job: Job) -> dict[str, object]:
     ev = sol.evaluation
     used = [r for r in ev.routes if r.n_flood_visits > 0]
     tr = sol.trace
+    # Outlet stops that drain an already empty tank; the solvers remove them.
+    redundant_if = count_redundant_if_stops(ev)
+    assert redundant_if == 0, f"{redundant_if} redundant outlet stop(s) in {job}"
     row: dict[str, object] = {
         **{k: v for k, v in asdict(job).items()},
         "objective_z": round(ev.objective_z, 3),
@@ -306,6 +314,7 @@ def run_job(job: Job) -> dict[str, object]:
         "vehicles_total": len(inst.vehicles),
         "flood_visits": ev.total_flood_visits,
         "if_visits": ev.total_if_visits,
+        "redundant_if": redundant_if,
         "excess_visits": ev.excess_visits,
         "total_distance_m": round(ev.total_distance, 1),
         "total_time_s": round(ev.total_time, 1),

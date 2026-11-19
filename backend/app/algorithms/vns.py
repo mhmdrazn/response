@@ -14,6 +14,7 @@ from app.algorithms.evaluator import (
     SolutionEval,
     all_floods_served,
     evaluate_solution,
+    drop_redundant_if_stops,
     prune_idle_stops,
 )
 from app.algorithms.instance import PUMP_RATE_LPS, SERVICE_SETUP_S, Instance
@@ -537,12 +538,19 @@ class VNS:
                 # Evaluate shaken first so polish has a real baseline —
                 # float("inf") baseline accepts every feasible candidate
                 # and thrashes with scan restarts.
+                # Shaking can leave two outlet stops back to back.
+                shaken = drop_redundant_if_stops(self.inst, shaken, best_caps)
                 shaken_ev = evaluate_solution(self.inst, shaken, best_caps)
                 polished, cand_score, pol_ev = polish(
                     self.inst, shaken, best_caps, shaken_ev.score,
                     max_rounds=2, quick=True, deadline=polish_deadline,
                     rng=self._rng,
                 )
+                cleaned = drop_redundant_if_stops(self.inst, polished, best_caps, pol_ev)
+                if cleaned is not polished:
+                    polished = cleaned
+                    pol_ev = evaluate_solution(self.inst, polished, best_caps)
+                    cand_score = pol_ev.score
             except Exception:
                 polished, pol_ev = None, None
 
@@ -582,6 +590,7 @@ class VNS:
         # leaving shaking and polish free to strand volume.
         best_eval = self._repair(best_routes, best_caps, deadline)
         best_routes = prune_idle_stops(self.inst, best_routes, best_eval)
+        best_routes = drop_redundant_if_stops(self.inst, best_routes, best_caps)
         best_eval = evaluate_solution(self.inst, best_routes, best_caps)
         best_score = best_eval.score
 
