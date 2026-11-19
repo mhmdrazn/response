@@ -1,0 +1,90 @@
+{
+  "sessions": [
+    {
+      "started_at": "2026-11-19T04:08:42+07:00",
+      "commit": "2aaedb82489e0460878a7121fa8de18c75ba9505",
+      "uncommitted_changes": false,
+      "python": "3.12.2",
+      "os": "Windows 11 (10.0.22631)",
+      "cpu": "13th Gen Intel(R) Core(TM) i7-13650HX",
+      "cpu_logical_cores": 20,
+      "ram_gb": 7.7,
+      "workers": 6,
+      "time_limit_s": 45.0,
+      "seeds": 30,
+      "sensitivity_seeds": 30,
+      "extra_seeds": 15,
+      "experiments": [
+        "main",
+        "horizon",
+        "dispatch",
+        "acs_params",
+        "polish_slice",
+        "unserved_penalty"
+      ],
+      "scenarios": [
+        "s1-jan",
+        "s2-jun",
+        "s3-nov"
+      ],
+      "resume": false,
+      "runs_planned": 1140
+    },
+    {
+      "started_at": "2026-11-19T06:29:31+07:00",
+      "commit": "2aaedb82489e0460878a7121fa8de18c75ba9505",
+      "uncommitted_changes": true,
+      "python": "3.12.2",
+      "os": "Windows 11 (10.0.22631)",
+      "cpu": "13th Gen Intel(R) Core(TM) i7-13650HX",
+      "cpu_logical_cores": 20,
+      "ram_gb": 7.7,
+      "workers": 6,
+      "time_limit_s": 45.0,
+      "seeds": 30,
+      "sensitivity_seeds": 30,
+      "extra_seeds": 15,
+      "experiments": [
+        "unserved_penalty"
+      ],
+      "scenarios": [
+        "s1-jan",
+        "s2-jun",
+        "s3-nov"
+      ],
+      "resume": true,
+      "runs_planned": 120
+    },
+    {
+      "started_at": "2026-11-19T07:31:18+07:00",
+      "commit": "2aaedb82489e0460878a7121fa8de18c75ba9505",
+      "uncommitted_changes": true,
+      "python": "3.12.2",
+      "os": "Windows 11 (10.0.22631)",
+      "cpu": "13th Gen Intel(R) Core(TM) i7-13650HX",
+      "cpu_logical_cores": 20,
+      "ram_gb": 7.7,
+      "workers": 6,
+      "time_limit_s": 45.0,
+      "seeds": 30,
+      "sensitivity_seeds": 30,
+      "extra_seeds": 15,
+      "experiments": [
+        "main",
+        "horizon",
+        "dispatch",
+        "acs_params",
+        "polish_slice",
+        "unserved_penalty"
+      ],
+      "scenarios": [
+        "s1-jan",
+        "s2-jun",
+        "s3-nov"
+      ],
+      "resume": true,
+      "runs_planned": 525
+    }
+  ],
+  "note": "The VNS session ran with the then-uncommitted changes later committed unchanged as 6b8196c (VNS) and eb858ab (experiment scripts). ACS runs were copied from the first run (now experiments/temp/bab6) (ACS code unchanged)."
+}

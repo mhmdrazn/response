@@ -1,7 +1,13 @@
 # Eksperimen Bab 6
 
-Folder ini adalah keluaran bawaan `scripts/run_experiments.py`. Hanya README ini
-yang masuk git; hasil run tetap lokal.
+Folder ini adalah keluaran bawaan `scripts/run_experiments.py`.
+
+- **`result/`**: hasil final yang dipakai di Bab 6 (masuk git). Hybrid ACS dan VNS
+  versi akhir (VNS dengan konstruksi paralel dan pemindahan ke kendaraan
+  menganggur, commit `6b8196c`); eksperimen λu di S1 dan S2. Detailnya di
+  `result/metadata.json`.
+- `temp/`: hasil lama yang tidak dipakai (tidak masuk git): run pertama dengan VNS
+  lama (`temp/bab6`) dan berkas dari sebelum matriks AHP final dan 19 depo.
 
 ## Perintah
 
@@ -10,25 +16,25 @@ Jalankan dari folder `backend/` dengan venv proyek (Windows, PowerShell):
 ```powershell
 cd backend
 .venv\Scripts\python -m pip install -r requirements-dev.txt   # sekali: matplotlib dan pytest
-.venv\Scripts\python scripts\run_experiments.py --workers 6 --out experiments\bab6
-.venv\Scripts\python scripts\make_figures.py --out experiments\bab6
+.venv\Scripts\python scripts\run_experiments.py --workers 6 --out experiments\result
+.venv\Scripts\python scripts\make_figures.py --out experiments\result
 ```
 
-`--out experiments\bab6` memakai folder baru supaya hasil lama (dari kode sebelum
-matriks AHP final dan 19 depo) tidak tercampur. Tanpa `--resume`, `runs.csv` di
+`--out experiments\result` adalah folder hasil final; untuk menjalankan ulang tanpa
+menimpanya, pakai nama folder lain. Tanpa `--resume`, `runs.csv` di
 folder tujuan dihapus lebih dulu.
 
 Kalau terhenti (laptop tidur, listrik padam), lanjutkan tanpa mengulang run yang
 sudah selesai:
 
 ```powershell
-.venv\Scripts\python scripts\run_experiments.py --workers 6 --out experiments\bab6 --resume
+.venv\Scripts\python scripts\run_experiments.py --workers 6 --out experiments\result --resume
 ```
 
 Satu eksperimen saja, misalnya untuk mengulang yang gagal:
 
 ```powershell
-.venv\Scripts\python scripts\run_experiments.py --only polish_slice unserved_penalty --workers 6 --out experiments\bab6 --resume
+.venv\Scripts\python scripts\run_experiments.py --only polish_slice unserved_penalty --workers 6 --out experiments\result --resume
 ```
 
 Uji cepat semua jalur keluaran (sekitar 2 menit):

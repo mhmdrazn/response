@@ -63,3 +63,6 @@ backend/app/data/files/cache/
 
 # The blank canvas scenario is created at runtime from hand-placed points.
 backend/app/data/files/scenarios/kanvas/
+
+# Old experiment output kept locally, not part of the thesis results
+backend/experiments/temp/

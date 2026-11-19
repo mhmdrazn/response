@@ -1,0 +1,3829 @@
+{
+ "scenario": "s2-jun",
+ "algorithm": "vns",
+ "seed": 13,
+ "time_limit_s": 45.0,
+ "metrics": {
+  "score": 524455.019,
+  "objective_z": 524455.019,
+  "penalty": 0.0,
+  "coverage_pct": 100.0,
+  "unserved_l": 0.0,
+  "vehicles_used": 24,
+  "flood_visits": 246,
+  "if_visits": 253,
+  "excess_visits": 50,
+  "total_distance_m": 1035390.7,
+  "total_time_s": 159287.4,
+  "makespan_s": 9916.0,
+  "runtime_s": 42.01,
+  "iterations": 63
+ },
+ "routes": [
+  {
+   "vehicle": "V03-3K",
+   "depot_index": 1,
+   "depot_id": "D_449809850",
+   "depot_name": "Dinas Pemadam Kebakaran Pos Keputih",
+   "capacity_l": 3000,
+   "distance_m": 62745.6,
+   "time_s": 7886.5,
+   "flood_visits": 11,
+   "if_visits": 12,
+   "visits": [
+    {
+     "type": "if",
+     "id": "IF_084",
+     "name": "Jalan Arief Rahman Hakim",
+     "volume_l": 0.0,
+     "arrival_s": 157.0
+    },
+    {
+     "type": "flood",
+     "id": "F_0021",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 632.9
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 916.4
+    },
+    {
+     "type": "flood",
+     "id": "F_0021",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 1352.8
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 1636.3
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 1726.3
+    },
+    {
+     "type": "flood",
+     "id": "F_0021",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 2162.7
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 2446.2
+    },
+    {
+     "type": "flood",
+     "id": "F_0021",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 2882.6
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 3166.1
+    },
+    {
+     "type": "flood",
+     "id": "F_0021",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 3602.5
+    },
+    {
+     "type": "if",
+     "id": "IF_060",
+     "name": "Jalan Arief Rahman Hakim",
+     "volume_l": 0.0,
+     "arrival_s": 3943.5
+    },
+    {
+     "type": "flood",
+     "id": "F_0021",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 4354.8
+    },
+    {
+     "type": "if",
+     "id": "IF_060",
+     "name": "Jalan Arief Rahman Hakim",
+     "volume_l": 0.0,
+     "arrival_s": 4695.8
+    },
+    {
+     "type": "flood",
+     "id": "F_0021",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 5107.1
+    },
+    {
+     "type": "if",
+     "id": "IF_060",
+     "name": "Jalan Arief Rahman Hakim",
+     "volume_l": 0.0,
+     "arrival_s": 5448.1
+    },
+    {
+     "type": "flood",
+     "id": "F_0017",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 5705.2
+    },
+    {
+     "type": "if",
+     "id": "IF_060",
+     "name": "Jalan Arief Rahman Hakim",
+     "volume_l": 0.0,
+     "arrival_s": 5918.4
+    },
+    {
+     "type": "flood",
+     "id": "F_0022",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 6175.5
+    },
+    {
+     "type": "if",
+     "id": "IF_060",
+     "name": "Jalan Arief Rahman Hakim",
+     "volume_l": 0.0,
+     "arrival_s": 6388.7
+    },
+    {
+     "type": "flood",
+     "id": "F_0022",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 6645.8
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 7110.4
+    },
+    {
+     "type": "flood",
+     "id": "F_0022",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 7668.8
+    }
+   ]
+  },
+  {
+   "vehicle": "V04-5K",
+   "depot_index": 1,
+   "depot_id": "D_449809850",
+   "depot_name": "Dinas Pemadam Kebakaran Pos Keputih",
+   "capacity_l": 5000,
+   "distance_m": 51812.8,
+   "time_s": 7859.5,
+   "flood_visits": 12,
+   "if_visits": 11,
+   "visits": [
+    {
+     "type": "if",
+     "id": "IF_084",
+     "name": "Jalan Arief Rahman Hakim",
+     "volume_l": 0.0,
+     "arrival_s": 157.0
+    },
+    {
+     "type": "flood",
+     "id": "F_0022",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 499.2
+    },
+    {
+     "type": "if",
+     "id": "IF_060",
+     "name": "Jalan Arief Rahman Hakim",
+     "volume_l": 0.0,
+     "arrival_s": 712.4
+    },
+    {
+     "type": "flood",
+     "id": "F_0017",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 1029.5
+    },
+    {
+     "type": "if",
+     "id": "IF_060",
+     "name": "Jalan Arief Rahman Hakim",
+     "volume_l": 0.0,
+     "arrival_s": 1242.7
+    },
+    {
+     "type": "flood",
+     "id": "F_0022",
+     "name": null,
+     "volume_l": 3500.0,
+     "arrival_s": 1514.8
+    },
+    {
+     "type": "flood",
+     "id": "F_0017",
+     "name": null,
+     "volume_l": 1500.0,
+     "arrival_s": 1619.8
+    },
+    {
+     "type": "if",
+     "id": "IF_060",
+     "name": "Jalan Arief Rahman Hakim",
+     "volume_l": 0.0,
+     "arrival_s": 1833.0
+    },
+    {
+     "type": "flood",
+     "id": "F_0021",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 2304.3
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 2587.8
+    },
+    {
+     "type": "flood",
+     "id": "F_0021",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 3084.2
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 3367.7
+    },
+    {
+     "type": "flood",
+     "id": "F_0021",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 3864.1
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 4147.6
+    },
+    {
+     "type": "flood",
+     "id": "F_0021",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 4644.0
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 4927.5
+    },
+    {
+     "type": "flood",
+     "id": "F_0021",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 5423.9
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 5707.4
+    },
+    {
+     "type": "flood",
+     "id": "F_0021",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 6203.8
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 6487.3
+    },
+    {
+     "type": "flood",
+     "id": "F_0021",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 6983.7
+    },
+    {
+     "type": "if",
+     "id": "IF_060",
+     "name": "Jalan Arief Rahman Hakim",
+     "volume_l": 0.0,
+     "arrival_s": 7324.7
+    },
+    {
+     "type": "flood",
+     "id": "F_0017",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 7641.8
+    }
+   ]
+  },
+  {
+   "vehicle": "V05-3K",
+   "depot_index": 2,
+   "depot_id": "D_451291149",
+   "depot_name": "Dinas Pemadam Kebakaran Pos Jambangan",
+   "capacity_l": 3000,
+   "distance_m": 20206.9,
+   "time_s": 3090.0,
+   "flood_visits": 4,
+   "if_visits": 4,
+   "visits": [
+    {
+     "type": "if",
+     "id": "IF_091",
+     "name": "Jalan Gayung Kebon Sari",
+     "volume_l": 0.0,
+     "arrival_s": 338.4
+    },
+    {
+     "type": "flood",
+     "id": "F_0029",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 762.7
+    },
+    {
+     "type": "if",
+     "id": "IF_127",
+     "name": "Jalan Jemur Andayani",
+     "volume_l": 0.0,
+     "arrival_s": 959.0
+    },
+    {
+     "type": "flood",
+     "id": "F_0000",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 1384.7
+    },
+    {
+     "type": "if",
+     "id": "IF_050",
+     "name": "Jalan Ahmad Yani",
+     "volume_l": 0.0,
+     "arrival_s": 1673.0
+    },
+    {
+     "type": "flood",
+     "id": "F_0000",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 2058.7
+    },
+    {
+     "type": "if",
+     "id": "IF_050",
+     "name": "Jalan Ahmad Yani",
+     "volume_l": 0.0,
+     "arrival_s": 2347.0
+    },
+    {
+     "type": "flood",
+     "id": "F_0000",
+     "name": null,
+     "volume_l": 250.0,
+     "arrival_s": 2650.2
+    }
+   ]
+  },
+  {
+   "vehicle": "V06-5K",
+   "depot_index": 2,
+   "depot_id": "D_451291149",
+   "depot_name": "Dinas Pemadam Kebakaran Pos Jambangan",
+   "capacity_l": 5000,
+   "distance_m": 16532.6,
+   "time_s": 1865.3,
+   "flood_visits": 2,
+   "if_visits": 2,
+   "visits": [
+    {
+     "type": "if",
+     "id": "IF_091",
+     "name": "Jalan Gayung Kebon Sari",
+     "volume_l": 0.0,
+     "arrival_s": 338.4
+    },
+    {
+     "type": "flood",
+     "id": "F_0029",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 822.7
+    },
+    {
+     "type": "if",
+     "id": "IF_127",
+     "name": "Jalan Jemur Andayani",
+     "volume_l": 0.0,
+     "arrival_s": 1019.0
+    },
+    {
+     "type": "flood",
+     "id": "F_0009",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 1327.2
+    }
+   ]
+  },
+  {
+   "vehicle": "V07-3K",
+   "depot_index": 3,
+   "depot_id": "D_451504869",
+   "depot_name": "Dinas Pemadam Kebakaran Rayon Timur",
+   "capacity_l": 3000,
+   "distance_m": 48281.2,
+   "time_s": 8403.6,
+   "flood_visits": 13,
+   "if_visits": 14,
+   "visits": [
+    {
+     "type": "if",
+     "id": "IF_036",
+     "name": "Jalan Raya Kendangsari Industri",
+     "volume_l": 0.0,
+     "arrival_s": 303.5
+    },
+    {
+     "type": "flood",
+     "id": "F_0028",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 627.1
+    },
+    {
+     "type": "if",
+     "id": "IF_127",
+     "name": "Jalan Jemur Andayani",
+     "volume_l": 0.0,
+     "arrival_s": 979.8
+    },
+    {
+     "type": "flood",
+     "id": "F_0028",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 1346.2
+    },
+    {
+     "type": "if",
+     "id": "IF_113",
+     "name": "Jalan Jemursari",
+     "volume_l": 0.0,
+     "arrival_s": 1635.0
+    },
+    {
+     "type": "flood",
+     "id": "F_0028",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 1905.0
+    },
+    {
+     "type": "if",
+     "id": "IF_113",
+     "name": "Jalan Jemursari",
+     "volume_l": 0.0,
+     "arrival_s": 2193.8
+    },
+    {
+     "type": "flood",
+     "id": "F_0028",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 2463.8
+    },
+    {
+     "type": "if",
+     "id": "IF_113",
+     "name": "Jalan Jemursari",
+     "volume_l": 0.0,
+     "arrival_s": 2752.6
+    },
+    {
+     "type": "flood",
+     "id": "F_0028",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 3022.6
+    },
+    {
+     "type": "if",
+     "id": "IF_113",
+     "name": "Jalan Jemursari",
+     "volume_l": 0.0,
+     "arrival_s": 3311.4
+    },
+    {
+     "type": "flood",
+     "id": "F_0028",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 3581.4
+    },
+    {
+     "type": "if",
+     "id": "IF_113",
+     "name": "Jalan Jemursari",
+     "volume_l": 0.0,
+     "arrival_s": 3870.2
+    },
+    {
+     "type": "flood",
+     "id": "F_0028",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 4140.2
+    },
+    {
+     "type": "if",
+     "id": "IF_113",
+     "name": "Jalan Jemursari",
+     "volume_l": 0.0,
+     "arrival_s": 4429.0
+    },
+    {
+     "type": "flood",
+     "id": "F_0028",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 4699.0
+    },
+    {
+     "type": "if",
+     "id": "IF_113",
+     "name": "Jalan Jemursari",
+     "volume_l": 0.0,
+     "arrival_s": 4987.8
+    },
+    {
+     "type": "flood",
+     "id": "F_0028",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 5257.8
+    },
+    {
+     "type": "if",
+     "id": "IF_113",
+     "name": "Jalan Jemursari",
+     "volume_l": 0.0,
+     "arrival_s": 5546.6
+    },
+    {
+     "type": "flood",
+     "id": "F_0028",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 5816.6
+    },
+    {
+     "type": "if",
+     "id": "IF_113",
+     "name": "Jalan Jemursari",
+     "volume_l": 0.0,
+     "arrival_s": 6105.4
+    },
+    {
+     "type": "flood",
+     "id": "F_0028",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 6375.4
+    },
+    {
+     "type": "if",
+     "id": "IF_127",
+     "name": "Jalan Jemur Andayani",
+     "volume_l": 0.0,
+     "arrival_s": 6728.1
+    },
+    {
+     "type": "flood",
+     "id": "F_0009",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 6976.3
+    },
+    {
+     "type": "if",
+     "id": "IF_011",
+     "name": "Selokan",
+     "volume_l": 0.0,
+     "arrival_s": 7275.5
+    },
+    {
+     "type": "if",
+     "id": "IF_011",
+     "name": "Selokan",
+     "volume_l": 0.0,
+     "arrival_s": 7365.5
+    },
+    {
+     "type": "flood",
+     "id": "F_0032",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 7951.9
+    }
+   ]
+  },
+  {
+   "vehicle": "V08-5K",
+   "depot_index": 3,
+   "depot_id": "D_451504869",
+   "depot_name": "Dinas Pemadam Kebakaran Rayon Timur",
+   "capacity_l": 5000,
+   "distance_m": 59562.1,
+   "time_s": 9627.1,
+   "flood_visits": 13,
+   "if_visits": 13,
+   "visits": [
+    {
+     "type": "if",
+     "id": "IF_036",
+     "name": "Jalan Raya Kendangsari Industri",
+     "volume_l": 0.0,
+     "arrival_s": 303.5
+    },
+    {
+     "type": "flood",
+     "id": "F_0028",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 687.1
+    },
+    {
+     "type": "if",
+     "id": "IF_113",
+     "name": "Jalan Jemursari",
+     "volume_l": 0.0,
+     "arrival_s": 975.9
+    },
+    {
+     "type": "flood",
+     "id": "F_0028",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 1305.9
+    },
+    {
+     "type": "if",
+     "id": "IF_113",
+     "name": "Jalan Jemursari",
+     "volume_l": 0.0,
+     "arrival_s": 1594.7
+    },
+    {
+     "type": "flood",
+     "id": "F_0028",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 1924.7
+    },
+    {
+     "type": "if",
+     "id": "IF_113",
+     "name": "Jalan Jemursari",
+     "volume_l": 0.0,
+     "arrival_s": 2213.5
+    },
+    {
+     "type": "flood",
+     "id": "F_0028",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 2543.5
+    },
+    {
+     "type": "if",
+     "id": "IF_113",
+     "name": "Jalan Jemursari",
+     "volume_l": 0.0,
+     "arrival_s": 2832.3
+    },
+    {
+     "type": "flood",
+     "id": "F_0028",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 3162.3
+    },
+    {
+     "type": "if",
+     "id": "IF_113",
+     "name": "Jalan Jemursari",
+     "volume_l": 0.0,
+     "arrival_s": 3451.1
+    },
+    {
+     "type": "flood",
+     "id": "F_0028",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 3781.1
+    },
+    {
+     "type": "if",
+     "id": "IF_113",
+     "name": "Jalan Jemursari",
+     "volume_l": 0.0,
+     "arrival_s": 4069.9
+    },
+    {
+     "type": "flood",
+     "id": "F_0028",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 4399.9
+    },
+    {
+     "type": "if",
+     "id": "IF_127",
+     "name": "Jalan Jemur Andayani",
+     "volume_l": 0.0,
+     "arrival_s": 4752.6
+    },
+    {
+     "type": "flood",
+     "id": "F_0009",
+     "name": null,
+     "volume_l": 4500.0,
+     "arrival_s": 5045.8
+    },
+    {
+     "type": "if",
+     "id": "IF_127",
+     "name": "Jalan Jemur Andayani",
+     "volume_l": 0.0,
+     "arrival_s": 5242.1
+    },
+    {
+     "type": "flood",
+     "id": "F_0029",
+     "name": null,
+     "volume_l": 4500.0,
+     "arrival_s": 5535.3
+    },
+    {
+     "type": "if",
+     "id": "IF_113",
+     "name": "Jalan Jemursari",
+     "volume_l": 0.0,
+     "arrival_s": 5879.9
+    },
+    {
+     "type": "flood",
+     "id": "F_0031",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 6295.4
+    },
+    {
+     "type": "if",
+     "id": "IF_113",
+     "name": "Jalan Jemursari",
+     "volume_l": 0.0,
+     "arrival_s": 6810.8
+    },
+    {
+     "type": "flood",
+     "id": "F_0032",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 7226.3
+    },
+    {
+     "type": "if",
+     "id": "IF_011",
+     "name": "Selokan",
+     "volume_l": 0.0,
+     "arrival_s": 7573.2
+    },
+    {
+     "type": "flood",
+     "id": "F_0031",
+     "name": null,
+     "volume_l": 3750.0,
+     "arrival_s": 8182.1
+    },
+    {
+     "type": "if",
+     "id": "IF_011",
+     "name": "Selokan",
+     "volume_l": 0.0,
+     "arrival_s": 8529.0
+    },
+    {
+     "type": "flood",
+     "id": "F_0032",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 9175.4
+    }
+   ]
+  },
+  {
+   "vehicle": "V09-3K",
+   "depot_index": 4,
+   "depot_id": "D_451981973",
+   "depot_name": "Dinas Pemadam Kebakaran Rayon Utara",
+   "capacity_l": 3000,
+   "distance_m": 31624.3,
+   "time_s": 3999.3,
+   "flood_visits": 7,
+   "if_visits": 7,
+   "visits": [
+    {
+     "type": "if",
+     "id": "IF_065",
+     "name": "Jalan Kenjeran",
+     "volume_l": 0.0,
+     "arrival_s": 241.4
+    },
+    {
+     "type": "flood",
+     "id": "F_0024",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 771.6
+    },
+    {
+     "type": "if",
+     "id": "IF_020",
+     "name": "Jalan Raya Menur",
+     "volume_l": 0.0,
+     "arrival_s": 908.5
+    },
+    {
+     "type": "flood",
+     "id": "F_0004",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 1136.9
+    },
+    {
+     "type": "if",
+     "id": "IF_072",
+     "name": "Jalan Ngagel",
+     "volume_l": 0.0,
+     "arrival_s": 1477.7
+    },
+    {
+     "type": "flood",
+     "id": "F_0003",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 1722.3
+    },
+    {
+     "type": "if",
+     "id": "IF_072",
+     "name": "Jalan Ngagel",
+     "volume_l": 0.0,
+     "arrival_s": 1869.4
+    },
+    {
+     "type": "flood",
+     "id": "F_0003",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 2114.0
+    },
+    {
+     "type": "if",
+     "id": "IF_072",
+     "name": "Jalan Ngagel",
+     "volume_l": 0.0,
+     "arrival_s": 2261.1
+    },
+    {
+     "type": "flood",
+     "id": "F_0003",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 2505.7
+    },
+    {
+     "type": "if",
+     "id": "IF_072",
+     "name": "Jalan Ngagel",
+     "volume_l": 0.0,
+     "arrival_s": 2652.8
+    },
+    {
+     "type": "flood",
+     "id": "F_0003",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 2897.4
+    },
+    {
+     "type": "if",
+     "id": "IF_070",
+     "name": "Jalan Raya Darmo",
+     "volume_l": 0.0,
+     "arrival_s": 3272.9
+    },
+    {
+     "type": "flood",
+     "id": "F_0011",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 3613.9
+    }
+   ]
+  },
+  {
+   "vehicle": "V10-5K",
+   "depot_index": 4,
+   "depot_id": "D_451981973",
+   "depot_name": "Dinas Pemadam Kebakaran Rayon Utara",
+   "capacity_l": 5000,
+   "distance_m": 29626.0,
+   "time_s": 3860.0,
+   "flood_visits": 6,
+   "if_visits": 6,
+   "visits": [
+    {
+     "type": "if",
+     "id": "IF_065",
+     "name": "Jalan Kenjeran",
+     "volume_l": 0.0,
+     "arrival_s": 241.4
+    },
+    {
+     "type": "flood",
+     "id": "F_0024",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 831.6
+    },
+    {
+     "type": "if",
+     "id": "IF_020",
+     "name": "Jalan Raya Menur",
+     "volume_l": 0.0,
+     "arrival_s": 968.5
+    },
+    {
+     "type": "flood",
+     "id": "F_0003",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 1469.2
+    },
+    {
+     "type": "if",
+     "id": "IF_072",
+     "name": "Jalan Ngagel",
+     "volume_l": 0.0,
+     "arrival_s": 1616.3
+    },
+    {
+     "type": "flood",
+     "id": "F_0003",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 1920.9
+    },
+    {
+     "type": "if",
+     "id": "IF_072",
+     "name": "Jalan Ngagel",
+     "volume_l": 0.0,
+     "arrival_s": 2068.0
+    },
+    {
+     "type": "flood",
+     "id": "F_0003",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 2372.6
+    },
+    {
+     "type": "if",
+     "id": "IF_072",
+     "name": "Jalan Ngagel",
+     "volume_l": 0.0,
+     "arrival_s": 2519.7
+    },
+    {
+     "type": "flood",
+     "id": "F_0003",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 2824.3
+    },
+    {
+     "type": "if",
+     "id": "IF_020",
+     "name": "Jalan Raya Menur",
+     "volume_l": 0.0,
+     "arrival_s": 3120.7
+    },
+    {
+     "type": "flood",
+     "id": "F_0004",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 3409.1
+    }
+   ]
+  },
+  {
+   "vehicle": "V17-3K",
+   "depot_index": 8,
+   "depot_id": "D_459270806",
+   "depot_name": "Dinas Pemadam Kebakaran Pos Kandangan",
+   "capacity_l": 3000,
+   "distance_m": 21581.6,
+   "time_s": 2788.0,
+   "flood_visits": 3,
+   "if_visits": 5,
+   "visits": [
+    {
+     "type": "if",
+     "id": "IF_106",
+     "name": "Jalan Raya Banjar Sugihan",
+     "volume_l": 0.0,
+     "arrival_s": 103.5
+    },
+    {
+     "type": "flood",
+     "id": "F_0001",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 478.4
+    },
+    {
+     "type": "if",
+     "id": "IF_105",
+     "name": "Jalan Sukomanunggal",
+     "volume_l": 0.0,
+     "arrival_s": 1131.7
+    },
+    {
+     "type": "flood",
+     "id": "F_0015",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 1411.5
+    },
+    {
+     "type": "if",
+     "id": "IF_105",
+     "name": "Jalan Sukomanunggal",
+     "volume_l": 0.0,
+     "arrival_s": 1693.1
+    },
+    {
+     "type": "flood",
+     "id": "F_0018",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 1971.6
+    },
+    {
+     "type": "if",
+     "id": "IF_031",
+     "name": "Jalan Raya Bringin Indah",
+     "volume_l": 0.0,
+     "arrival_s": 2544.0
+    },
+    {
+     "type": "if",
+     "id": "IF_031",
+     "name": "Jalan Raya Bringin Indah",
+     "volume_l": 0.0,
+     "arrival_s": 2634.0
+    }
+   ]
+  },
+  {
+   "vehicle": "V18-5K",
+   "depot_index": 8,
+   "depot_id": "D_459270806",
+   "depot_name": "Dinas Pemadam Kebakaran Pos Kandangan",
+   "capacity_l": 5000,
+   "distance_m": 19443.6,
+   "time_s": 2728.2,
+   "flood_visits": 5,
+   "if_visits": 3,
+   "visits": [
+    {
+     "type": "if",
+     "id": "IF_106",
+     "name": "Jalan Raya Banjar Sugihan",
+     "volume_l": 0.0,
+     "arrival_s": 103.5
+    },
+    {
+     "type": "flood",
+     "id": "F_0001",
+     "name": null,
+     "volume_l": 3250.0,
+     "arrival_s": 485.9
+    },
+    {
+     "type": "flood",
+     "id": "F_0030",
+     "name": null,
+     "volume_l": 1750.0,
+     "arrival_s": 598.4
+    },
+    {
+     "type": "if",
+     "id": "IF_031",
+     "name": "Jalan Raya Bringin Indah",
+     "volume_l": 0.0,
+     "arrival_s": 788.0
+    },
+    {
+     "type": "flood",
+     "id": "F_0030",
+     "name": null,
+     "volume_l": 4500.0,
+     "arrival_s": 1077.3
+    },
+    {
+     "type": "if",
+     "id": "IF_105",
+     "name": "Jalan Sukomanunggal",
+     "volume_l": 0.0,
+     "arrival_s": 1730.6
+    },
+    {
+     "type": "flood",
+     "id": "F_0015",
+     "name": null,
+     "volume_l": 3250.0,
+     "arrival_s": 2017.9
+    },
+    {
+     "type": "flood",
+     "id": "F_0018",
+     "name": null,
+     "volume_l": 1375.0,
+     "arrival_s": 2265.3
+    }
+   ]
+  },
+  {
+   "vehicle": "V21-3K",
+   "depot_index": 10,
+   "depot_id": "D_467117596",
+   "depot_name": "Dinas Pemadam Kebakaran Pos Kali Rungkut",
+   "capacity_l": 3000,
+   "distance_m": 65320.8,
+   "time_s": 9891.0,
+   "flood_visits": 16,
+   "if_visits": 19,
+   "visits": [
+    {
+     "type": "if",
+     "id": "IF_011",
+     "name": "Selokan",
+     "volume_l": 0.0,
+     "arrival_s": 179.9
+    },
+    {
+     "type": "flood",
+     "id": "F_0021",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 605.3
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 888.8
+    },
+    {
+     "type": "flood",
+     "id": "F_0005",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 1184.8
+    },
+    {
+     "type": "if",
+     "id": "IF_085",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 1331.9
+    },
+    {
+     "type": "flood",
+     "id": "F_0005",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 1631.9
+    },
+    {
+     "type": "if",
+     "id": "IF_085",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 1779.0
+    },
+    {
+     "type": "flood",
+     "id": "F_0005",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 2079.0
+    },
+    {
+     "type": "if",
+     "id": "IF_085",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 2226.1
+    },
+    {
+     "type": "if",
+     "id": "IF_085",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 2316.1
+    },
+    {
+     "type": "flood",
+     "id": "F_0026",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 2620.0
+    },
+    {
+     "type": "if",
+     "id": "IF_057",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 2759.1
+    },
+    {
+     "type": "flood",
+     "id": "F_0026",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 2958.4
+    },
+    {
+     "type": "if",
+     "id": "IF_057",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 3097.5
+    },
+    {
+     "type": "flood",
+     "id": "F_0002",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 3296.8
+    },
+    {
+     "type": "if",
+     "id": "IF_113",
+     "name": "Jalan Jemursari",
+     "volume_l": 0.0,
+     "arrival_s": 3771.6
+    },
+    {
+     "type": "flood",
+     "id": "F_0028",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 4041.6
+    },
+    {
+     "type": "if",
+     "id": "IF_113",
+     "name": "Jalan Jemursari",
+     "volume_l": 0.0,
+     "arrival_s": 4330.4
+    },
+    {
+     "type": "flood",
+     "id": "F_0028",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 4600.4
+    },
+    {
+     "type": "if",
+     "id": "IF_113",
+     "name": "Jalan Jemursari",
+     "volume_l": 0.0,
+     "arrival_s": 4889.2
+    },
+    {
+     "type": "flood",
+     "id": "F_0028",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 5159.2
+    },
+    {
+     "type": "if",
+     "id": "IF_113",
+     "name": "Jalan Jemursari",
+     "volume_l": 0.0,
+     "arrival_s": 5448.0
+    },
+    {
+     "type": "if",
+     "id": "IF_113",
+     "name": "Jalan Jemursari",
+     "volume_l": 0.0,
+     "arrival_s": 5598.0
+    },
+    {
+     "type": "flood",
+     "id": "F_0032",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 5953.5
+    },
+    {
+     "type": "if",
+     "id": "IF_011",
+     "name": "Selokan",
+     "volume_l": 0.0,
+     "arrival_s": 6300.4
+    },
+    {
+     "type": "flood",
+     "id": "F_0016",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 6740.7
+    },
+    {
+     "type": "if",
+     "id": "IF_057",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 7119.5
+    },
+    {
+     "type": "flood",
+     "id": "F_0005",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 7357.9
+    },
+    {
+     "type": "if",
+     "id": "IF_085",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 7505.0
+    },
+    {
+     "type": "flood",
+     "id": "F_0002",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 7808.9
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 8178.2
+    },
+    {
+     "type": "flood",
+     "id": "F_0020",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 8554.0
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 8890.8
+    },
+    {
+     "type": "flood",
+     "id": "F_0020",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 9266.6
+    },
+    {
+     "type": "if",
+     "id": "IF_086",
+     "name": null,
+     "volume_l": 0.0,
+     "arrival_s": 9645.8
+    }
+   ]
+  },
+  {
+   "vehicle": "V22-5K",
+   "depot_index": 10,
+   "depot_id": "D_467117596",
+   "depot_name": "Dinas Pemadam Kebakaran Pos Kali Rungkut",
+   "capacity_l": 5000,
+   "distance_m": 60996.3,
+   "time_s": 9736.7,
+   "flood_visits": 15,
+   "if_visits": 16,
+   "visits": [
+    {
+     "type": "if",
+     "id": "IF_011",
+     "name": "Selokan",
+     "volume_l": 0.0,
+     "arrival_s": 179.9
+    },
+    {
+     "type": "flood",
+     "id": "F_0021",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 665.3
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 948.8
+    },
+    {
+     "type": "flood",
+     "id": "F_0027",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 1293.4
+    },
+    {
+     "type": "if",
+     "id": "IF_057",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 1420.2
+    },
+    {
+     "type": "flood",
+     "id": "F_0027",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 1733.0
+    },
+    {
+     "type": "if",
+     "id": "IF_057",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 1859.8
+    },
+    {
+     "type": "flood",
+     "id": "F_0027",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 2172.6
+    },
+    {
+     "type": "if",
+     "id": "IF_057",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 2299.4
+    },
+    {
+     "type": "flood",
+     "id": "F_0026",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 2558.7
+    },
+    {
+     "type": "if",
+     "id": "IF_057",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 2697.8
+    },
+    {
+     "type": "flood",
+     "id": "F_0026",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 2957.1
+    },
+    {
+     "type": "if",
+     "id": "IF_057",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 3096.2
+    },
+    {
+     "type": "flood",
+     "id": "F_0026",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 3355.5
+    },
+    {
+     "type": "if",
+     "id": "IF_057",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 3494.6
+    },
+    {
+     "type": "flood",
+     "id": "F_0016",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 4047.5
+    },
+    {
+     "type": "if",
+     "id": "IF_086",
+     "name": null,
+     "volume_l": 0.0,
+     "arrival_s": 4326.5
+    },
+    {
+     "type": "flood",
+     "id": "F_0021",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 4780.5
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 5064.0
+    },
+    {
+     "type": "flood",
+     "id": "F_0016",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 5459.5
+    },
+    {
+     "type": "if",
+     "id": "IF_086",
+     "name": null,
+     "volume_l": 0.0,
+     "arrival_s": 5738.5
+    },
+    {
+     "type": "flood",
+     "id": "F_0021",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 6192.5
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 6476.0
+    },
+    {
+     "type": "flood",
+     "id": "F_0016",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 6871.5
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 7184.9
+    },
+    {
+     "type": "flood",
+     "id": "F_0016",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 7580.4
+    },
+    {
+     "type": "if",
+     "id": "IF_086",
+     "name": null,
+     "volume_l": 0.0,
+     "arrival_s": 7859.4
+    },
+    {
+     "type": "flood",
+     "id": "F_0016",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 8325.5
+    },
+    {
+     "type": "if",
+     "id": "IF_086",
+     "name": null,
+     "volume_l": 0.0,
+     "arrival_s": 8604.5
+    },
+    {
+     "type": "flood",
+     "id": "F_0020",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 9112.3
+    },
+    {
+     "type": "if",
+     "id": "IF_086",
+     "name": null,
+     "volume_l": 0.0,
+     "arrival_s": 9491.5
+    }
+   ]
+  },
+  {
+   "vehicle": "V23-3K",
+   "depot_index": 11,
+   "depot_id": "D_487570882",
+   "depot_name": "Dinas Pemadam Kebakaran Kota Surabaya Rayon Pusat",
+   "capacity_l": 3000,
+   "distance_m": 23538.3,
+   "time_s": 3747.1,
+   "flood_visits": 5,
+   "if_visits": 5,
+   "visits": [
+    {
+     "type": "if",
+     "id": "IF_015",
+     "name": "Jalan Raya Dupak",
+     "volume_l": 0.0,
+     "arrival_s": 167.4
+    },
+    {
+     "type": "flood",
+     "id": "F_0013",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 507.3
+    },
+    {
+     "type": "if",
+     "id": "IF_103",
+     "name": "Jalan Raya Demak",
+     "volume_l": 0.0,
+     "arrival_s": 755.2
+    },
+    {
+     "type": "flood",
+     "id": "F_0013",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 1035.0
+    },
+    {
+     "type": "if",
+     "id": "IF_103",
+     "name": "Jalan Raya Demak",
+     "volume_l": 0.0,
+     "arrival_s": 1282.9
+    },
+    {
+     "type": "flood",
+     "id": "F_0014",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 1679.1
+    },
+    {
+     "type": "if",
+     "id": "IF_010",
+     "name": "Jalan Simo Gunung",
+     "volume_l": 0.0,
+     "arrival_s": 2078.0
+    },
+    {
+     "type": "flood",
+     "id": "F_0033",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 2472.5
+    },
+    {
+     "type": "if",
+     "id": "IF_010",
+     "name": "Jalan Simo Gunung",
+     "volume_l": 0.0,
+     "arrival_s": 2871.4
+    },
+    {
+     "type": "flood",
+     "id": "F_0033",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 3265.9
+    }
+   ]
+  },
+  {
+   "vehicle": "V24-5K",
+   "depot_index": 11,
+   "depot_id": "D_487570882",
+   "depot_name": "Dinas Pemadam Kebakaran Kota Surabaya Rayon Pusat",
+   "capacity_l": 5000,
+   "distance_m": 24711.7,
+   "time_s": 3501.2,
+   "flood_visits": 5,
+   "if_visits": 4,
+   "visits": [
+    {
+     "type": "if",
+     "id": "IF_015",
+     "name": "Jalan Raya Dupak",
+     "volume_l": 0.0,
+     "arrival_s": 167.4
+    },
+    {
+     "type": "flood",
+     "id": "F_0033",
+     "name": null,
+     "volume_l": 250.0,
+     "arrival_s": 568.9
+    },
+    {
+     "type": "flood",
+     "id": "F_0014",
+     "name": null,
+     "volume_l": 4750.0,
+     "arrival_s": 771.4
+    },
+    {
+     "type": "if",
+     "id": "IF_010",
+     "name": "Jalan Simo Gunung",
+     "volume_l": 0.0,
+     "arrival_s": 1170.3
+    },
+    {
+     "type": "flood",
+     "id": "F_0014",
+     "name": null,
+     "volume_l": 4750.0,
+     "arrival_s": 1617.3
+    },
+    {
+     "type": "if",
+     "id": "IF_010",
+     "name": "Jalan Simo Gunung",
+     "volume_l": 0.0,
+     "arrival_s": 2016.2
+    },
+    {
+     "type": "flood",
+     "id": "F_0011",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 2510.2
+    },
+    {
+     "type": "if",
+     "id": "IF_070",
+     "name": "Jalan Raya Darmo",
+     "volume_l": 0.0,
+     "arrival_s": 2735.2
+    },
+    {
+     "type": "flood",
+     "id": "F_0013",
+     "name": null,
+     "volume_l": 2750.0,
+     "arrival_s": 3241.3
+    }
+   ]
+  },
+  {
+   "vehicle": "V25-3K",
+   "depot_index": 12,
+   "depot_id": "D_9000000001",
+   "depot_name": "Dinas Pemadam Kebakaran Pos Mulyorejo",
+   "capacity_l": 3000,
+   "distance_m": 55849.1,
+   "time_s": 7084.0,
+   "flood_visits": 11,
+   "if_visits": 11,
+   "visits": [
+    {
+     "type": "if",
+     "id": "IF_019",
+     "name": "Jalan Mulyorejo",
+     "volume_l": 0.0,
+     "arrival_s": 186.5
+    },
+    {
+     "type": "flood",
+     "id": "F_0010",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 541.8
+    },
+    {
+     "type": "if",
+     "id": "IF_082",
+     "name": "Jalan Raya Dharmahusada Indah",
+     "volume_l": 0.0,
+     "arrival_s": 769.0
+    },
+    {
+     "type": "flood",
+     "id": "F_0010",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 1007.1
+    },
+    {
+     "type": "if",
+     "id": "IF_082",
+     "name": "Jalan Raya Dharmahusada Indah",
+     "volume_l": 0.0,
+     "arrival_s": 1234.3
+    },
+    {
+     "type": "flood",
+     "id": "F_0010",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 1472.4
+    },
+    {
+     "type": "if",
+     "id": "IF_082",
+     "name": "Jalan Raya Dharmahusada Indah",
+     "volume_l": 0.0,
+     "arrival_s": 1699.6
+    },
+    {
+     "type": "flood",
+     "id": "F_0010",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 1937.7
+    },
+    {
+     "type": "if",
+     "id": "IF_082",
+     "name": "Jalan Raya Dharmahusada Indah",
+     "volume_l": 0.0,
+     "arrival_s": 2164.9
+    },
+    {
+     "type": "flood",
+     "id": "F_0010",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 2403.0
+    },
+    {
+     "type": "if",
+     "id": "IF_082",
+     "name": "Jalan Raya Dharmahusada Indah",
+     "volume_l": 0.0,
+     "arrival_s": 2630.2
+    },
+    {
+     "type": "flood",
+     "id": "F_0010",
+     "name": null,
+     "volume_l": 2500.0,
+     "arrival_s": 2853.3
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 3270.1
+    },
+    {
+     "type": "flood",
+     "id": "F_0021",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 3706.5
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 3990.0
+    },
+    {
+     "type": "flood",
+     "id": "F_0021",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 4426.4
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 4709.9
+    },
+    {
+     "type": "flood",
+     "id": "F_0021",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 5146.3
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 5429.8
+    },
+    {
+     "type": "flood",
+     "id": "F_0021",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 5866.2
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 6149.7
+    },
+    {
+     "type": "flood",
+     "id": "F_0017",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 6708.1
+    }
+   ]
+  },
+  {
+   "vehicle": "V26-5K",
+   "depot_index": 12,
+   "depot_id": "D_9000000001",
+   "depot_name": "Dinas Pemadam Kebakaran Pos Mulyorejo",
+   "capacity_l": 5000,
+   "distance_m": 55149.0,
+   "time_s": 7147.3,
+   "flood_visits": 9,
+   "if_visits": 9,
+   "visits": [
+    {
+     "type": "if",
+     "id": "IF_019",
+     "name": "Jalan Mulyorejo",
+     "volume_l": 0.0,
+     "arrival_s": 186.5
+    },
+    {
+     "type": "flood",
+     "id": "F_0021",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 781.3
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 1064.8
+    },
+    {
+     "type": "flood",
+     "id": "F_0023",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 1448.8
+    },
+    {
+     "type": "if",
+     "id": "IF_086",
+     "name": null,
+     "volume_l": 0.0,
+     "arrival_s": 1634.1
+    },
+    {
+     "type": "flood",
+     "id": "F_0021",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 2088.1
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 2371.6
+    },
+    {
+     "type": "flood",
+     "id": "F_0021",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 2868.0
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 3151.5
+    },
+    {
+     "type": "flood",
+     "id": "F_0021",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 3647.9
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 3931.4
+    },
+    {
+     "type": "flood",
+     "id": "F_0021",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 4427.8
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 4711.3
+    },
+    {
+     "type": "flood",
+     "id": "F_0021",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 5207.7
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 5491.2
+    },
+    {
+     "type": "flood",
+     "id": "F_0021",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 5987.6
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 6271.1
+    },
+    {
+     "type": "flood",
+     "id": "F_0021",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 6767.5
+    }
+   ]
+  },
+  {
+   "vehicle": "V27-3K",
+   "depot_index": 13,
+   "depot_id": "D_9000000002",
+   "depot_name": "Dinas Pemadam Kebakaran Pos Menur",
+   "capacity_l": 3000,
+   "distance_m": 58272.0,
+   "time_s": 9828.2,
+   "flood_visits": 18,
+   "if_visits": 19,
+   "visits": [
+    {
+     "type": "if",
+     "id": "IF_020",
+     "name": "Jalan Raya Menur",
+     "volume_l": 0.0,
+     "arrival_s": 174.6
+    },
+    {
+     "type": "flood",
+     "id": "F_0004",
+     "name": null,
+     "volume_l": 750.0,
+     "arrival_s": 335.5
+    },
+    {
+     "type": "flood",
+     "id": "F_0024",
+     "name": null,
+     "volume_l": 2250.0,
+     "arrival_s": 463.0
+    },
+    {
+     "type": "if",
+     "id": "IF_020",
+     "name": "Jalan Raya Menur",
+     "volume_l": 0.0,
+     "arrival_s": 599.9
+    },
+    {
+     "type": "flood",
+     "id": "F_0024",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 828.3
+    },
+    {
+     "type": "if",
+     "id": "IF_020",
+     "name": "Jalan Raya Menur",
+     "volume_l": 0.0,
+     "arrival_s": 965.2
+    },
+    {
+     "type": "flood",
+     "id": "F_0012",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 1303.8
+    },
+    {
+     "type": "if",
+     "id": "IF_080",
+     "name": "Jalan Ngagel Jaya Selatan",
+     "volume_l": 0.0,
+     "arrival_s": 1472.2
+    },
+    {
+     "type": "flood",
+     "id": "F_0023",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 1683.3
+    },
+    {
+     "type": "if",
+     "id": "IF_057",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 1968.6
+    },
+    {
+     "type": "flood",
+     "id": "F_0027",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 2221.4
+    },
+    {
+     "type": "if",
+     "id": "IF_057",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 2348.2
+    },
+    {
+     "type": "flood",
+     "id": "F_0027",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 2601.0
+    },
+    {
+     "type": "if",
+     "id": "IF_057",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 2727.8
+    },
+    {
+     "type": "flood",
+     "id": "F_0002",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 2927.1
+    },
+    {
+     "type": "if",
+     "id": "IF_057",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 3066.2
+    },
+    {
+     "type": "flood",
+     "id": "F_0002",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 3265.5
+    },
+    {
+     "type": "if",
+     "id": "IF_057",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 3404.6
+    },
+    {
+     "type": "if",
+     "id": "IF_057",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 3494.6
+    },
+    {
+     "type": "flood",
+     "id": "F_0012",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 3839.4
+    },
+    {
+     "type": "if",
+     "id": "IF_080",
+     "name": "Jalan Ngagel Jaya Selatan",
+     "volume_l": 0.0,
+     "arrival_s": 4007.8
+    },
+    {
+     "type": "flood",
+     "id": "F_0028",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 4463.9
+    },
+    {
+     "type": "if",
+     "id": "IF_113",
+     "name": "Jalan Jemursari",
+     "volume_l": 0.0,
+     "arrival_s": 4752.7
+    },
+    {
+     "type": "flood",
+     "id": "F_0028",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 5022.7
+    },
+    {
+     "type": "if",
+     "id": "IF_113",
+     "name": "Jalan Jemursari",
+     "volume_l": 0.0,
+     "arrival_s": 5311.5
+    },
+    {
+     "type": "if",
+     "id": "IF_113",
+     "name": "Jalan Jemursari",
+     "volume_l": 0.0,
+     "arrival_s": 5461.5
+    },
+    {
+     "type": "flood",
+     "id": "F_0028",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 5731.5
+    },
+    {
+     "type": "if",
+     "id": "IF_086",
+     "name": null,
+     "volume_l": 0.0,
+     "arrival_s": 6169.6
+    },
+    {
+     "type": "flood",
+     "id": "F_0016",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 6575.7
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 6889.1
+    },
+    {
+     "type": "flood",
+     "id": "F_0016",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 7224.6
+    },
+    {
+     "type": "if",
+     "id": "IF_086",
+     "name": null,
+     "volume_l": 0.0,
+     "arrival_s": 7503.6
+    },
+    {
+     "type": "flood",
+     "id": "F_0020",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 7951.4
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 8288.2
+    },
+    {
+     "type": "flood",
+     "id": "F_0020",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 8664.0
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 9000.8
+    },
+    {
+     "type": "flood",
+     "id": "F_0020",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 9376.6
+    }
+   ]
+  },
+  {
+   "vehicle": "V28-5K",
+   "depot_index": 13,
+   "depot_id": "D_9000000002",
+   "depot_name": "Dinas Pemadam Kebakaran Pos Menur",
+   "capacity_l": 5000,
+   "distance_m": 57927.0,
+   "time_s": 9720.8,
+   "flood_visits": 15,
+   "if_visits": 16,
+   "visits": [
+    {
+     "type": "if",
+     "id": "IF_086",
+     "name": null,
+     "volume_l": 0.0,
+     "arrival_s": 278.2
+    },
+    {
+     "type": "flood",
+     "id": "F_0027",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 585.2
+    },
+    {
+     "type": "if",
+     "id": "IF_057",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 712.0
+    },
+    {
+     "type": "flood",
+     "id": "F_0005",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 1010.4
+    },
+    {
+     "type": "if",
+     "id": "IF_085",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 1157.5
+    },
+    {
+     "type": "flood",
+     "id": "F_0005",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 1517.5
+    },
+    {
+     "type": "if",
+     "id": "IF_020",
+     "name": "Jalan Raya Menur",
+     "volume_l": 0.0,
+     "arrival_s": 1716.5
+    },
+    {
+     "type": "flood",
+     "id": "F_0024",
+     "name": null,
+     "volume_l": 4250.0,
+     "arrival_s": 1982.4
+    },
+    {
+     "type": "if",
+     "id": "IF_020",
+     "name": "Jalan Raya Menur",
+     "volume_l": 0.0,
+     "arrival_s": 2119.3
+    },
+    {
+     "type": "flood",
+     "id": "F_0023",
+     "name": null,
+     "volume_l": 4500.0,
+     "arrival_s": 2420.7
+    },
+    {
+     "type": "if",
+     "id": "IF_020",
+     "name": "Jalan Raya Menur",
+     "volume_l": 0.0,
+     "arrival_s": 2691.0
+    },
+    {
+     "type": "flood",
+     "id": "F_0012",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 3089.6
+    },
+    {
+     "type": "if",
+     "id": "IF_080",
+     "name": "Jalan Ngagel Jaya Selatan",
+     "volume_l": 0.0,
+     "arrival_s": 3258.0
+    },
+    {
+     "type": "flood",
+     "id": "F_0012",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 3673.5
+    },
+    {
+     "type": "if",
+     "id": "IF_080",
+     "name": "Jalan Ngagel Jaya Selatan",
+     "volume_l": 0.0,
+     "arrival_s": 3841.9
+    },
+    {
+     "type": "flood",
+     "id": "F_0012",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 4257.4
+    },
+    {
+     "type": "if",
+     "id": "IF_080",
+     "name": "Jalan Ngagel Jaya Selatan",
+     "volume_l": 0.0,
+     "arrival_s": 4425.8
+    },
+    {
+     "type": "flood",
+     "id": "F_0016",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 4889.1
+    },
+    {
+     "type": "if",
+     "id": "IF_086",
+     "name": null,
+     "volume_l": 0.0,
+     "arrival_s": 5168.1
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 5310.2
+    },
+    {
+     "type": "flood",
+     "id": "F_0016",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 5705.7
+    },
+    {
+     "type": "if",
+     "id": "IF_086",
+     "name": null,
+     "volume_l": 0.0,
+     "arrival_s": 5984.7
+    },
+    {
+     "type": "flood",
+     "id": "F_0021",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 6438.7
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 6722.2
+    },
+    {
+     "type": "flood",
+     "id": "F_0016",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 7117.7
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 7431.1
+    },
+    {
+     "type": "flood",
+     "id": "F_0016",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 7826.6
+    },
+    {
+     "type": "if",
+     "id": "IF_086",
+     "name": null,
+     "volume_l": 0.0,
+     "arrival_s": 8105.6
+    },
+    {
+     "type": "flood",
+     "id": "F_0020",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 8613.4
+    },
+    {
+     "type": "if",
+     "id": "IF_086",
+     "name": null,
+     "volume_l": 0.0,
+     "arrival_s": 8992.6
+    },
+    {
+     "type": "flood",
+     "id": "F_0008",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 9380.3
+    }
+   ]
+  },
+  {
+   "vehicle": "V31-3K",
+   "depot_index": 15,
+   "depot_id": "D_9000000004",
+   "depot_name": "Dinas Pemadam Kebakaran Pos Sukolilo",
+   "capacity_l": 3000,
+   "distance_m": 58282.3,
+   "time_s": 9662.5,
+   "flood_visits": 18,
+   "if_visits": 18,
+   "visits": [
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 129.7
+    },
+    {
+     "type": "flood",
+     "id": "F_0005",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 425.7
+    },
+    {
+     "type": "if",
+     "id": "IF_085",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 572.8
+    },
+    {
+     "type": "flood",
+     "id": "F_0027",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 877.6
+    },
+    {
+     "type": "if",
+     "id": "IF_057",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 1004.4
+    },
+    {
+     "type": "flood",
+     "id": "F_0005",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 1242.8
+    },
+    {
+     "type": "if",
+     "id": "IF_080",
+     "name": "Jalan Ngagel Jaya Selatan",
+     "volume_l": 0.0,
+     "arrival_s": 1399.9
+    },
+    {
+     "type": "flood",
+     "id": "F_0027",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 1639.7
+    },
+    {
+     "type": "if",
+     "id": "IF_080",
+     "name": "Jalan Ngagel Jaya Selatan",
+     "volume_l": 0.0,
+     "arrival_s": 1813.9
+    },
+    {
+     "type": "flood",
+     "id": "F_0027",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 2053.7
+    },
+    {
+     "type": "if",
+     "id": "IF_057",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 2180.5
+    },
+    {
+     "type": "flood",
+     "id": "F_0026",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 2379.8
+    },
+    {
+     "type": "if",
+     "id": "IF_057",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 2518.9
+    },
+    {
+     "type": "flood",
+     "id": "F_0026",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 2718.2
+    },
+    {
+     "type": "if",
+     "id": "IF_057",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 2857.3
+    },
+    {
+     "type": "flood",
+     "id": "F_0012",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 3202.1
+    },
+    {
+     "type": "if",
+     "id": "IF_085",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 3369.0
+    },
+    {
+     "type": "flood",
+     "id": "F_0012",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 3730.4
+    },
+    {
+     "type": "if",
+     "id": "IF_085",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 3897.3
+    },
+    {
+     "type": "flood",
+     "id": "F_0012",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 4258.7
+    },
+    {
+     "type": "if",
+     "id": "IF_080",
+     "name": "Jalan Ngagel Jaya Selatan",
+     "volume_l": 0.0,
+     "arrival_s": 4427.1
+    },
+    {
+     "type": "flood",
+     "id": "F_0028",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 4883.2
+    },
+    {
+     "type": "if",
+     "id": "IF_113",
+     "name": "Jalan Jemursari",
+     "volume_l": 0.0,
+     "arrival_s": 5172.0
+    },
+    {
+     "type": "flood",
+     "id": "F_0028",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 5442.0
+    },
+    {
+     "type": "if",
+     "id": "IF_113",
+     "name": "Jalan Jemursari",
+     "volume_l": 0.0,
+     "arrival_s": 5730.8
+    },
+    {
+     "type": "flood",
+     "id": "F_0028",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 6000.8
+    },
+    {
+     "type": "if",
+     "id": "IF_113",
+     "name": "Jalan Jemursari",
+     "volume_l": 0.0,
+     "arrival_s": 6289.6
+    },
+    {
+     "type": "flood",
+     "id": "F_0032",
+     "name": null,
+     "volume_l": 1500.0,
+     "arrival_s": 6600.1
+    },
+    {
+     "type": "if",
+     "id": "IF_011",
+     "name": "Selokan",
+     "volume_l": 0.0,
+     "arrival_s": 6947.0
+    },
+    {
+     "type": "flood",
+     "id": "F_0016",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 7387.3
+    },
+    {
+     "type": "if",
+     "id": "IF_086",
+     "name": null,
+     "volume_l": 0.0,
+     "arrival_s": 7666.3
+    },
+    {
+     "type": "flood",
+     "id": "F_0016",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 8072.4
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 8385.8
+    },
+    {
+     "type": "flood",
+     "id": "F_0020",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 8761.6
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 9098.4
+    },
+    {
+     "type": "flood",
+     "id": "F_0008",
+     "name": null,
+     "volume_l": 1250.0,
+     "arrival_s": 9411.2
+    }
+   ]
+  },
+  {
+   "vehicle": "V32-5K",
+   "depot_index": 15,
+   "depot_id": "D_9000000004",
+   "depot_name": "Dinas Pemadam Kebakaran Pos Sukolilo",
+   "capacity_l": 5000,
+   "distance_m": 61042.2,
+   "time_s": 9916.0,
+   "flood_visits": 16,
+   "if_visits": 16,
+   "visits": [
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 129.7
+    },
+    {
+     "type": "flood",
+     "id": "F_0012",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 590.0
+    },
+    {
+     "type": "if",
+     "id": "IF_080",
+     "name": "Jalan Ngagel Jaya Selatan",
+     "volume_l": 0.0,
+     "arrival_s": 758.4
+    },
+    {
+     "type": "flood",
+     "id": "F_0027",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 1058.2
+    },
+    {
+     "type": "if",
+     "id": "IF_057",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 1185.0
+    },
+    {
+     "type": "flood",
+     "id": "F_0027",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 1497.8
+    },
+    {
+     "type": "if",
+     "id": "IF_057",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 1624.6
+    },
+    {
+     "type": "flood",
+     "id": "F_0027",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 1937.4
+    },
+    {
+     "type": "if",
+     "id": "IF_057",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 2064.2
+    },
+    {
+     "type": "flood",
+     "id": "F_0026",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 2323.5
+    },
+    {
+     "type": "if",
+     "id": "IF_057",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 2462.6
+    },
+    {
+     "type": "flood",
+     "id": "F_0026",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 2721.9
+    },
+    {
+     "type": "if",
+     "id": "IF_057",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 2861.0
+    },
+    {
+     "type": "flood",
+     "id": "F_0026",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 3120.3
+    },
+    {
+     "type": "if",
+     "id": "IF_057",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 3259.4
+    },
+    {
+     "type": "flood",
+     "id": "F_0002",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 3518.7
+    },
+    {
+     "type": "if",
+     "id": "IF_057",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 3657.8
+    },
+    {
+     "type": "flood",
+     "id": "F_0028",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 4263.5
+    },
+    {
+     "type": "if",
+     "id": "IF_086",
+     "name": null,
+     "volume_l": 0.0,
+     "arrival_s": 4701.6
+    },
+    {
+     "type": "flood",
+     "id": "F_0005",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 5020.0
+    },
+    {
+     "type": "if",
+     "id": "IF_085",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 5167.1
+    },
+    {
+     "type": "flood",
+     "id": "F_0021",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 5794.7
+    },
+    {
+     "type": "if",
+     "id": "IF_086",
+     "name": null,
+     "volume_l": 0.0,
+     "arrival_s": 6120.6
+    },
+    {
+     "type": "flood",
+     "id": "F_0021",
+     "name": null,
+     "volume_l": 4000.0,
+     "arrival_s": 6544.6
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 6828.1
+    },
+    {
+     "type": "flood",
+     "id": "F_0016",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 7223.6
+    },
+    {
+     "type": "if",
+     "id": "IF_009",
+     "name": "Jalan Nginden Semolo",
+     "volume_l": 0.0,
+     "arrival_s": 7537.0
+    },
+    {
+     "type": "flood",
+     "id": "F_0016",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 7932.5
+    },
+    {
+     "type": "if",
+     "id": "IF_086",
+     "name": null,
+     "volume_l": 0.0,
+     "arrival_s": 8211.5
+    },
+    {
+     "type": "flood",
+     "id": "F_0020",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 8719.3
+    },
+    {
+     "type": "if",
+     "id": "IF_086",
+     "name": null,
+     "volume_l": 0.0,
+     "arrival_s": 9098.5
+    },
+    {
+     "type": "flood",
+     "id": "F_0020",
+     "name": null,
+     "volume_l": 4500.0,
+     "arrival_s": 9591.3
+    }
+   ]
+  },
+  {
+   "vehicle": "V35-3K",
+   "depot_index": 17,
+   "depot_id": "D_9000000006",
+   "depot_name": "Dinas Pemadam Kebakaran Pos TVRI",
+   "capacity_l": 3000,
+   "distance_m": 43491.5,
+   "time_s": 6888.3,
+   "flood_visits": 11,
+   "if_visits": 10,
+   "visits": [
+    {
+     "type": "if",
+     "id": "IF_099",
+     "name": "Jalan Mayjend Sungkono",
+     "volume_l": 0.0,
+     "arrival_s": 163.7
+    },
+    {
+     "type": "flood",
+     "id": "F_0011",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 520.2
+    },
+    {
+     "type": "if",
+     "id": "IF_070",
+     "name": "Jalan Raya Darmo",
+     "volume_l": 0.0,
+     "arrival_s": 745.2
+    },
+    {
+     "type": "flood",
+     "id": "F_0025",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 1066.8
+    },
+    {
+     "type": "if",
+     "id": "IF_070",
+     "name": "Jalan Raya Darmo",
+     "volume_l": 0.0,
+     "arrival_s": 1308.5
+    },
+    {
+     "type": "flood",
+     "id": "F_0025",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 1630.1
+    },
+    {
+     "type": "if",
+     "id": "IF_070",
+     "name": "Jalan Raya Darmo",
+     "volume_l": 0.0,
+     "arrival_s": 1871.8
+    },
+    {
+     "type": "flood",
+     "id": "F_0025",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 2193.4
+    },
+    {
+     "type": "if",
+     "id": "IF_070",
+     "name": "Jalan Raya Darmo",
+     "volume_l": 0.0,
+     "arrival_s": 2435.1
+    },
+    {
+     "type": "flood",
+     "id": "F_0025",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 2756.7
+    },
+    {
+     "type": "if",
+     "id": "IF_070",
+     "name": "Jalan Raya Darmo",
+     "volume_l": 0.0,
+     "arrival_s": 2998.4
+    },
+    {
+     "type": "flood",
+     "id": "F_0002",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 3439.9
+    },
+    {
+     "type": "if",
+     "id": "IF_057",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 3579.0
+    },
+    {
+     "type": "flood",
+     "id": "F_0005",
+     "name": null,
+     "volume_l": 2000.0,
+     "arrival_s": 3787.4
+    },
+    {
+     "type": "flood",
+     "id": "F_0007",
+     "name": null,
+     "volume_l": 1000.0,
+     "arrival_s": 4581.7
+    },
+    {
+     "type": "if",
+     "id": "IF_110",
+     "name": null,
+     "volume_l": 0.0,
+     "arrival_s": 4833.9
+    },
+    {
+     "type": "flood",
+     "id": "F_0007",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 5240.8
+    },
+    {
+     "type": "if",
+     "id": "IF_110",
+     "name": null,
+     "volume_l": 0.0,
+     "arrival_s": 5493.0
+    },
+    {
+     "type": "flood",
+     "id": "F_0007",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 5899.9
+    },
+    {
+     "type": "if",
+     "id": "IF_110",
+     "name": null,
+     "volume_l": 0.0,
+     "arrival_s": 6152.1
+    },
+    {
+     "type": "flood",
+     "id": "F_0007",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 6559.0
+    }
+   ]
+  },
+  {
+   "vehicle": "V36-5K",
+   "depot_index": 17,
+   "depot_id": "D_9000000006",
+   "depot_name": "Dinas Pemadam Kebakaran Pos TVRI",
+   "capacity_l": 5000,
+   "distance_m": 41177.9,
+   "time_s": 6772.4,
+   "flood_visits": 10,
+   "if_visits": 10,
+   "visits": [
+    {
+     "type": "if",
+     "id": "IF_099",
+     "name": "Jalan Mayjend Sungkono",
+     "volume_l": 0.0,
+     "arrival_s": 163.7
+    },
+    {
+     "type": "flood",
+     "id": "F_0025",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 611.4
+    },
+    {
+     "type": "if",
+     "id": "IF_070",
+     "name": "Jalan Raya Darmo",
+     "volume_l": 0.0,
+     "arrival_s": 853.1
+    },
+    {
+     "type": "flood",
+     "id": "F_0025",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 1234.7
+    },
+    {
+     "type": "if",
+     "id": "IF_070",
+     "name": "Jalan Raya Darmo",
+     "volume_l": 0.0,
+     "arrival_s": 1476.4
+    },
+    {
+     "type": "flood",
+     "id": "F_0025",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 1858.0
+    },
+    {
+     "type": "if",
+     "id": "IF_070",
+     "name": "Jalan Raya Darmo",
+     "volume_l": 0.0,
+     "arrival_s": 2099.7
+    },
+    {
+     "type": "flood",
+     "id": "F_0011",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 2500.7
+    },
+    {
+     "type": "if",
+     "id": "IF_057",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 2876.2
+    },
+    {
+     "type": "flood",
+     "id": "F_0026",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 3135.5
+    },
+    {
+     "type": "if",
+     "id": "IF_057",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 3274.6
+    },
+    {
+     "type": "flood",
+     "id": "F_0002",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 3533.9
+    },
+    {
+     "type": "if",
+     "id": "IF_072",
+     "name": "Jalan Ngagel",
+     "volume_l": 0.0,
+     "arrival_s": 3737.4
+    },
+    {
+     "type": "flood",
+     "id": "F_0003",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 3982.0
+    },
+    {
+     "type": "if",
+     "id": "IF_110",
+     "name": null,
+     "volume_l": 0.0,
+     "arrival_s": 4538.0
+    },
+    {
+     "type": "flood",
+     "id": "F_0007",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 5004.9
+    },
+    {
+     "type": "if",
+     "id": "IF_110",
+     "name": null,
+     "volume_l": 0.0,
+     "arrival_s": 5257.1
+    },
+    {
+     "type": "flood",
+     "id": "F_0007",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 5724.0
+    },
+    {
+     "type": "if",
+     "id": "IF_110",
+     "name": null,
+     "volume_l": 0.0,
+     "arrival_s": 5976.2
+    },
+    {
+     "type": "flood",
+     "id": "F_0007",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 6443.1
+    }
+   ]
+  },
+  {
+   "vehicle": "V37-3K",
+   "depot_index": 18,
+   "depot_id": "D_9000000007",
+   "depot_name": "Dinas Pemadam Kebakaran Pos Demak Grudo",
+   "capacity_l": 3000,
+   "distance_m": 39407.9,
+   "time_s": 6762.4,
+   "flood_visits": 10,
+   "if_visits": 12,
+   "visits": [
+    {
+     "type": "if",
+     "id": "IF_070",
+     "name": "Jalan Raya Darmo",
+     "volume_l": 0.0,
+     "arrival_s": 331.9
+    },
+    {
+     "type": "flood",
+     "id": "F_0025",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 653.5
+    },
+    {
+     "type": "if",
+     "id": "IF_070",
+     "name": "Jalan Raya Darmo",
+     "volume_l": 0.0,
+     "arrival_s": 895.2
+    },
+    {
+     "type": "flood",
+     "id": "F_0025",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 1216.8
+    },
+    {
+     "type": "if",
+     "id": "IF_070",
+     "name": "Jalan Raya Darmo",
+     "volume_l": 0.0,
+     "arrival_s": 1458.5
+    },
+    {
+     "type": "flood",
+     "id": "F_0025",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 1780.1
+    },
+    {
+     "type": "if",
+     "id": "IF_070",
+     "name": "Jalan Raya Darmo",
+     "volume_l": 0.0,
+     "arrival_s": 2021.8
+    },
+    {
+     "type": "flood",
+     "id": "F_0025",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 2343.4
+    },
+    {
+     "type": "if",
+     "id": "IF_070",
+     "name": "Jalan Raya Darmo",
+     "volume_l": 0.0,
+     "arrival_s": 2585.1
+    },
+    {
+     "type": "if",
+     "id": "IF_057",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 3015.7
+    },
+    {
+     "type": "flood",
+     "id": "F_0026",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 3215.0
+    },
+    {
+     "type": "if",
+     "id": "IF_057",
+     "name": "Kali Boma",
+     "volume_l": 0.0,
+     "arrival_s": 3354.1
+    },
+    {
+     "type": "flood",
+     "id": "F_0006",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 4078.5
+    },
+    {
+     "type": "if",
+     "id": "IF_010",
+     "name": "Jalan Simo Gunung",
+     "volume_l": 0.0,
+     "arrival_s": 4355.7
+    },
+    {
+     "type": "flood",
+     "id": "F_0006",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 4599.5
+    },
+    {
+     "type": "if",
+     "id": "IF_010",
+     "name": "Jalan Simo Gunung",
+     "volume_l": 0.0,
+     "arrival_s": 4876.7
+    },
+    {
+     "type": "flood",
+     "id": "F_0006",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 5120.5
+    },
+    {
+     "type": "if",
+     "id": "IF_010",
+     "name": "Jalan Simo Gunung",
+     "volume_l": 0.0,
+     "arrival_s": 5397.7
+    },
+    {
+     "type": "flood",
+     "id": "F_0006",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 5641.5
+    },
+    {
+     "type": "if",
+     "id": "IF_010",
+     "name": "Jalan Simo Gunung",
+     "volume_l": 0.0,
+     "arrival_s": 5918.7
+    },
+    {
+     "type": "flood",
+     "id": "F_0019",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 6162.5
+    },
+    {
+     "type": "if",
+     "id": "IF_010",
+     "name": "Jalan Simo Gunung",
+     "volume_l": 0.0,
+     "arrival_s": 6439.7
+    }
+   ]
+  },
+  {
+   "vehicle": "V38-5K",
+   "depot_index": 18,
+   "depot_id": "D_9000000007",
+   "depot_name": "Dinas Pemadam Kebakaran Pos Demak Grudo",
+   "capacity_l": 5000,
+   "distance_m": 28808.0,
+   "time_s": 6522.0,
+   "flood_visits": 11,
+   "if_visits": 11,
+   "visits": [
+    {
+     "type": "if",
+     "id": "IF_070",
+     "name": "Jalan Raya Darmo",
+     "volume_l": 0.0,
+     "arrival_s": 331.9
+    },
+    {
+     "type": "flood",
+     "id": "F_0011",
+     "name": null,
+     "volume_l": 1500.0,
+     "arrival_s": 627.9
+    },
+    {
+     "type": "flood",
+     "id": "F_0025",
+     "name": null,
+     "volume_l": 3500.0,
+     "arrival_s": 824.1
+    },
+    {
+     "type": "if",
+     "id": "IF_070",
+     "name": "Jalan Raya Darmo",
+     "volume_l": 0.0,
+     "arrival_s": 1065.8
+    },
+    {
+     "type": "flood",
+     "id": "F_0025",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 1447.4
+    },
+    {
+     "type": "if",
+     "id": "IF_070",
+     "name": "Jalan Raya Darmo",
+     "volume_l": 0.0,
+     "arrival_s": 1689.1
+    },
+    {
+     "type": "flood",
+     "id": "F_0025",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 2070.7
+    },
+    {
+     "type": "if",
+     "id": "IF_070",
+     "name": "Jalan Raya Darmo",
+     "volume_l": 0.0,
+     "arrival_s": 2312.4
+    },
+    {
+     "type": "if",
+     "id": "IF_070",
+     "name": "Jalan Raya Darmo",
+     "volume_l": 0.0,
+     "arrival_s": 2462.4
+    },
+    {
+     "type": "flood",
+     "id": "F_0006",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 2994.6
+    },
+    {
+     "type": "if",
+     "id": "IF_010",
+     "name": "Jalan Simo Gunung",
+     "volume_l": 0.0,
+     "arrival_s": 3271.8
+    },
+    {
+     "type": "flood",
+     "id": "F_0006",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 3575.6
+    },
+    {
+     "type": "if",
+     "id": "IF_010",
+     "name": "Jalan Simo Gunung",
+     "volume_l": 0.0,
+     "arrival_s": 3852.8
+    },
+    {
+     "type": "flood",
+     "id": "F_0006",
+     "name": null,
+     "volume_l": 3000.0,
+     "arrival_s": 4096.6
+    },
+    {
+     "type": "flood",
+     "id": "F_0019",
+     "name": null,
+     "volume_l": 2000.0,
+     "arrival_s": 4216.6
+    },
+    {
+     "type": "if",
+     "id": "IF_010",
+     "name": "Jalan Simo Gunung",
+     "volume_l": 0.0,
+     "arrival_s": 4493.8
+    },
+    {
+     "type": "flood",
+     "id": "F_0019",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 4797.6
+    },
+    {
+     "type": "if",
+     "id": "IF_010",
+     "name": "Jalan Simo Gunung",
+     "volume_l": 0.0,
+     "arrival_s": 5074.8
+    },
+    {
+     "type": "flood",
+     "id": "F_0019",
+     "name": null,
+     "volume_l": 5000.0,
+     "arrival_s": 5378.6
+    },
+    {
+     "type": "if",
+     "id": "IF_010",
+     "name": "Jalan Simo Gunung",
+     "volume_l": 0.0,
+     "arrival_s": 5655.8
+    },
+    {
+     "type": "flood",
+     "id": "F_0019",
+     "name": null,
+     "volume_l": 3750.0,
+     "arrival_s": 5922.1
+    },
+    {
+     "type": "if",
+     "id": "IF_010",
+     "name": "Jalan Simo Gunung",
+     "volume_l": 0.0,
+     "arrival_s": 6199.3
+    }
+   ]
+  }
+ ]
+}
