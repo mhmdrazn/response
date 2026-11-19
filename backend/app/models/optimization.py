@@ -73,7 +73,7 @@ class ACSRequest(_RunContext):
     alpha: float = Field(1.0, ge=0.1, le=5.0)
     beta: float = Field(1.0, ge=0.1, le=10.0)
     rho: float = Field(0.15, ge=0.01, le=0.9)
-    q0: float = Field(0.70, ge=0.0, le=1.0)
+    q0: float = Field(0.90, ge=0.0, le=1.0)
     seed: int | None = None
     time_limit_s: float | None = Field(45.0, ge=1.0, le=180.0)
     unserved_penalty: float | None = Field(None, ge=0.0, le=10000.0)

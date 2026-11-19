@@ -368,7 +368,7 @@ export const DEFAULT_ACS_PARAMS: ACSParams = {
   alpha: 1.0,
   beta: 1.0,
   rho: 0.15,
-  q0: 0.7,
+  q0: 0.9,
   seed: 42,
   time_limit_s: 45,
 };

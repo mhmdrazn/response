@@ -28,7 +28,8 @@ export interface UseAlgorithmConfig {
   buildRunRequest: (extras?: RunExtras) => RunRequest;
 }
 
-const STORAGE_KEY = "floodroute:algo-config:v4";
+// v5: q0 default 0.7 -> 0.9; a saved v4 config would keep the old default.
+const STORAGE_KEY = "floodroute:algo-config:v5";
 
 interface StoredConfig {
   algorithm: AlgorithmType;

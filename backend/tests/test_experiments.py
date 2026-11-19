@@ -91,7 +91,7 @@ def test_acs_params_runs_each_distinct_setting_once():
     assert settings == {
         ("default", 0.0),
         ("n_ants", 10.0), ("n_ants", 30.0),
-        ("q0", 0.5), ("q0", 0.9),
+        ("q0", 0.5), ("q0", 0.7),
         ("rho", 0.10), ("rho", 0.30),
     }
     assert len(jobs) == 7 * 30
@@ -113,14 +113,14 @@ def test_acs_summary_counts_the_default_runs_in_every_group():
     summary = experiments.summarise_acs(runs)
     by = {(r["param"], r["value"]): r for r in summary}
 
-    for param, default in (("n_ants", "20"), ("q0", "0.7"), ("rho", "0.15")):
+    for param, default in (("n_ants", "20"), ("q0", "0.9"), ("rho", "0.15")):
         assert by[(param, default)]["is_default"] is True
         assert by[(param, default)]["n_runs"] == 2
         assert by[(param, default)]["z_median"] == 101.5
     assert by[("n_ants", "10")]["z_mean"] == 201.5
     assert by[("n_ants", "10")]["is_default"] is False
     # Settings with no runs yet are left out rather than reported empty.
-    assert ("q0", "0.9") not in by
+    assert ("q0", "0.7") not in by
 
 
 # --- Bab 6 additions: extra experiments, traces, best solutions, reports ---------
