@@ -1,0 +1,34 @@
+{
+  "sessions": [
+    {
+      "started_at": "2026-11-19T11:02:13+07:00",
+      "commit": "d4fd9c3278eed24ec73c8d6db421e2fcdc1474eb",
+      "uncommitted_changes": true,
+      "python": "3.12.2",
+      "os": "Windows 11 (10.0.22631)",
+      "cpu": "13th Gen Intel(R) Core(TM) i7-13650HX",
+      "cpu_logical_cores": 20,
+      "ram_gb": 7.7,
+      "workers": 6,
+      "time_limit_s": 45.0,
+      "seeds": 30,
+      "sensitivity_seeds": 30,
+      "extra_seeds": 15,
+      "experiments": [
+        "main",
+        "horizon",
+        "dispatch",
+        "acs_params",
+        "polish_slice",
+        "unserved_penalty"
+      ],
+      "scenarios": [
+        "s1-jan",
+        "s2-jun",
+        "s3-nov"
+      ],
+      "resume": false,
+      "runs_planned": 1260
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+﻿Kendaraan;Depo;Urutan kunjungan;Jarak (km);Waktu (menit);Kunjungan IF
+V05-3K;D3 Dinas Pemadam Kebakaran Pos Jambangan;D3 → IF91 → F_0017 → IF50 → F_0009 → D3;23,00;37,8;2
+V06-5K;D3 Dinas Pemadam Kebakaran Pos Jambangan;D3 → IF91 → F_0017 → IF41 → F_0009 → D3;20,54;37,2;2
+V07-3K;D4 Dinas Pemadam Kebakaran Rayon Timur;D4 → IF36 → F_0004 → IF123 → F_0001 → IF36 → F_0005 → D4;16,08;38,0;3
+V08-5K;D4 Dinas Pemadam Kebakaran Rayon Timur;D4 → IF36 → F_0008 → IF113 → F_0008 → IF113 → F_0005 → F_0004 → IF11 → F_0004 → D4;25,80;63,5;4
+V09-3K;D5 Dinas Pemadam Kebakaran Rayon Utara;D5 → IF65 → F_0022 → D5;17,19;20,2;1
+V10-5K;D5 Dinas Pemadam Kebakaran Rayon Utara;D5 → IF65 → F_0022 → D5;17,19;21,2;1
+V13-3K;D7 Dinas Pemadam Kebakaran Rayon Selatan;D7 → IF74 → F_0016 → IF41 → D7;7,93;17,1;2
+V14-5K;D7 Dinas Pemadam Kebakaran Rayon Selatan;D7 → IF74 → F_0016 → F_0006 → IF41 → F_0006 → D7;12,09;29,9;2
+V17-3K;D9 Dinas Pemadam Kebakaran Pos Kandangan;D9 → IF106 → F_0018 → IF31 → F_0018 → IF31 → F_0018 → IF31 → F_0018 → IF31 → F_0018 → IF31 → F_0018 → IF31 → F_0018 → IF31 → F_0018 → IF31 → F_0020 → IF107 → F_0020 → IF105 → F_0021 → IF133 → F_0021 → IF133 → F_0021 → D9;70,18;141,9;13
+V18-5K;D9 Dinas Pemadam Kebakaran Pos Kandangan;D9 → IF106 → F_0018 → IF31 → F_0018 → IF31 → F_0018 → IF31 → F_0018 → IF31 → F_0018 → IF31 → F_0018 → IF31 → F_0018 → IF31 → F_0018 → F_0020 → IF107 → F_0010 → IF105 → F_0010 → IF133 → F_0021 → IF133 → F_0021 → D9;59,02;139,2;12
+V21-3K;D11 Dinas Pemadam Kebakaran Pos Kali Rungkut;D11 → IF123 → F_0001 → IF123 → F_0001 → IF123 → F_0001 → IF123 → F_0001 → IF123 → F_0001 → IF123 → F_0001 → IF123 → F_0001 → IF11 → F_0003 → D11;11,99;51,3;8
+V22-5K;D11 Dinas Pemadam Kebakaran Pos Kali Rungkut;D11 → IF11 → F_0001 → IF123 → F_0001 → IF123 → F_0001 → IF123 → F_0001 → IF123 → F_0001 → IF123 → F_0001 → F_0007 → IF86 → F_0003 → D11;19,59;64,1;7
+V23-3K;D12 Dinas Pemadam Kebakaran Kota Surabaya Rayon Pusat;D12 → IF15 → F_0014 → IF71 → F_0014 → IF105 → F_0023 → D12;24,17;43,4;3
+V24-5K;D12 Dinas Pemadam Kebakaran Kota Surabaya Rayon Pusat;D12 → IF15 → F_0023 → F_0014 → IF71 → F_0014 → D12;23,34;40,2;2
+V27-3K;D14 Dinas Pemadam Kebakaran Pos Menur;D14 → IF20 → F_0013 → IF86 → F_0013 → IF86 → F_0013 → IF39 → F_0007 → F_0000 → IF86 → F_0000 → IF86 → D14;19,67;54,5;6
+V28-5K;D14 Dinas Pemadam Kebakaran Pos Menur;D14 → IF20 → F_0012 → IF85 → F_0012 → IF39 → F_0013 → IF86 → F_0000 → IF86 → F_0000 → D14;18,88;52,1;5
+V31-3K;D16 Dinas Pemadam Kebakaran Pos Sukolilo;D16 → IF9 → F_0000 → IF86 → F_0019 → IF57 → F_0008 → IF11 → F_0002 → D16;25,68;50,3;4
+V32-5K;D16 Dinas Pemadam Kebakaran Pos Sukolilo;D16 → IF9 → F_0000 → IF86 → F_0013 → IF86 → F_0000 → IF86 → F_0000 → IF86 → F_0002 → D16;23,28;59,8;5
+V33-3K;D17 Dinas Pemadam Kebakaran Pos Pegirian;D17 → IF4 → F_0015 → D17;11,96;16,3;1
+V34-5K;D17 Dinas Pemadam Kebakaran Pos Pegirian;D17 → IF4 → F_0015 → D17;11,96;16,5;1
+V35-3K;D18 Dinas Pemadam Kebakaran Pos TVRI;D18 → IF99 → F_0014 → IF71 → F_0025 → IF76 → F_0025 → IF76 → F_0025 → IF10 → F_0024 → IF10 → F_0024 → IF10 → F_0024 → D18;30,91;88,6;7
+V36-5K;D18 Dinas Pemadam Kebakaran Pos TVRI;D18 → IF99 → F_0022 → IF72 → F_0019 → IF57 → F_0019 → IF57 → F_0026 → IF48 → F_0026 → IF48 → F_0026 → IF48 → F_0026 → IF48 → F_0026 → D18;47,80;102,2;8
+V37-3K;D19 Dinas Pemadam Kebakaran Pos Demak Grudo;D19 → IF70 → F_0014 → F_0011 → IF71 → D19;16,52;30,2;2
+V38-5K;D19 Dinas Pemadam Kebakaran Pos Demak Grudo;D19 → IF70 → F_0022 → IF57 → F_0011 → D19;12,83;28,9;2

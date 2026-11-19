@@ -1,0 +1,26 @@
+﻿Kendaraan;Depo;Urutan kunjungan;Jarak (km);Waktu (menit);Kunjungan IF
+V07-3K;D4 Dinas Pemadam Kebakaran Rayon Timur;D4 → IF36 → F_0000 → D4;5,67;15,8;1
+V08-5K;D4 Dinas Pemadam Kebakaran Rayon Timur;D4 → IF36 → F_0000 → D4;5,67;15,9;1
+V09-3K;D5 Dinas Pemadam Kebakaran Rayon Utara;D5 → IF65 → F_0016 → D5;4,97;10,9;1
+V10-5K;D5 Dinas Pemadam Kebakaran Rayon Utara;D5 → IF65 → F_0016 → D5;4,97;11,1;1
+V13-3K;D7 Dinas Pemadam Kebakaran Rayon Selatan;D7 → IF74 → F_0014 → IF139 → F_0014 → IF139 → F_0014 → IF139 → F_0014 → IF139 → F_0014 → IF139 → F_0014 → IF139 → F_0014 → IF139 → F_0014 → IF139 → F_0014 → IF139 → F_0014 → IF139 → F_0014 → IF139 → F_0014 → IF139 → F_0008 → IF139 → F_0008 → IF139 → F_0008 → IF139 → F_0008 → D7;84,98;185,2;16
+V14-5K;D7 Dinas Pemadam Kebakaran Rayon Selatan;D7 → IF74 → F_0014 → IF139 → F_0014 → IF139 → F_0014 → IF139 → F_0014 → IF139 → F_0014 → IF139 → F_0014 → IF139 → F_0014 → IF139 → F_0014 → IF139 → F_0014 → IF139 → F_0014 → IF139 → F_0014 → IF139 → F_0014 → IF139 → F_0014 → IF139 → F_0008 → IF139 → F_0008 → IF139 → F_0008 → D7;83,64;197,0;16
+V17-3K;D9 Dinas Pemadam Kebakaran Pos Kandangan;D9 → IF106 → F_0007 → IF88 → F_0011 → IF31 → F_0011 → IF31 → F_0011 → IF31 → F_0011 → IF31 → F_0011 → IF31 → F_0011 → IF31 → F_0011 → IF31 → F_0011 → IF31 → F_0011 → IF31 → F_0011 → IF31 → F_0010 → IF52 → F_0010 → IF31 → F_0010 → IF31 → F_0010 → IF31 → F_0010 → IF31 → F_0010 → IF31 → F_0010 → IF31 → F_0010 → IF31 → F_0012 → IF31 → F_0012 → IF52 → F_0012 → D9;105,55;278,3;22
+V18-5K;D9 Dinas Pemadam Kebakaran Pos Kandangan;D9 → IF106 → F_0007 → IF88 → F_0011 → IF31 → F_0011 → IF31 → F_0011 → IF31 → F_0011 → IF31 → F_0011 → IF31 → F_0011 → IF31 → F_0011 → IF31 → F_0011 → IF31 → F_0010 → IF52 → F_0010 → IF31 → F_0012 → IF31 → F_0010 → IF31 → F_0010 → IF31 → F_0010 → IF31 → F_0010 → IF31 → F_0010 → IF31 → F_0010 → IF31 → F_0010 → IF31 → F_0012 → D9;98,02;274,9;20
+V19-3K;D10 Dinas Pemadam Kebakaran Rayon Barat;D10 → IF106 → F_0007 → IF88 → F_0007 → IF88 → F_0007 → IF88 → F_0007 → IF88 → F_0007 → IF88 → F_0007 → IF88 → F_0007 → IF88 → F_0009 → IF106 → F_0009 → IF106 → F_0009 → IF106 → F_0009 → IF106 → F_0009 → IF106 → F_0009 → IF106 → F_0009 → IF106 → F_0009 → IF106 → D10;45,45;129,1;16
+V20-5K;D10 Dinas Pemadam Kebakaran Rayon Barat;D10 → IF106 → F_0009 → IF106 → F_0009 → IF106 → F_0009 → IF106 → F_0009 → IF106 → F_0009 → IF106 → F_0009 → IF106 → F_0009 → IF106 → F_0009 → IF106 → F_0007 → IF88 → F_0007 → IF88 → F_0007 → IF88 → F_0007 → IF88 → F_0007 → IF88 → F_0007 → IF88 → F_0007 → D10;44,28;139,7;15
+V21-3K;D11 Dinas Pemadam Kebakaran Pos Kali Rungkut;D11 → IF11 → F_0006 → D11;14,29;19,8;1
+V22-5K;D11 Dinas Pemadam Kebakaran Pos Kali Rungkut;D11 → IF11 → F_0001 → D11;12,64;19,1;1
+V23-3K;D12 Dinas Pemadam Kebakaran Kota Surabaya Rayon Pusat;D12 → IF15 → F_0005 → IF71 → F_0005 → IF10 → F_0005 → IF10 → F_0005 → IF10 → D12;27,48;67,5;5
+V24-5K;D12 Dinas Pemadam Kebakaran Kota Surabaya Rayon Pusat;D12 → IF15 → F_0015 → IF71 → F_0005 → IF10 → F_0005 → IF10 → F_0005 → D12;23,44;61,0;4
+V25-3K;D13 Dinas Pemadam Kebakaran Pos Mulyorejo;D13 → IF19 → F_0013 → D13;10,63;17,1;1
+V26-5K;D13 Dinas Pemadam Kebakaran Pos Mulyorejo;D13 → IF19 → F_0013 → D13;10,63;17,2;1
+V27-3K;D14 Dinas Pemadam Kebakaran Pos Menur;D14 → IF20 → F_0004 → IF99 → D14;17,05;24,8;2
+V28-5K;D14 Dinas Pemadam Kebakaran Pos Menur;D14 → IF20 → F_0001 → IF99 → F_0004 → D14;19,43;32,8;2
+V32-5K;D16 Dinas Pemadam Kebakaran Pos Sukolilo;D16 → IF9 → F_0006 → D16;6,39;12,9;1
+V33-3K;D17 Dinas Pemadam Kebakaran Pos Pegirian;D17 → IF4 → F_0002 → IF3 → D17;11,44;19,3;2
+V34-5K;D17 Dinas Pemadam Kebakaran Pos Pegirian;D17 → IF4 → F_0002 → IF3 → F_0002 → D17;18,72;33,2;2
+V35-3K;D18 Dinas Pemadam Kebakaran Pos TVRI;D18 → IF99 → F_0004 → IF99 → F_0004 → IF99 → D18;12,91;26,0;3
+V36-5K;D18 Dinas Pemadam Kebakaran Pos TVRI;D18 → IF99 → F_0006 → IF57 → F_0004 → D18;14,61;25,5;2
+V37-3K;D19 Dinas Pemadam Kebakaran Pos Demak Grudo;D19 → IF70 → F_0003 → D19;2,32;11,5;1
+V38-5K;D19 Dinas Pemadam Kebakaran Pos Demak Grudo;D19 → IF70 → F_0003 → IF70 → F_0015 → D19;9,61;25,8;2

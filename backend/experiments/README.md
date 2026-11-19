@@ -8,7 +8,7 @@ Folder ini adalah keluaran bawaan `scripts/run_experiments.py`.
   menganggur (`6b8196c`), serta eksperimen λu di S1 dan S2. Commit, perangkat, dan
   tanggal tercatat di `result/metadata.json`.
 - `temp/`: hasil lama yang tidak dipakai (tidak masuk git):
-  - `temp/result_q07`: hasil final sebelumnya, dengan q0 0,7 dan tanpa pembersihan
+  - `temp/result-old`: hasil final sebelumnya, dengan q0 0,7 dan tanpa pembersihan
     kunjungan IF mubazir.
   - `temp/bab6`: run pertama dengan VNS lama yang membiarkan sebagian armada
     menganggur.

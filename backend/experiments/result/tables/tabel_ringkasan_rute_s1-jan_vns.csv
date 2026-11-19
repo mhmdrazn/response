@@ -1,0 +1,19 @@
+﻿Kendaraan;Depo;Titik genangan dilayani;Kunjungan genangan;Kunjungan IF;Jarak (km);Waktu (menit);Tiba pertama di genangan (menit)
+V07-3K;D4 Rayon Timur;F_0000;1;1;5,67;15,8;11,2
+V08-5K;D4 Rayon Timur;F_0000;1;1;5,67;15,9;11,3
+V13-3K;D7 Rayon Selatan;F_0008;4;4;29,34;61,0;12,9
+V14-5K;D7 Rayon Selatan;F_0014, F_0008;23;24;116,61;279,2;12,6
+V17-3K;D9 Pos Kandangan;F_0010, F_0012;20;20;106,15;271,3;10,1
+V18-5K;D9 Pos Kandangan;F_0011, F_0010;20;21;96,55;278,8;10,3
+V19-3K;D10 Rayon Barat;F_0009;1;1;9,31;16,0;10,9
+V20-5K;D10 Rayon Barat;F_0009, F_0007;25;25;68,96;227,5;11,9
+V21-3K;D11 Pos Kali Rungkut;F_0006;1;1;10,23;16,2;9,9
+V22-5K;D11 Pos Kali Rungkut;F_0006, F_0001;4;4;18,79;41,1;14,5
+V23-3K;D12 Kota Surabaya Rayon Pusat;F_0002;1;1;20,59;28,8;20,6
+V24-5K;D12 Kota Surabaya Rayon Pusat;F_0005;5;5;24,87;76,8;11,9
+V27-3K;D14 Pos Menur;F_0003, F_0004, F_0013;4;4;20,29;44,0;10,0
+V28-5K;D14 Pos Menur;F_0004, F_0013;3;4;29,05;51,9;16,3
+V33-3K;D17 Pos Pegirian;F_0002;2;3;20,05;34,1;10,9
+V34-5K;D17 Pos Pegirian;F_0016, F_0002;3;2;26,12;40,2;13,3
+V36-5K;D18 Pos TVRI;F_0004;1;1;5,08;11,4;9,4
+V38-5K;D19 Pos Demak Grudo;F_0003, F_0015;3;2;15,18;34,9;7,7

@@ -1,0 +1,33 @@
+﻿Uji;Algoritma;Parameter;Nilai;Metrik;n;Rata-rata;Rata-rata bawaan;Selisih (%);p-value
+Wilcoxon vs bawaan 20;Hybrid ACS;n_ants;10;Z;30;494.965,57;497.405,93;-0,49;0,2054
+Wilcoxon vs bawaan 20;Hybrid ACS;n_ants;30;Z;30;496.161,84;497.405,93;-0,25;0,4161
+Wilcoxon vs bawaan 0,9;Hybrid ACS;q0;0,5;Z;30;514.215,61;497.405,93;3,38;< 0,001
+Wilcoxon vs bawaan 0,9;Hybrid ACS;q0;0,7;Z;30;508.698,48;497.405,93;2,27;< 0,001
+Wilcoxon vs bawaan 0,15;Hybrid ACS;rho;0,1;Z;30;498.151,38;497.405,93;0,15;0,9515
+Wilcoxon vs bawaan 0,15;Hybrid ACS;rho;0,3;Z;30;497.169,13;497.405,93;-0,05;0,6408
+Wilcoxon vs bawaan 20;Hybrid ACS;n_ants;10;Skor (Z + penalti);30;494.965,57;497.405,93;-0,49;0,2054
+Wilcoxon vs bawaan 20;Hybrid ACS;n_ants;30;Skor (Z + penalti);30;496.161,84;497.405,93;-0,25;0,4161
+Wilcoxon vs bawaan 0,9;Hybrid ACS;q0;0,5;Skor (Z + penalti);30;514.215,61;497.405,93;3,38;< 0,001
+Wilcoxon vs bawaan 0,9;Hybrid ACS;q0;0,7;Skor (Z + penalti);30;508.698,48;497.405,93;2,27;< 0,001
+Wilcoxon vs bawaan 0,15;Hybrid ACS;rho;0,1;Skor (Z + penalti);30;498.151,38;497.405,93;0,15;0,9515
+Wilcoxon vs bawaan 0,15;Hybrid ACS;rho;0,3;Skor (Z + penalti);30;497.169,13;497.405,93;-0,05;0,6408
+Wilcoxon vs bawaan 0,3;Hybrid ACS;polish_slice_s;0,1;Z;15;497.331,92;496.185,41;0,23;0,6788
+Wilcoxon vs bawaan 0,3;Hybrid ACS;polish_slice_s;0,5;Z;15;497.392,71;496.185,41;0,24;0,5245
+Wilcoxon vs bawaan 0,3;Hybrid ACS;polish_slice_s;1,0;Z;15;499.460,94;496.185,41;0,66;0,3591
+Wilcoxon vs bawaan 0,3;Hybrid ACS;polish_slice_s;2,0;Z;15;501.232,11;496.185,41;1,02;0,0637
+Friedman (χ² = 3,733, df = 4);Hybrid ACS;polish_slice_s;semua nilai;Z;15;;;;0,4433
+Wilcoxon vs bawaan 0,3;Hybrid ACS;polish_slice_s;0,1;Skor (Z + penalti);15;497.331,92;496.185,41;0,23;0,6788
+Wilcoxon vs bawaan 0,3;Hybrid ACS;polish_slice_s;0,5;Skor (Z + penalti);15;497.392,71;496.185,41;0,24;0,5245
+Wilcoxon vs bawaan 0,3;Hybrid ACS;polish_slice_s;1,0;Skor (Z + penalti);15;499.460,94;496.185,41;0,66;0,3591
+Wilcoxon vs bawaan 0,3;Hybrid ACS;polish_slice_s;2,0;Skor (Z + penalti);15;501.232,11;496.185,41;1,02;0,0637
+Friedman (χ² = 3,733, df = 4);Hybrid ACS;polish_slice_s;semua nilai;Skor (Z + penalti);15;;;;0,4433
+Wilcoxon vs bawaan 0,5;VNS;polish_slice_s;0,1;Z;15;534.088,23;534.049,55;0,01;1,0000
+Wilcoxon vs bawaan 0,5;VNS;polish_slice_s;0,3;Z;15;532.662,13;534.049,55;-0,26;0,6788
+Wilcoxon vs bawaan 0,5;VNS;polish_slice_s;1,0;Z;15;532.743,95;534.049,55;-0,24;0,4212
+Wilcoxon vs bawaan 0,5;VNS;polish_slice_s;2,0;Z;15;532.961,68;534.049,55;-0,20;0,2078
+Friedman (χ² = 1,227, df = 4);VNS;polish_slice_s;semua nilai;Z;15;;;;0,8737
+Wilcoxon vs bawaan 0,5;VNS;polish_slice_s;0,1;Skor (Z + penalti);15;534.088,23;534.049,55;0,01;1,0000
+Wilcoxon vs bawaan 0,5;VNS;polish_slice_s;0,3;Skor (Z + penalti);15;532.662,13;534.049,55;-0,26;0,6788
+Wilcoxon vs bawaan 0,5;VNS;polish_slice_s;1,0;Skor (Z + penalti);15;532.743,95;534.049,55;-0,24;0,4212
+Wilcoxon vs bawaan 0,5;VNS;polish_slice_s;2,0;Skor (Z + penalti);15;532.961,68;534.049,55;-0,20;0,2078
+Friedman (χ² = 1,227, df = 4);VNS;polish_slice_s;semua nilai;Skor (Z + penalti);15;;;;0,8737
