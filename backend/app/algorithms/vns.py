@@ -105,26 +105,15 @@ class VNS:
             volumes_left = self.inst.volumes.copy()
             n_vehicles = len(self.inst.vehicles)
 
-            order = list(range(n_vehicles))
-            self._rng.shuffle(order)
-
-            route_map: dict[int, list[int]] = {}
-            cap_map: dict[int, int] = {}
-
-            for vi in order:
-                depot, cap = self.inst.vehicles[vi]
-                if np.all(volumes_left <= 0.5):
-                    route_map[vi] = [depot, depot]
-                    cap_map[vi] = cap
-                    continue
-                route, _ = self._build_greedy_route(
-                    depot, cap, volumes_left, self.inst.horizon_of(vi)
-                )
-                route_map[vi] = route
-                cap_map[vi] = cap
-
-            routes = [route_map[i] for i in range(n_vehicles)]
-            capacities = [cap_map[i] for i in range(n_vehicles)]
+            # Alternate the two constructions: parallel spreads the work over the
+            # fleet (earlier arrivals, lower Z), sequential packs each crew to its
+            # horizon (can reach more volume where coverage is short). Full
+            # coverage returns at once; otherwise the best by score is kept.
+            if _attempt % 2 == 0:
+                routes = self._build_parallel(volumes_left)
+            else:
+                routes = self._build_sequential(volumes_left)
+            capacities = [cap for _, cap in self.inst.vehicles[:n_vehicles]]
 
             for _repair_round in range(self.inst.n_floods * 3):
                 ev = evaluate_solution(self.inst, routes, capacities)
@@ -142,6 +131,81 @@ class VNS:
         if best_effort is None:
             raise RuntimeError("VNS did not construct any initial solution.")
         return best_effort
+
+    def _build_parallel(self, volumes_left: np.ndarray) -> list[list[int]]:
+        """Grow every vehicle's route at once, always extending the one free soonest.
+
+        Building vehicles one after another let the first crews take the work up
+        to the horizon and left the rest of the fleet idle, so floods were reached
+        late and Z suffered most where the fleet is largest. Extending whichever
+        vehicle's clock is earliest (parallel construction) spreads the work over
+        the fleet. Each step is the same greedy step as before: drain at the
+        nearest outlet when the tank is full, else the next flood by SI / distance
+        among those the depot may dispatch to, never past the vehicle's horizon.
+        """
+        t = self.inst.time_matrix
+        if_base = self.inst.n_depots + self.inst.n_floods
+        n = len(self.inst.vehicles)
+        routes = [[depot] for depot, _ in self.inst.vehicles]
+        tank = [float(cap) for _, cap in self.inst.vehicles]  # standby full
+        clock = [0.0] * n
+        open_ = list(range(n))
+        self._rng.shuffle(open_)  # ties between equal clocks vary per attempt
+
+        while open_:
+            vi = min(open_, key=lambda v: clock[v])
+            depot, cap = self.inst.vehicles[vi]
+            horizon = self.inst.horizon_of(vi)
+            current = routes[vi][-1]
+            served = [
+                fi for fi in self.inst.depot_flood_sets.get(depot, set())
+                if volumes_left[self._flood_lookup[fi]] > 0.5
+            ]
+            if not served:
+                open_.remove(vi)
+                continue
+            if tank[vi] >= cap - 1e-3:
+                nearest_if = self._nearest(current, self.inst.if_indices)
+                drain = float(self.inst.if_drain_s[nearest_if - if_base])
+                arrival = clock[vi] + float(t[current, nearest_if])
+                if arrival + drain + float(t[nearest_if, depot]) > horizon:
+                    open_.remove(vi)
+                    continue
+                routes[vi].append(nearest_if)
+                clock[vi] = arrival + drain
+                tank[vi] = 0.0
+                continue
+            nxt = self._greedy_next(current, served)
+            slot = self._flood_lookup[nxt]
+            pump = min(volumes_left[slot], cap - tank[vi])
+            service = SERVICE_SETUP_S + pump / PUMP_RATE_LPS
+            arrival = clock[vi] + float(t[current, nxt])
+            if arrival + service + float(t[nxt, depot]) > horizon:
+                open_.remove(vi)
+                continue
+            volumes_left[slot] -= pump
+            tank[vi] += pump
+            routes[vi].append(nxt)
+            clock[vi] = arrival + service
+
+        for vi, (depot, _) in enumerate(self.inst.vehicles):
+            routes[vi].append(depot)
+        return routes
+
+    def _build_sequential(self, volumes_left: np.ndarray) -> list[list[int]]:
+        """The earlier construction: vehicles in random order, each to its horizon."""
+        order = list(range(len(self.inst.vehicles)))
+        self._rng.shuffle(order)
+        routes: list[list[int]] = [[] for _ in order]
+        for vi in order:
+            depot, cap = self.inst.vehicles[vi]
+            if np.all(volumes_left <= 0.5):
+                routes[vi] = [depot, depot]
+                continue
+            routes[vi], _ = self._build_greedy_route(
+                depot, cap, volumes_left, self.inst.horizon_of(vi)
+            )
+        return routes
 
     def _build_greedy_route(
         self,
@@ -325,13 +389,15 @@ class VNS:
     ) -> list[list[int]]:
         shaken = [list(r) for r in routes]
         for _ in range(k):
-            move = self._rng.randint(0, 2)
+            move = self._rng.randint(0, 3)
             if move == 0:
                 self._shake_swap_within(shaken)
             elif move == 1:
                 self._shake_relocate_between(shaken)
-            else:
+            elif move == 2:
                 self._shake_reverse_segment(shaken)
+            else:
+                self._shake_split_to_idle(shaken)
         return shaken
 
     def _active_routes(self, routes: list[list[int]]) -> list[int]:
@@ -367,8 +433,10 @@ class VNS:
         node = src[pos]
 
         allowed = self.inst.eligible_depots[node - self.inst.n_depots]
+        # An idle vehicle of an eligible depot is a destination too: without it
+        # the fleet a route started with is the fleet the search ends with.
         eligible = [
-            r for r in active
+            r for r in range(len(routes))
             if r != src_ri and routes[r][0] in allowed
         ]
         if not eligible:
@@ -377,8 +445,43 @@ class VNS:
         src.pop(pos)
         dst_ri = self._rng.choice(eligible)
         dst = routes[dst_ri]
+        if dst_ri not in active:
+            # An idle crew starts with a full tank: drain before pumping.
+            first_if = self._nearest(node, self.inst.if_indices)
+            routes[dst_ri] = [dst[0], first_if, node, dst[-1]]
+            return
         insert_pos = self._rng.randint(1, max(1, len(dst) - 1))
         dst.insert(insert_pos, node)
+
+    def _shake_split_to_idle(self, routes: list[list[int]]) -> None:
+        """Hand the tail of a long route to an idle crew of the same depot.
+
+        Floods at the end of a long route are reached late, and every second of
+        delay counts in Z, so a second crew taking them from the start of the
+        shift can pay off even though it drives further.
+        """
+        active = set(self._active_routes(routes))
+        idle_depots = {routes[r][0] for r in range(len(routes)) if r not in active}
+        # The longest route among depots that still have a crew standing by.
+        candidates = [r for r in active if routes[r][0] in idle_depots]
+        if not candidates:
+            return
+        src_ri = max(candidates, key=lambda r: len(routes[r]))
+        src = routes[src_ri]
+        depot = src[0]
+        idle = [
+            r for r in range(len(routes))
+            if r not in active and routes[r][0] == depot
+        ]
+        floods_at = [i for i in range(1, len(src) - 1) if src[i] in self._flood_set]
+        if len(floods_at) < 2:
+            return
+        cut = self._rng.choice(floods_at[len(floods_at) // 2 :])
+        tail = src[cut:-1]
+        dst_ri = self._rng.choice(idle)
+        first_if = self._nearest(tail[0], self.inst.if_indices)
+        routes[dst_ri] = [depot, first_if, *tail, depot]
+        routes[src_ri] = src[:cut] + [depot]
 
     def _shake_reverse_segment(self, routes: list[list[int]]) -> None:
         active = self._active_routes(routes)

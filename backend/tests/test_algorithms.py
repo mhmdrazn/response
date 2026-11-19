@@ -95,3 +95,51 @@ def test_acs_global_update_touches_only_best_route_arcs(s2):
     expected = (1 - 0.15) * before[on_route] + 0.15 / best_score
     assert np.allclose(after[on_route], expected, rtol=0, atol=1e-18)
     assert np.array_equal(after, after.T)
+
+
+def test_vns_parallel_construction_spreads_work_over_the_fleet(s2):
+    """Building crews one after another left most of the fleet idle and Z high."""
+    from app.algorithms.evaluator import evaluate_solution
+    from app.algorithms.instance import build_instance
+    from app.algorithms.vns import VNS, VNSParams
+    from app.severity.index import compute_severity_index
+
+    sev = compute_severity_index(s2.floods, s2.faskes)
+    inst = build_instance(
+        depots_df=s2.depots, floods_df=s2.floods, ifs_df=s2.ifs,
+        dist_matrix=s2.distance_matrix, time_matrix=s2.time_matrix, si_values=sev.si_values,
+    )
+    v = VNS(inst, VNSParams(seed=1))
+    caps = [c for _, c in inst.vehicles]
+
+    def used_and_z(routes):
+        ev = evaluate_solution(inst, routes, caps)
+        return sum(1 for r in ev.routes if r.n_flood_visits > 0), ev.objective_z
+
+    par_used, par_z = used_and_z(v._build_parallel(inst.volumes.copy()))
+    seq_used, seq_z = used_and_z(v._build_sequential(inst.volumes.copy()))
+    assert par_used > seq_used
+    assert par_z < seq_z
+    for routes in (v._build_parallel(inst.volumes.copy()), v._build_sequential(inst.volumes.copy())):
+        assert all(r[0] == r[-1] == d for r, (d, _) in zip(routes, inst.vehicles))
+
+
+def test_vns_split_hands_a_route_tail_to_an_idle_crew(s2):
+    from app.algorithms.instance import build_instance
+    from app.algorithms.vns import VNS, VNSParams
+    from app.severity.index import compute_severity_index
+
+    sev = compute_severity_index(s2.floods, s2.faskes)
+    inst = build_instance(
+        depots_df=s2.depots, floods_df=s2.floods, ifs_df=s2.ifs,
+        dist_matrix=s2.distance_matrix, time_matrix=s2.time_matrix, si_values=sev.si_values,
+    )
+    v = VNS(inst, VNSParams(seed=2))
+    routes = v._build_sequential(inst.volumes.copy())
+    before = sorted(n for r in routes for n in r[1:-1] if n in v._flood_set)
+    active_before = len(v._active_routes(routes))
+    v._shake_split_to_idle(routes)
+    after = sorted(n for r in routes for n in r[1:-1] if n in v._flood_set)
+    assert after == before  # no flood visit lost or duplicated
+    assert len(v._active_routes(routes)) == active_before + 1
+    assert all(r[0] == r[-1] == d for r, (d, _) in zip(routes, inst.vehicles))
