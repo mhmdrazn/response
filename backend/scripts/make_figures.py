@@ -7,14 +7,21 @@ traces/ and best/ in --out and writes:
             the book), labels in Indonesian
     konvergensi_<scenario>.png      mean best score over time, ACS vs VNS, IQR band
     konvergensi_z_<scenario>.png    the same for Z of the best solution
-    boxplot_<metric>.png            ACS vs VNS per scenario (objective_z, score,
-                                    total_distance_m, vehicles_used)
-    sensitivitas_<param>.png        n_ants, q0, rho: mean +/- std of score and Z
-    polish_slice.png, unserved_penalty.png
+    boxplot_<metric>.png            ACS vs VNS, one panel per scenario with its own
+                                    y axis (objective_z, score, total_distance_m,
+                                    vehicles_used)
+    sensitivitas_<param>.png        n_ants, q0, rho: mean +/- std (Z only when every
+                                    run is fully covered, else score and Z)
+    sensitivitas_horizon.png, sensitivitas_dispatch.png
+                                    ACS vs VNS: Z, coverage and vehicles used
+    polish_slice.png, unserved_penalty[_<scenario>].png
   tables/   CSV to paste into Word: ';' separated, decimal comma, UTF-8 with BOM
     tabel_statistik_<algorithm>.csv, tabel_perbandingan.csv,
-    tabel_rute_<scenario>_<algorithm>.csv, tabel_sensitivitas.csv,
-    tabel_polish_slice.csv, tabel_unserved_penalty.csv
+    tabel_ringkasan_rute_<scenario>_<algorithm>.csv (per vehicle, for the body),
+    tabel_rute_<scenario>_<algorithm>.csv (full stop order, for the appendix),
+    tabel_sensitivitas.csv, uji_sensitivitas.csv (Wilcoxon vs default, Friedman),
+    tabel_sensitivitas_horizon_dispatch.csv, tabel_polish_slice.csv,
+    tabel_unserved_penalty[_<scenario>].csv
 
 A figure or table whose experiment has not been run is skipped with a note.
 
@@ -38,7 +45,7 @@ import matplotlib  # noqa: E402
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
-from matplotlib.ticker import FuncFormatter  # noqa: E402
+from matplotlib.ticker import FuncFormatter, MaxNLocator  # noqa: E402
 
 OUT_DEFAULT = Path(__file__).resolve().parents[1] / "experiments"
 SCENARIOS = ["s1-jan", "s2-jun", "s3-nov"]
@@ -123,6 +130,11 @@ def _save(fig, path: Path, made: list[Path]) -> None:
     fig.savefig(path, dpi=DPI)
     plt.close(fig)
     made.append(path)
+
+
+def _percent_axis(ax) -> None:
+    """Coverage sits just under 100, where whole numbers repeat: one decimal."""
+    ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _p: id_number(v, 1)))
 
 
 def _number_axis(ax, which: str = "y") -> None:
@@ -229,59 +241,71 @@ def boxplots(runs: list[dict[str, str]], figs: Path, made: list[Path], notes: li
     scenarios = [sc for sc in SCENARIOS if any(r["scenario"] == sc for r in main)]
     for metric in ("objective_z", "score", "total_distance_m", "vehicles_used"):
         scale = 1000.0 if metric == "total_distance_m" else 1.0
-        fig, ax = plt.subplots(figsize=FIG_SIZE)
-        width = 0.34
-        for k, a in enumerate(ALGOS):
-            data = [
-                [fval(r, metric) / scale for r in main if r["scenario"] == sc and r["algorithm"] == a]
-                for sc in scenarios
-            ]
-            pos = np.arange(len(scenarios)) + (k - 0.5) * (width + 0.04)
-            bp = ax.boxplot(
-                data, positions=pos, widths=width, patch_artist=True, showfliers=True,
-                medianprops={"color": INK, "linewidth": 1.4},
-                whiskerprops={"color": MUTED, "linewidth": 1.0},
-                capprops={"color": MUTED, "linewidth": 1.0},
-                flierprops={"marker": MARKER[a], "markersize": 4, "markerfacecolor": COLOR[a],
-                            "markeredgecolor": "white", "markeredgewidth": 0.6},
-            )
-            for box in bp["boxes"]:
+        # One panel per scenario, each on its own y axis: on a shared axis the
+        # large S1/S2 values flatten the S3 boxes.
+        fig, axes = plt.subplots(1, len(scenarios), figsize=FIG_SIZE, squeeze=False)
+        for ax, sc in zip(axes[0], scenarios):
+            for k, a in enumerate(ALGOS):
+                data = [fval(r, metric) / scale for r in main if r["scenario"] == sc and r["algorithm"] == a]
+                if not data:
+                    continue
+                bp = ax.boxplot(
+                    [data], positions=[k], widths=0.6, patch_artist=True, showfliers=True,
+                    medianprops={"color": INK, "linewidth": 1.4},
+                    whiskerprops={"color": MUTED, "linewidth": 1.0},
+                    capprops={"color": MUTED, "linewidth": 1.0},
+                    flierprops={"marker": MARKER[a], "markersize": 4, "markerfacecolor": COLOR[a],
+                                "markeredgecolor": "white", "markeredgewidth": 0.6},
+                )
+                box = bp["boxes"][0]
                 box.set_facecolor(COLOR[a])
                 box.set_alpha(0.75)
                 box.set_edgecolor("white")
                 box.set_linewidth(1.0)
                 if a == "vns":
                     box.set_hatch("///")
-            bp["boxes"][0].set_label(ALGO_LABEL[a])
-        ax.set_xticks(np.arange(len(scenarios)))
-        ax.set_xticklabels([SCENARIO_LABEL.get(sc, sc) for sc in scenarios])
-        ax.set_ylabel(METRIC_LABEL[metric])
-        ax.grid(axis="x", visible=False)
-        _number_axis(ax)
-        ax.legend(loc="best")
+            ax.set_xticks(range(len(ALGOS)))
+            ax.set_xticklabels([ALGO_LABEL[a] for a in ALGOS], fontsize=8)
+            ax.set_xlabel(SCENARIO_LABEL.get(sc, sc), fontsize=9)
+            ax.grid(axis="x", visible=False)
+            _number_axis(ax)
+        axes[0][0].set_ylabel(METRIC_LABEL[metric])
         _save(fig, figs / f"boxplot_{metric}.png", made)
 
 
 # --- Sensitivity -----------------------------------------------------------------
 
 
-def _two_panels():
-    fig, axes = plt.subplots(1, 2, figsize=FIG_SIZE)
-    return fig, axes
+def fully_covered(runs: list[dict[str, str]]) -> bool:
+    """Every run served all the work, so its score is its Z and one panel suffices."""
+    return bool(runs) and all(
+        fval(r, "coverage_pct") >= 100.0 - 1e-6
+        and abs(fval(r, "score") - fval(r, "objective_z")) <= 1e-6 * max(1.0, fval(r, "objective_z"))
+        for r in runs
+    )
 
 
-def sensitivity_acs(rows: list[dict[str, str]], figs: Path, made: list[Path], notes: list[str]) -> None:
+def _panels(n: int):
+    fig, axes = plt.subplots(1, n, figsize=FIG_SIZE, squeeze=False)
+    return fig, list(axes[0])
+
+
+def sensitivity_acs(
+    rows: list[dict[str, str]], runs: list[dict[str, str]], figs: Path, made: list[Path], notes: list[str]
+) -> None:
     if not rows:
         notes.append("sensitivitas: sensitivity_acs.csv missing (acs_params not run)")
         return
     label = {"n_ants": "Jumlah semut (m)", "q0": "q₀", "rho": "ρ"}
+    one_panel = fully_covered([r for r in runs if r["experiment"] == "acs_params"])
+    panels = [("z", "Z")] if one_panel else [("score", "Skor"), ("z", "Z")]
     for param in ("n_ants", "q0", "rho"):
         group = sorted((r for r in rows if r["param"] == param), key=lambda r: float(r["value"]))
         if not group:
             continue
         x = np.array([float(r["value"]) for r in group])
-        fig, axes = _two_panels()
-        for ax, key, ylabel in ((axes[0], "score", "Skor"), (axes[1], "z", "Z")):
+        fig, axes = _panels(len(panels))
+        for ax, (key, ylabel) in zip(axes, panels):
             mean = np.array([fval(r, f"{key}_mean") for r in group])
             std = np.array([fval(r, f"{key}_std") for r in group])
             ax.errorbar(x, mean, yerr=std, color=COLOR["acs"], marker="o", markersize=5,
@@ -299,20 +323,23 @@ def sensitivity_acs(rows: list[dict[str, str]], figs: Path, made: list[Path], no
         _save(fig, figs / f"sensitivitas_{param}.png", made)
 
 
-def extra_figures(rows: list[dict[str, str]], figs: Path, made: list[Path], notes: list[str]) -> None:
-    specs = {
-        "polish_slice": (
-            "Batas waktu polish per iterasi (detik)",
-            [("score", "Skor"), ("objective_z", "Z")],
-        ),
-        "unserved_penalty": (
-            "Bobot penalti tak terlayani (λᵤ)",
-            [("coverage_pct", "Cakupan (%)"), ("objective_z", "Z"), ("score", "Skor")],
-        ),
+def extra_figures(
+    rows: list[dict[str, str]], runs: list[dict[str, str]], figs: Path, made: list[Path], notes: list[str]
+) -> None:
+    xlabels = {
+        "polish_slice": "Batas waktu polish per iterasi (detik)",
+        "unserved_penalty": "Bobot penalti tak terlayani (λᵤ)",
     }
-    for exp, sc, group in _by_scenario(rows, list(specs)):
-        xlabel, panels = specs[exp]
-        fig, axes = plt.subplots(1, len(panels), figsize=FIG_SIZE)
+    for exp, sc, group in _by_scenario(rows, list(xlabels)):
+        xlabel = xlabels[exp]
+        group_runs = [r for r in runs if r["experiment"] == exp and r["scenario"] == sc]
+        if fully_covered(group_runs):
+            panels = [("objective_z", "Z")]
+        elif exp == "unserved_penalty":
+            panels = [("coverage_pct", "Cakupan (%)"), ("objective_z", "Z"), ("score", "Skor")]
+        else:
+            panels = [("score", "Skor"), ("objective_z", "Z")]
+        fig, axes = _panels(len(panels))
         for ax, (key, ylabel) in zip(axes, panels):
             for a in ALGOS:
                 g = sorted((r for r in group if r["algorithm"] == a), key=lambda r: float(r["param_value"]))
@@ -334,14 +361,50 @@ def extra_figures(rows: list[dict[str, str]], figs: Path, made: list[Path], note
             ax.xaxis.set_minor_formatter(FuncFormatter(lambda v, _p: ""))
             if len(panels) == 3:
                 ax.tick_params(axis="x", labelsize=8)
-            _number_axis(ax)
+            _percent_axis(ax) if key == "coverage_pct" else _number_axis(ax)
         axes[0].legend(loc="best")
         if len(panels) == 3:
             fig.supxlabel(xlabel, fontsize=10)
         _save(fig, figs / f"{exp}{_suffix(sc)}.png", made)
-    for exp in specs:
+    for exp in xlabels:
         if not any(r["experiment"] == exp for r in rows):
             notes.append(f"{exp}: not run")
+
+
+def limits_figures(summary: list[dict[str, str]], figs: Path, made: list[Path], notes: list[str]) -> None:
+    """sensitivitas_horizon.png and sensitivitas_dispatch.png: Z, coverage and fleet used."""
+    specs = {
+        "horizon": ("horizon_min", "Batas durasi rute (menit)"),
+        "dispatch": ("dispatch_min", "Batas waktu dispatch (menit)"),
+    }
+    panels = [("objective_z", "Z"), ("coverage_pct", "Cakupan (%)"), ("vehicles_used", "Kendaraan terpakai")]
+    for exp, (col, xlabel) in specs.items():
+        group = [r for r in summary if r["experiment"] == exp]
+        if not group:
+            notes.append(f"sensitivitas_{exp}: not run")
+            continue
+        fig, axes = _panels(len(panels))
+        for ax, (key, ylabel) in zip(axes, panels):
+            for a in ALGOS:
+                g = sorted((r for r in group if r["algorithm"] == a), key=lambda r: float(r[col]))
+                if not g:
+                    continue
+                x = np.array([float(r[col]) for r in g])
+                mean = np.array([fval(r, f"{key}_mean") for r in g])
+                std = np.array([fval(r, f"{key}_std") for r in g])
+                ax.errorbar(x, mean, yerr=std, color=COLOR[a], linestyle=STYLE[a], marker=MARKER[a],
+                            markersize=5, linewidth=1.6, capsize=3, elinewidth=1.0, label=ALGO_LABEL[a])
+            ax.set_ylabel(ylabel)
+            ticks = sorted({float(r[col]) for r in group})
+            ax.set_xticks(ticks)
+            ax.xaxis.set_major_formatter(FuncFormatter(lambda v, _p: id_number(v, 0)))
+            ax.tick_params(axis="x", labelsize=8, labelrotation=45)
+            _percent_axis(ax) if key == "coverage_pct" else _number_axis(ax)
+            if key == "vehicles_used":
+                ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+        axes[0].legend(loc="best")
+        fig.supxlabel(xlabel, fontsize=10)
+        _save(fig, figs / f"sensitivitas_{exp}.png", made)
 
 
 def _suffix(scenario: str) -> str:
@@ -500,6 +563,198 @@ def table_extra(rows: list[dict[str, str]], tables: Path, made: list[Path]) -> N
         )
 
 
+def short_depot(name: str | None, depot_id: str) -> str:
+    """Depot name without the "Dinas Pemadam Kebakaran" every one starts with."""
+    if not name:
+        return depot_id
+    for prefix in ("Dinas Pemadam Kebakaran ", "Dinas Kebakaran "):
+        if name.startswith(prefix):
+            return name[len(prefix):]
+    return name
+
+
+def table_route_summary(out: Path, tables: Path, made: list[Path]) -> None:
+    """Per vehicle: the floods it served, its stops, distance and time, first arrival."""
+    for path in sorted((out / "best").glob("*.json")):
+        best = json.loads(path.read_text(encoding="utf-8"))
+        rows: list[list[object]] = []
+        for v in best["routes"]:
+            floods = [s for s in v["visits"] if s["type"] == "flood"]
+            served = list(dict.fromkeys(s["id"] for s in floods))
+            first = min((float(s["arrival_s"]) for s in floods), default=math.nan)
+            rows.append([
+                v["vehicle"],
+                f"D{int(v['depot_index']) + 1} {short_depot(v.get('depot_name'), v['depot_id'])}",
+                ", ".join(served),
+                len(floods),
+                v["if_visits"],
+                id_number(float(v["distance_m"]) / 1000.0, 2),
+                id_number(float(v["time_s"]) / 60.0, 1),
+                id_number(first / 60.0, 1),
+            ])
+        write_table(
+            tables / f"tabel_ringkasan_rute_{best['scenario']}_{best['algorithm']}.csv",
+            ["Kendaraan", "Depo", "Titik genangan dilayani", "Kunjungan genangan",
+             "Kunjungan IF", "Jarak (km)", "Waktu (menit)", "Tiba pertama di genangan (menit)"],
+            rows, made,
+        )
+
+
+def _wilcoxon():
+    """wilcoxon_signed_rank from run_experiments.py (one implementation for both scripts)."""
+    import importlib.util
+
+    path = Path(__file__).resolve().parent / "run_experiments.py"
+    spec = importlib.util.spec_from_file_location("run_experiments_for_figures", path)
+    assert spec and spec.loader
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = mod
+    spec.loader.exec_module(mod)
+    return mod.wilcoxon_signed_rank
+
+
+def chi2_sf(x: float, df: int) -> float:
+    """P(X >= x) for a chi-squared variable, from the regularized lower gamma series."""
+    if x <= 0:
+        return 1.0
+    a, z = df / 2.0, x / 2.0
+    term = total = 1.0 / a
+    k = 0
+    while abs(term) > 1e-15 * abs(total) and k < 10_000:
+        k += 1
+        term *= z / (a + k)
+        total += term
+    lower = math.exp(a * math.log(z) - z - math.lgamma(a)) * total
+    return float(min(1.0, max(0.0, 1.0 - lower)))
+
+
+def friedman(blocks: np.ndarray) -> tuple[float, int, float]:
+    """Friedman test, rows = blocks (seeds), columns = settings: (chi2, df, p).
+
+    Ranks within each block, ties sharing their average rank, with the usual
+    tie correction.
+    """
+    n, k = blocks.shape
+    ranks = np.zeros_like(blocks, dtype=float)
+    ties = 0.0
+    for i, row in enumerate(blocks):
+        order = np.argsort(row, kind="mergesort")
+        r = np.empty(k)
+        sorted_row = row[order]
+        j = 0
+        while j < k:
+            m = j
+            while m + 1 < k and sorted_row[m + 1] == sorted_row[j]:
+                m += 1
+            r[order[j : m + 1]] = (j + m) / 2.0 + 1.0
+            t = m - j + 1
+            ties += t**3 - t
+            j = m + 1
+        ranks[i] = r
+    rsum = ranks.sum(axis=0)
+    chi2 = 12.0 / (n * k * (k + 1)) * float(np.sum(rsum**2)) - 3.0 * n * (k + 1)
+    correction = 1.0 - ties / (n * k * (k**2 - 1))
+    if correction > 0:
+        chi2 /= correction
+    return chi2, k - 1, chi2_sf(chi2, k - 1)
+
+
+def _by_seed(rows: list[dict[str, str]], metric: str) -> dict[int, float]:
+    return {int(float(r["seed"])): fval(r, metric) for r in rows}
+
+
+def table_sensitivity_tests(runs: list[dict[str, str]], tables: Path, made: list[Path]) -> None:
+    """Each ACS parameter value and each polish slice against its default, paired by seed."""
+    from app.algorithms.acs import DEFAULT_POLISH_SLICE_S as ACS_SLICE, ACSParams
+    from app.algorithms.vns import DEFAULT_POLISH_SLICE_S as VNS_SLICE
+
+    wilcoxon = _wilcoxon()
+    out: list[list[object]] = []
+
+    def row(test, algo, param, value, metric, base, other):
+        seeds = sorted(set(base) & set(other))
+        if not seeds:
+            return
+        b = np.array([base[s] for s in seeds])
+        o = np.array([other[s] for s in seeds])
+        res = wilcoxon(o, b)
+        out.append([
+            test, ALGO_LABEL[algo], param, value, METRIC_LABEL[metric], len(seeds),
+            id_number(float(o.mean())), id_number(float(b.mean())),
+            id_number(100.0 * (o.mean() / b.mean() - 1.0), 2),
+            "< 0,001" if res["p_value"] < 0.001 else id_number(float(res["p_value"]), 4),
+        ])
+
+    acs = [r for r in runs if r["experiment"] == "acs_params"]
+    defaults = ACSParams()
+    for metric in ("objective_z", "score"):
+        base = _by_seed([r for r in acs if r["param"] == "default"], metric)
+        for param in ("n_ants", "q0", "rho"):
+            values = sorted({float(r["param_value"]) for r in acs if r["param"] == param})
+            for v in values:
+                other = _by_seed([r for r in acs if r["param"] == param and float(r["param_value"]) == v], metric)
+                default_label = id_number(float(getattr(defaults, param)), 2).rstrip("0").rstrip(",")
+                row("Wilcoxon vs bawaan " + default_label, "acs", param,
+                    id_number(v, 2).rstrip("0").rstrip(","), metric, base, other)
+
+    polish = [r for r in runs if r["experiment"] == "polish_slice"]
+    for algo, default in (("acs", ACS_SLICE), ("vns", VNS_SLICE)):
+        mine = [r for r in polish if r["algorithm"] == algo]
+        if not mine:
+            continue
+        values = sorted({float(r["param_value"]) for r in mine})
+        for metric in ("objective_z", "score"):
+            base = _by_seed([r for r in mine if float(r["param_value"]) == float(default)], metric)
+            for v in values:
+                if v == float(default):
+                    continue
+                other = _by_seed([r for r in mine if float(r["param_value"]) == v], metric)
+                row(f"Wilcoxon vs bawaan {id_number(default, 1)}", algo, "polish_slice_s",
+                    id_number(v, 1), metric, base, other)
+            per_value = [_by_seed([r for r in mine if float(r["param_value"]) == v], metric) for v in values]
+            seeds = sorted(set.intersection(*(set(d) for d in per_value)))
+            if len(seeds) >= 2 and len(values) >= 3:
+                blocks = np.array([[d[s] for d in per_value] for s in seeds])
+                chi2, df, p = friedman(blocks)
+                out.append([
+                    f"Friedman (χ² = {id_number(chi2, 3)}, df = {df})", ALGO_LABEL[algo],
+                    "polish_slice_s", "semua nilai", METRIC_LABEL[metric], len(seeds),
+                    "", "", "", "< 0,001" if p < 0.001 else id_number(p, 4),
+                ])
+    if out:
+        write_table(
+            tables / "uji_sensitivitas.csv",
+            ["Uji", "Algoritma", "Parameter", "Nilai", "Metrik", "n", "Rata-rata",
+             "Rata-rata bawaan", "Selisih (%)", "p-value"],
+            out, made,
+        )
+
+
+def table_limits(summary: list[dict[str, str]], tables: Path, made: list[Path]) -> None:
+    """Horizon and dispatch groups: Z, coverage, vehicles and distance per value."""
+    rows: list[list[object]] = []
+    for exp, col, label in (("horizon", "horizon_min", "Batas durasi rute (menit)"),
+                            ("dispatch", "dispatch_min", "Batas waktu dispatch (menit)")):
+        group = sorted((r for r in summary if r["experiment"] == exp),
+                       key=lambda r: (float(r[col]), r["algorithm"]))
+        for r in group:
+            rows.append([
+                label, id_number(float(r[col]), 0), ALGO_LABEL.get(r["algorithm"], r["algorithm"]),
+                r["n_runs"],
+                id_number(fval(r, "objective_z_mean")), id_number(fval(r, "objective_z_std")),
+                id_number(fval(r, "coverage_pct_mean"), 2),
+                id_number(fval(r, "vehicles_used_mean"), 1),
+                id_number(fval(r, "total_distance_m_mean") / 1000.0, 1),
+            ])
+    if rows:
+        write_table(
+            tables / "tabel_sensitivitas_horizon_dispatch.csv",
+            ["Parameter", "Nilai", "Algoritma", "n", "Rata-rata Z", "Simpangan baku Z",
+             "Rata-rata cakupan (%)", "Rata-rata kendaraan", "Rata-rata jarak (km)"],
+            rows, made,
+        )
+
+
 # --- Main ------------------------------------------------------------------------
 
 
@@ -533,14 +788,19 @@ def main() -> None:
     boxplots(runs, figs, made, notes)
     sens = read_csv(out / "sensitivity_acs.csv")
     extra = read_csv(out / "sensitivity_extra.csv")
-    sensitivity_acs(sens, figs, made, notes)
-    extra_figures(extra, figs, made, notes)
+    summary = read_csv(out / "summary.csv")
+    sensitivity_acs(sens, runs, figs, made, notes)
+    extra_figures(extra, runs, figs, made, notes)
+    limits_figures(summary, figs, made, notes)
 
     table_statistics(runs, tables, made)
     table_comparison(read_csv(out / "wilcoxon.csv"), tables, made)
     table_routes(out, tables, made, notes)
+    table_route_summary(out, tables, made)
     table_sensitivity(sens, tables, made)
+    table_sensitivity_tests(runs, tables, made)
     table_extra(extra, tables, made)
+    table_limits(summary, tables, made)
 
     for p in made:
         print(f"wrote {p.relative_to(out)}")
